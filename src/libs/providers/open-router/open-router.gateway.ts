@@ -3,43 +3,37 @@ import type {
 	Generation,
 	LlmGateway,
 } from "@briom/domain/orchestrator";
+import type { OpenRouter } from "@openrouter/sdk";
+
+import { SDKError } from "./error.util";
 
 export class OpenRouterLlmGateway implements LlmGateway {
-	private readonly baseUrl = "https://openrouter.ai/api/v1";
-
-	public constructor(private readonly apiKey: string) {}
+	public constructor(private readonly client: OpenRouter) {}
 
 	public async generate(input: GenerateInput): Promise<Generation> {
-		const response = await fetch(`${this.baseUrl}/chat/completions`, {
-			method: "POST",
-			headers: {
-				Authorization: `Bearer ${this.apiKey}`,
-				"Content-Type": "application/json",
-				"HTTP-Referer": "https://briom.app",
-				"X-Title": "Briom",
-			},
-			body: JSON.stringify({
-				model: input.qualifiedModel,
-				messages: [
-					{ role: "system", content: input.systemPrompt },
-					...input.messages,
-				],
-			}),
-		});
+		try {
+			const response = await this.client.chat.send({
+				chatRequest: {
+					model: input.qualifiedModel,
+					messages: [
+						{ role: "system", content: input.systemPrompt },
+						...input.messages,
+					],
+				},
+			});
 
-		if (!response.ok) {
+			const content = response.choices[0].message.content;
+			if (!content) {
+				throw new Error("OpenRouter returned empty content");
+			}
+
+			return { content };
+		} catch (error) {
+			if (SDKError.isSDKError(error)) SDKError.processThenThrow(error);
+			console.error("[OpenRouter] Unexpected Error :: ", error);
 			throw new Error(
-				`OpenRouter error: ${response.status} ${response.statusText}`,
+				error instanceof Error ? error.message : "Internal provider error",
 			);
 		}
-
-		const data = await response.json();
-		const content = data.choices?.[0]?.message?.content;
-
-		if (!content) {
-			throw new Error("OpenRouter returned empty content");
-		}
-
-		return { content };
 	}
 }

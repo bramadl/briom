@@ -14,6 +14,7 @@
     "db:studio": "dotenv -e .env.local drizzle-kit studio"
   },
   "dependencies": {
+    "@openrouter/sdk": "^0.12.79",
     "drizzle-orm": "^0.45.2",
     "next": "16.2.9",
     "postgres": "^3.4.9",
