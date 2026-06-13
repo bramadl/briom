@@ -19,8 +19,8 @@
 			}
 		],
 		"paths": {
-			"@briom/*": ["./src/*"],
 			"@briom/domain/*": ["./src/core/domain/*"],
+			"@briom/shared/*": ["./src/core/shared/*"],
 			"@briom/drimion": ["./src/libs/drimion"]
 		}
 	},
