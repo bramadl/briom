@@ -19,9 +19,26 @@
 			}
 		],
 		"paths": {
+			// Core
+			"@briom/app": ["./src/core/application"],
+			"@briom/app/*": ["./src/core/application/*"],
+			"@briom/domain": ["./src/core/domain"],
 			"@briom/domain/*": ["./src/core/domain/*"],
+			"@briom/shared": ["./src/core/shared"],
 			"@briom/shared/*": ["./src/core/shared/*"],
-			"@briom/drimion": ["./src/libs/drimion"]
+
+			// Libs
+			"@briom/drimion": ["./src/libs/drimion"],
+			"@briom/drimion/*": ["./src/libs/drimion/*"],
+
+			// Providers
+			"@briom/drizzle": ["./src/libs/providers/drizzle"],
+			"@briom/drizzle/*": ["./src/libs/providers/drizzle/*"],
+			"@briom/open-router": ["./src/libs/providers/open-router"],
+			"@briom/open-router/*": ["./src/libs/providers/open-router/*"],
+
+			// Container
+			"@briom/container": ["./src/container.ts"]
 		}
 	},
 	"include": [
