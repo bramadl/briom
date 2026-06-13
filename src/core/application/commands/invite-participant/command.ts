@@ -1,11 +1,9 @@
-import type { AiProvider } from "@briom/domain/ai";
-import type { Participant } from "@briom/domain/participant";
-import type { RoomNotFoundError } from "@briom/domain/room";
+import type { Participant, RoomNotFoundError } from "@briom/domain";
 import type { DomainError } from "@briom/drimion";
 
 export type InviteParticipantInput = {
 	roomId: string;
-	provider: AiProvider;
+	provider: string;
 	model: string;
 	displayName: string;
 };

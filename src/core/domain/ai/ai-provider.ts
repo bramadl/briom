@@ -1,7 +1,4 @@
-export const AI_PROVIDER = {
-	OPENAI: "openai",
-	ANTHROPIC: "anthropic",
-	GOOGLE: "google",
-} as const;
+import type { Brand } from "@briom/shared/brand";
 
-export type AiProvider = (typeof AI_PROVIDER)[keyof typeof AI_PROVIDER];
+export type AiProvider = Brand<string, "AiProvider">;
+export const AiProvider = (value: string): AiProvider => value as AiProvider;

@@ -1,11 +1,5 @@
 import { enumsSchema } from "./db-schema";
 
-export const aiProviderEnum = enumsSchema.enum("ai_provider", [
-	"openai",
-	"anthropic",
-	"google",
-]);
-
 export const authorTypeEnum = enumsSchema.enum("author_type", [
 	"user",
 	"participant",

@@ -1,6 +1,5 @@
 import { text } from "drizzle-orm/pg-core";
 
-import { aiProviderEnum } from "../meta/db-enums";
 import { participantsSchema } from "../meta/db-schema";
 import { roomsTable } from "../room/room.model";
 
@@ -9,7 +8,7 @@ export const participantsTable = participantsSchema.table("participants", {
 	roomId: text("room_id")
 		.notNull()
 		.references(() => roomsTable.id, { onDelete: "cascade" }),
-	provider: aiProviderEnum("provider").notNull(),
+	provider: text("provider").notNull(),
 	model: text("model").notNull(),
 	displayName: text("display_name").notNull(),
 });

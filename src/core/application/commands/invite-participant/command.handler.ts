@@ -1,14 +1,13 @@
-import { AiModel } from "@briom/domain/ai";
 import {
+	AiModel,
+	AiProvider,
 	Participant,
 	ParticipantId,
 	type ParticipantRepository,
-} from "@briom/domain/participant";
-import {
 	RoomId,
 	RoomNotFoundError,
 	type RoomRepository,
-} from "@briom/domain/room";
+} from "@briom/domain";
 import { type ICommand, type IResult, Result } from "@briom/drimion";
 
 import type {
@@ -43,7 +42,7 @@ export class InviteParticipantHandler
 		const participantResult = Participant.create({
 			id: ParticipantId(crypto.randomUUID()),
 			roomId,
-			provider: input.provider,
+			provider: AiProvider(input.provider),
 			model: AiModel(input.model),
 			displayName: input.displayName,
 		});

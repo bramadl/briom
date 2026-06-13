@@ -1,5 +1,4 @@
-import type { RoomNotFoundError } from "@briom/domain/room";
-import type { Turn } from "@briom/domain/turn";
+import type { RoomNotFoundError, Turn } from "@briom/domain";
 import type { DomainError } from "@briom/drimion";
 
 export type AddUserMessageInput = {

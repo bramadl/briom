@@ -1,11 +1,12 @@
-import type { Orchestrator } from "@briom/domain/orchestrator";
 import {
+	type Orchestrator,
 	ParticipantId,
 	type ParticipantRepository,
-} from "@briom/domain/participant";
-import type { RoomRepository } from "@briom/domain/room";
-import { RoomId, RoomNotFoundError } from "@briom/domain/room";
-import type { TurnRepository } from "@briom/domain/turn";
+	RoomId,
+	RoomNotFoundError,
+	type RoomRepository,
+	type TurnRepository,
+} from "@briom/domain";
 import { type ICommand, type IResult, Result } from "@briom/drimion";
 
 import type {

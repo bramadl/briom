@@ -1,4 +1,4 @@
-import { Room, RoomId, type RoomRepository } from "@briom/domain/room";
+import { Room, RoomId, type RoomRepository } from "@briom/domain";
 import { type ICommand, type IResult, Result } from "@briom/drimion";
 
 import type {

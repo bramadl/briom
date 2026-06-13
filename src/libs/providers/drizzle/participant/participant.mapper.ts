@@ -1,4 +1,4 @@
-import { AiModel } from "@briom/domain/ai";
+import { AiModel, AiProvider } from "@briom/domain/ai";
 import { Participant, ParticipantId } from "@briom/domain/participant";
 import { RoomId } from "@briom/domain/room";
 
@@ -9,7 +9,7 @@ export const ParticipantMapper = {
 		const result = Participant.create({
 			id: ParticipantId(record.id),
 			roomId: RoomId(record.roomId),
-			provider: record.provider,
+			provider: AiProvider(record.provider),
 			model: AiModel(record.model),
 			displayName: record.displayName,
 		});

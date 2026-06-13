@@ -1,11 +1,12 @@
-import type { RoomRepository } from "@briom/domain/room";
-import { RoomId, RoomNotFoundError } from "@briom/domain/room";
 import {
+	RoomId,
+	RoomNotFoundError,
+	type RoomRepository,
 	Turn,
 	TurnId,
 	type TurnRepository,
 	type TurnSequencer,
-} from "@briom/domain/turn";
+} from "@briom/domain";
 import { type ICommand, type IResult, Result } from "@briom/drimion";
 
 import type {

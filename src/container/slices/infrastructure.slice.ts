@@ -7,26 +7,25 @@ import {
 } from "@briom/drizzle";
 import { db } from "@briom/drizzle/client";
 import { OpenRouterLlmGateway } from "@briom/open-router";
-
-const openRouterApiKey = process.env.OPEN_ROUTER_API_KEY;
-if (!openRouterApiKey) throw new Error("OPEN_ROUTER_API_KEY is required");
+import { openRouter } from "@briom/open-router/client";
 
 export const infrastructureSlice = (container: ContainerBuilder) => {
 	return container
-		.add("Database", () => db)
+		.add("Client:Database", () => db)
+		.add("Client:OpenRouter", () => openRouter)
 		.add("Repository:Room", (r) => {
-			return new DrizzleRoomRepository(r.Database);
+			return new DrizzleRoomRepository(r["Client:Database"]);
 		})
 		.add("Repository:Participant", (r) => {
-			return new DrizzleParticipantRepository(r.Database);
+			return new DrizzleParticipantRepository(r["Client:Database"]);
 		})
 		.add("Repository:Turn", (r) => {
-			return new DrizzleTurnRepository(r.Database);
+			return new DrizzleTurnRepository(r["Client:Database"]);
 		})
 		.add("QueryService:TurnSequencer", (r) => {
-			return new DrizzleTurnSequencer(r.Database);
+			return new DrizzleTurnSequencer(r["Client:Database"]);
 		})
-		.add("Adapter:LLMGateway", () => {
-			return new OpenRouterLlmGateway(openRouterApiKey);
+		.add("Adapter:LLMGateway", (r) => {
+			return new OpenRouterLlmGateway(r["Client:OpenRouter"]);
 		});
 };

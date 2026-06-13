@@ -1,4 +1,4 @@
-import type { Room } from "@briom/domain/room";
+import type { Room } from "@briom/domain";
 import type { DomainError } from "@briom/drimion";
 
 export type CreateRoomInput = {
