@@ -19,6 +19,9 @@
 			}
 		],
 		"paths": {
+			// Client
+			"@briom": ["./src/container"],
+
 			// Core
 			"@briom/app": ["./src/core/application"],
 			"@briom/app/*": ["./src/core/application/*"],
@@ -28,6 +31,7 @@
 			"@briom/shared/*": ["./src/core/shared/*"],
 
 			// Libs
+			"@briom/utils": ["./src/libs/utils.ts"],
 			"@briom/drimion": ["./src/libs/drimion"],
 			"@briom/drimion/*": ["./src/libs/drimion/*"],
 
@@ -35,10 +39,7 @@
 			"@briom/drizzle": ["./src/libs/providers/drizzle"],
 			"@briom/drizzle/*": ["./src/libs/providers/drizzle/*"],
 			"@briom/open-router": ["./src/libs/providers/open-router"],
-			"@briom/open-router/*": ["./src/libs/providers/open-router/*"],
-
-			// Container
-			"@briom/container": ["./src/container"]
+			"@briom/open-router/*": ["./src/libs/providers/open-router/*"]
 		}
 	},
 	"include": [
