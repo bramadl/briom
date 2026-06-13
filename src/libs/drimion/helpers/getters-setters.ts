@@ -125,7 +125,10 @@ export abstract class GettersAndSetters<Props> {
 	 * @param key The property key to assign to.
 	 * @param value The validated value to apply.
 	 */
-	private applyValue<Key extends keyof Props>(key: Key, value: Props[Key]): void {
+	private applyValue<Key extends keyof Props>(
+		key: Key,
+		value: Props[Key],
+	): void {
 		if (key === "id" && this.parentKind === "Entity") {
 			this.applyEntityId(value);
 			return;
@@ -176,7 +179,10 @@ export abstract class GettersAndSetters<Props> {
 	): void {
 		const name = Reflect.getPrototypeOf(this)?.constructor.name;
 
-		if (typeof externalValidation === "function" && !externalValidation(value)) {
+		if (
+			typeof externalValidation === "function" &&
+			!externalValidation(value)
+		) {
 			throw new DomainError(`Set: validation failed for "${String(key)}".`, {
 				context: name,
 				field: String(key),
@@ -240,7 +246,9 @@ export abstract class GettersAndSetters<Props> {
 	 * ```
 	 */
 	public get<Key extends keyof Props>(key: Key): Props[Key];
-	public get(key: "value"): "value" extends keyof Props ? Props["value"] : Props;
+	public get(
+		key: "value",
+	): "value" extends keyof Props ? Props["value"] : Props;
 	/** biome-ignore lint/suspicious/noExplicitAny: TS cannot correlate overload branches with runtime narrowing. */
 	public get(key: any): any {
 		if (this.config.disableGetters) {
@@ -285,14 +293,10 @@ export abstract class GettersAndSetters<Props> {
 		const obj = this.props as AnyObject;
 
 		if (!(key in obj)) {
-			const name = Reflect.getPrototypeOf(this)?.constructor.name;
-			throw new DomainError(`Get: key "${String(key)}" does not exist.`, {
-				context: name,
-				field: String(key),
-			});
+			return undefined;
 		}
 
-		return obj[key] ?? null;
+		return obj[key];
 	}
 
 	/**
@@ -321,10 +325,16 @@ export abstract class GettersAndSetters<Props> {
 	public set<Key extends keyof Props>(
 		key: Key,
 	): {
-		to: (value: Props[Key], validation?: (value: Props[Key]) => boolean) => boolean;
+		to: (
+			value: Props[Key],
+			validation?: (value: Props[Key]) => boolean,
+		) => boolean;
 	} {
 		return {
-			to: (value: Props[Key], validation?: (value: Props[Key]) => boolean): boolean => {
+			to: (
+				value: Props[Key],
+				validation?: (value: Props[Key]) => boolean,
+			): boolean => {
 				this.assertSettersEnabled(key);
 				this.assertValid(key, value, validation);
 				this.applyValue(key, value);
@@ -362,7 +372,10 @@ export abstract class GettersAndSetters<Props> {
 	 * }
 	 * ```
 	 */
-	public validation<Key extends keyof Props>(_value: Props[Key], _key: Key): boolean {
+	public validation<Key extends keyof Props>(
+		_value: Props[Key],
+		_key: Key,
+	): boolean {
 		return true;
 	}
 }
