@@ -32,7 +32,9 @@
     "useGitignore": true,
     "useDotIgnore": true,
     "useDefaultPatterns": true,
-    "customPatterns": []
+    "customPatterns": [
+      "public/**"
+    ]
   },
   "security": {
     "enableSecurityCheck": true
