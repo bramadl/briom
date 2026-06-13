@@ -1,0 +1,352 @@
+import type { Aggregate, Entity, ID, ValueObject } from "../core";
+import type { BaseSpecification } from "../core/specification";
+import type { AnyObject } from "../types/utils.types";
+import { Stringify } from "../utils/string.utils";
+
+/**
+ * @description
+ * A utility class for validating various data types, including numbers, strings, objects, dates, and more.
+ * Provides methods to check the type and properties of values, as well as to perform specific validations.
+ */
+export class Validator {
+	private static instance: Validator = null as unknown as Validator;
+
+	private constructor() {}
+
+	/**
+	 * @description
+	 * Creates or retrieves the singleton instance of the `Validator` class.
+	 *
+	 * @returns {Validator} The instance of the `Validator` class.
+	 */
+	public static create(): Validator {
+		if (!Validator.instance) Validator.instance = new Validator();
+		return Validator.instance;
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is an aggregate.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is an aggregate, false otherwise.
+	 */
+	public isAggregate(props: unknown): props is Aggregate<never> {
+		if (props === null || typeof props !== "object") return false;
+		return (props as AnyObject).__aggregate === true;
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is an array.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is an array, false otherwise.
+	 */
+	public isArray(props: unknown): props is unknown[] {
+		return Array.isArray(props);
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a boolean.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is a boolean, false otherwise.
+	 */
+	public isBoolean(props: unknown): props is boolean {
+		return typeof props === "boolean";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a date.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is a date, false otherwise.
+	 */
+	public isDate(props: unknown): props is Date {
+		return props instanceof Date;
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is an entity (but not an aggregate).
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is an entity, false otherwise.
+	 */
+	public isEntity(props: unknown): props is Entity<never> {
+		if (props === null || typeof props !== "object") return false;
+		return (props as AnyObject).__kind === "Entity";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a function.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is a function, false otherwise.
+	 */
+	public isFunction(props: unknown): props is (...args: unknown[]) => unknown {
+		return typeof props === "function";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is an ID instance.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is an ID, false otherwise.
+	 */
+	public isID(props: unknown): props is ID {
+		if (props === null || typeof props !== "object") return false;
+		return (props as AnyObject).__kind === "ID";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is null.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is null, false otherwise.
+	 */
+	public isNull(props: unknown): props is null {
+		return props === null;
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a number.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is a number, false otherwise.
+	 */
+	public isNumber(props: unknown): props is number {
+		return typeof props === "number";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is an object, excluding arrays, entities, aggregates, and value objects.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is an object, false otherwise.
+	 */
+	public isObject(props: unknown): props is Record<string, unknown> {
+		const isObj = typeof props === "object";
+		if (!isObj || props === null) return false;
+		if (Stringify(props) === Stringify({})) return true;
+		const hasKeys = Object.keys(props).length > 0;
+		const isNotArray = !Validator.instance.isArray(props);
+		const isNotEntity = !Validator.instance.isEntity(props);
+		const isNotAggregate = !Validator.instance.isAggregate(props);
+		const isNotValueObject = !Validator.instance.isValueObject(props);
+		const isNotId = !Validator.instance.isID(props);
+		return (
+			hasKeys && isNotAggregate && isNotArray && isNotEntity && isNotValueObject && isNotId
+		);
+	}
+
+	/**
+	 * @description
+	 * Checks if a character at a specified index is a special character based on ASCII codes.
+	 *
+	 * @param char The character to check.
+	 * @param index The index of the character.
+	 * @returns {boolean} True if the character is a special character, false otherwise.
+	 */
+	private static isSpecialChar(char: string, index: number): boolean {
+		const asciiCode = char.charCodeAt(index);
+		return (
+			(asciiCode >= 33 && asciiCode <= 47) ||
+			(asciiCode >= 58 && asciiCode <= 64) ||
+			(asciiCode >= 91 && asciiCode <= 96) ||
+			(asciiCode >= 123 && asciiCode <= 126)
+		);
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a `BaseSpecification` instance.
+	 *
+	 * @param props The value to check.
+	 * @returns True if the value is a Specification, false otherwise.
+	 */
+	public isSpecification(props: unknown): props is BaseSpecification<never> {
+		if (props === null || typeof props !== "object") return false;
+		return (props as AnyObject).__kind === "Specification";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a symbol.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is a symbol, false otherwise.
+	 */
+	public isSymbol(props: unknown): props is symbol {
+		return typeof props === "symbol";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a string.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is a string, false otherwise.
+	 */
+	public isString(props: unknown): props is string {
+		return typeof props === "string";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is undefined.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is undefined, false otherwise.
+	 */
+	public isUndefined(props: unknown): props is undefined {
+		return typeof props === "undefined";
+	}
+
+	/**
+	 * @description
+	 * Checks if the provided value is a value object.
+	 *
+	 * @param props The value to check.
+	 * @returns {boolean} True if the value is a value object, false otherwise.
+	 */
+	public isValueObject(props: unknown): props is ValueObject<never> {
+		if (props === null || typeof props !== "object") return false;
+		return (props as AnyObject).__kind === "ValueObject";
+	}
+
+	public date(target: Date) {
+		return {
+			isAfterNow: (): boolean =>
+				Validator.instance.isDate(target) && target.getTime() > Date.now(),
+			isAfterOrEqualTo: (value: Date): boolean =>
+				Validator.instance.isDate(target) &&
+				Validator.instance.isDate(value) &&
+				target.getTime() >= value.getTime(),
+			isAfterThan: (value: Date): boolean =>
+				Validator.instance.isDate(target) &&
+				Validator.instance.isDate(value) &&
+				target.getTime() > value.getTime(),
+			isBeforeNow: (): boolean =>
+				Validator.instance.isDate(target) && target.getTime() < Date.now(),
+			isBeforeOrEqualTo: (value: Date): boolean =>
+				Validator.instance.isDate(target) &&
+				Validator.instance.isDate(value) &&
+				target.getTime() <= value.getTime(),
+			isBeforeThan: (value: Date): boolean =>
+				Validator.instance.isDate(target) &&
+				Validator.instance.isDate(value) &&
+				target.getTime() < value.getTime(),
+			isBetween: (start: Date, end: Date): boolean =>
+				Validator.instance.isDate(target) &&
+				target.getTime() > start.getTime() &&
+				target.getTime() < end.getTime(),
+			isWeekend: (): boolean =>
+				(Validator.instance.isDate(target) && target.getDay() === 0) ||
+				(Validator.instance.isDate(target) && target.getDay() === 6),
+		};
+	}
+
+	public number(target: number) {
+		return {
+			isBetween: (min: number, max: number): boolean =>
+				Validator.instance.isNumber(target) && target < max && target > min,
+			isBetweenOrEqual: (min: number, max: number): boolean =>
+				Validator.instance.isNumber(target) && target <= max && target >= min,
+			isEqualTo: (value: number): boolean =>
+				Validator.instance.isNumber(target) &&
+				Validator.instance.isNumber(value) &&
+				target === value,
+			isEven: (): boolean => Validator.instance.isNumber(target) && target % 2 === 0,
+			isGreaterOrEqualTo: (value: number): boolean =>
+				Validator.instance.isNumber(target) &&
+				Validator.instance.isNumber(value) &&
+				target >= value,
+			isGreaterThan: (value: number): boolean =>
+				Validator.instance.isNumber(target) &&
+				Validator.instance.isNumber(value) &&
+				target > value,
+			isInteger: (): boolean =>
+				Validator.instance.isNumber(target) && target - Math.trunc(target) === 0,
+			isLessOrEqualTo: (value: number): boolean =>
+				Validator.instance.isNumber(target) &&
+				Validator.instance.isNumber(value) &&
+				target <= value,
+			isLessThan: (value: number): boolean =>
+				Validator.instance.isNumber(target) &&
+				Validator.instance.isNumber(value) &&
+				target < value,
+			isNegative: (): boolean => Validator.instance.isNumber(target) && target < 0,
+			isPositive: (): boolean => Validator.instance.isNumber(target) && target > 0,
+			isSafeInteger: (): boolean =>
+				Validator.instance.isNumber(target) &&
+				target <= Number.MAX_SAFE_INTEGER &&
+				target >= Number.MIN_SAFE_INTEGER,
+		};
+	}
+
+	public string(target: string) {
+		return {
+			hasLengthBetween: (min: number, max: number): boolean =>
+				Validator.instance.isString(target) && target.length > min && target.length < max,
+			hasLengthBetweenOrEqual: (min: number, max: number): boolean =>
+				Validator.instance.isString(target) && target.length >= min && target.length <= max,
+			hasLengthEqualTo: (length: number): boolean =>
+				Validator.instance.isString(target) && target.length === length,
+			hasLengthGreaterOrEqualTo: (length: number): boolean =>
+				Validator.instance.isString(target) && target.length >= length,
+			hasLengthGreaterThan: (length: number): boolean =>
+				Validator.instance.isString(target) && target.length > length,
+			hasLengthLessOrEqualTo: (length: number): boolean =>
+				Validator.instance.isString(target) && target.length <= length,
+			hasLengthLessThan: (length: number): boolean =>
+				Validator.instance.isString(target) && target.length < length,
+			hasOnlyLetters: (): boolean =>
+				Validator.instance.isString(target) &&
+				target
+					.toUpperCase()
+					.split("")
+					.map((n) => n.charCodeAt(0) >= 65 && n.charCodeAt(0) <= 90)
+					.every((v) => v === true),
+			hasOnlyNumbers: (): boolean =>
+				Validator.instance.isString(target) &&
+				target
+					.split("")
+					.map((n) => n.charCodeAt(0) >= 48 && n.charCodeAt(0) <= 57)
+					.every((v) => v === true),
+			hasSpecialChar: (): boolean =>
+				Validator.instance.isString(target) &&
+				target
+					.split("")
+					.map((char) => Validator.isSpecialChar(char, 0))
+					.includes(true),
+			includes: (value: string): boolean =>
+				(Validator.instance.isString(target) && target.includes(value)) ||
+				value
+					.split("")
+					.map((char) => target.includes(char))
+					.includes(true),
+			isEmpty: (): boolean =>
+				Validator.instance.isUndefined(target) ||
+				Validator.instance.isNull(target) ||
+				(Validator.instance.isString(target) && target.trim() === ""),
+			isEqual: (value: string) =>
+				Validator.instance.isString(target) &&
+				Validator.instance.isString(value) &&
+				target === value,
+			isSpecialChar: (index = 0): boolean =>
+				Validator.instance.isString(target[index]) && Validator.isSpecialChar(target, index),
+			match: (regex: RegExp): boolean => regex.test(target),
+		};
+	}
+}
+
+export default Validator.create();
