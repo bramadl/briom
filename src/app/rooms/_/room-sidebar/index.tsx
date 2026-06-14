@@ -1,8 +1,6 @@
 "use client";
 
 import { Logo } from "@briom/components/logo";
-import { UserDropdownMenu } from "@briom/components/user-dropdown-menu";
-import { Badge } from "@briom/ui/badge";
 import { Kbd, KbdGroup } from "@briom/ui/kbd";
 import {
 	SIDEBAR_KEYBOARD_SHORTCUT,
@@ -21,7 +19,12 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@briom/ui/tooltip";
 import { Plus } from "lucide-react";
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+import { UserDropdownMenu } from "./user-dropdown-menu";
+
+export function RoomSidebar({
+	children,
+	...props
+}: React.ComponentProps<typeof Sidebar>) {
 	const { open } = useSidebar();
 
 	return (
@@ -73,10 +76,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 									<SidebarMenuButton
 										className="px-2.5 md:px-2"
 										isActive={true}
-										tooltip={{
-											children: "New Room",
-											hidden: false,
-										}}
+										tooltip={{ children: "New Room", hidden: false }}
 									>
 										<Plus />
 										<span>New Room</span>
@@ -92,42 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 				</SidebarFooter>
 			</Sidebar>
 
-			<Sidebar className="hidden flex-1 md:flex" collapsible="none">
-				<SidebarHeader className="h-14 border-b border-sidebar-border justify-center px-4">
-					<div className="flex items-center justify-between gap-4">
-						<h2 className="text-muted-foreground text-sm whitespace-nowrap">
-							My Rooms
-						</h2>
-						<Badge>2</Badge>
-					</div>
-				</SidebarHeader>
-				<SidebarContent>
-					<SidebarGroup className="px-0 py-0">
-						<SidebarGroupContent>
-							<div className="flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0 bg-muted/50">
-								<div className="flex w-full items-center gap-2">
-									<h2>DDD untuk Briom</h2>
-									<p className="ml-auto text-xs">19:40</p>
-								</div>
-								<span className="font-medium">4 AI Participants</span>
-								<span className="line-clamp-2 w-[260px] text-xs whitespace-break-spaces">
-									Informasi which idk what
-								</span>
-							</div>
-							<div className="flex flex-col items-start gap-2 border-b p-4 text-sm leading-tight whitespace-nowrap last:border-b-0 hover:bg-muted/25">
-								<div className="flex w-full items-center gap-2">
-									<h2>Strategi Monetisasi</h2>
-									<p className="ml-auto text-xs">15:12</p>
-								</div>
-								<span className="font-medium">2 AI Participants</span>
-								<span className="line-clamp-2 w-[260px] text-xs whitespace-break-spaces">
-									Informasi which idk what
-								</span>
-							</div>
-						</SidebarGroupContent>
-					</SidebarGroup>
-				</SidebarContent>
-			</Sidebar>
+			{children}
 		</Sidebar>
 	);
 }
