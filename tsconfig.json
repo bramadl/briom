@@ -19,6 +19,13 @@
 			}
 		],
 		"paths": {
+			// Shadcn
+			"@briom/*": ["./src/*"],
+			"@briom/components/*": ["./src/components/*"],
+			"@briom/ui/*": ["./src/components/ui/*"],
+			"@briom/libs/*": ["./src/libs/*"],
+			"@briom/hooks/*": ["./src/hooks/*"],
+
 			// Client
 			"@briom": ["./src/container"],
 
