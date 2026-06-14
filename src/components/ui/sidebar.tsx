@@ -320,7 +320,7 @@ function SidebarInset({
 			<AnimatedOrnament
 				className={cn(
 					"left-[unset] right-0 transition-[width] will-change-[width]",
-					open ? "w-[calc(100%-var(--sidebar-width))]" : "w-full",
+					open ? "w-full md:w-[calc(100%-var(--sidebar-width))]" : "w-full",
 				)}
 			/>
 			{children}
