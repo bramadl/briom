@@ -5,6 +5,7 @@ import { UserDropdownMenu } from "@briom/components/user-dropdown-menu";
 import { Badge } from "@briom/ui/badge";
 import { Kbd, KbdGroup } from "@briom/ui/kbd";
 import {
+	SIDEBAR_KEYBOARD_SHORTCUT,
 	Sidebar,
 	SidebarContent,
 	SidebarFooter,
@@ -30,19 +31,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 			{...props}
 		>
 			<Sidebar
-				className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r bg-transparent"
+				className="w-[calc(var(--sidebar-width-icon))]! border-r bg-transparent"
 				collapsible="none"
 			>
 				<SidebarHeader className="h-14 border-b">
 					<SidebarMenu>
 						<Tooltip>
 							<SidebarMenuItem>
-								<TooltipTrigger asChild>
-									<SidebarMenuButton
-										asChild
-										className="relative md:p-0 md:h-8 transition-opacity group/trigger mt-1"
-										size="lg"
-									>
+								<SidebarMenuButton
+									asChild
+									className="relative md:p-0 md:h-8 transition-opacity group/trigger mt-1"
+									size="lg"
+								>
+									<TooltipTrigger asChild>
 										<div>
 											<Logo
 												className="ml-1 size-6! group-hover/trigger:opacity-0 transition-opacity"
@@ -50,13 +51,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 											/>
 											<SidebarTrigger className="ml-0.5 mt-0.5 absolute inset-0 text-muted-foreground opacity-0 group-hover/trigger:opacity-100 transition-opacity" />
 										</div>
-									</SidebarMenuButton>
-								</TooltipTrigger>
+									</TooltipTrigger>
+								</SidebarMenuButton>
 								<TooltipContent side="right">
 									<p>{open ? "Collapse" : "Expand"} Sidebar</p>
 									<KbdGroup>
 										<Kbd>⌘</Kbd>
-										<Kbd>B</Kbd>
+										<Kbd>{SIDEBAR_KEYBOARD_SHORTCUT}</Kbd>
 									</KbdGroup>
 								</TooltipContent>
 							</SidebarMenuItem>
