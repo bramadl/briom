@@ -33,7 +33,9 @@
     "useDotIgnore": true,
     "useDefaultPatterns": true,
     "customPatterns": [
-      "public/**"
+      "public/**",
+      "src/libs/providers/drizzle/migrations/**",
+      "src/libs/drimion/**"
     ]
   },
   "security": {
