@@ -37,14 +37,19 @@ export default function RootLayout({
 			lang="en"
 			suppressHydrationWarning
 		>
-			<ThemeProvider
-				attribute="class"
-				defaultTheme="system"
-				disableTransitionOnChange
-				enableSystem
-			>
-				<body>{children}</body>
-			</ThemeProvider>
+			<head>
+				<meta content="Briom" name="apple-mobile-web-app-title" />
+			</head>
+			<body>
+				<ThemeProvider
+					attribute="class"
+					defaultTheme="system"
+					disableTransitionOnChange
+					enableSystem
+				>
+					{children}
+				</ThemeProvider>
+			</body>
 		</html>
 	);
 }
