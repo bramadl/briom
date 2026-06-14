@@ -186,7 +186,7 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 overscroll-y-none;
   }
   html, body {
     @apply h-full bg-background text-foreground;
@@ -199,6 +199,6 @@
     @apply font-sans;
   }
   main {
-    @apply relative w-full min-h-svh flex flex-col after:fixed after:w-full after:min-h-svh after:inset-0 after:bg-[radial-gradient(ellipse_80%_50%_at_50%_-10%,rgba(201,162,75,0.06),transparent_60%),repeating-radial-gradient(circle_at_0_0,rgba(255,255,255,0.012)_0,rgba(255,255,255,0.012)_1px,transparent_1px,transparent_3px)];
+    @apply relative w-full min-h-svh flex flex-col;
   }
 }
