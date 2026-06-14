@@ -34,7 +34,7 @@ export function RoomSidebar({
 			{...props}
 		>
 			<Sidebar
-				className="w-[calc(var(--sidebar-width-icon))]! border-r bg-transparent"
+				className="w-[calc(var(--sidebar-width-icon))]! md:border-r bg-transparent"
 				collapsible="none"
 			>
 				<SidebarHeader className="h-14 border-b">
@@ -43,7 +43,7 @@ export function RoomSidebar({
 							<SidebarMenuItem>
 								<SidebarMenuButton
 									asChild
-									className="relative md:p-0 md:h-8 transition-opacity group/trigger mt-1"
+									className="relative md:p-0 h-8 transition-opacity group/trigger mt-1"
 									size="lg"
 								>
 									<TooltipTrigger asChild>
@@ -56,7 +56,7 @@ export function RoomSidebar({
 										</div>
 									</TooltipTrigger>
 								</SidebarMenuButton>
-								<TooltipContent side="right">
+								<TooltipContent className="hidden md:block" side="right">
 									<p>{open ? "Collapse" : "Expand"} Sidebar</p>
 									<KbdGroup>
 										<Kbd>⌘</Kbd>
