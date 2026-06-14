@@ -1,6 +1,12 @@
 import { briom } from "@briom";
 import { NextResponse } from "next/server";
 
+export async function GET() {
+	const result = await briom.getRooms({} as never);
+
+	return NextResponse.json(result.value());
+}
+
 export async function POST(request: Request) {
 	const body = await request.json();
 

@@ -5,6 +5,12 @@ import {
 	CreateRoomCommand,
 	type CreateRoomHandler,
 	type CreateRoomInput,
+	type GetRoomHandler,
+	type GetRoomInput,
+	GetRoomQuery,
+	type GetRoomsHandler,
+	type GetRoomsInput,
+	GetRoomsQuery,
 	InviteParticipantCommand,
 	type InviteParticipantHandler,
 	type InviteParticipantInput,
@@ -16,6 +22,8 @@ import {
 export interface BriomDeps {
 	addUserMessage: AddUserMessageHandler;
 	createRoom: CreateRoomHandler;
+	getRoom: GetRoomHandler;
+	getRooms: GetRoomsHandler;
 	inviteParticipant: InviteParticipantHandler;
 	requestParticipantResponse: RequestParticipantResponseHandler;
 }
@@ -29,6 +37,13 @@ export class Briom {
 
 	public createRoom(input: CreateRoomInput) {
 		return this.deps.createRoom.execute(new CreateRoomCommand(input));
+	}
+
+	public getRoom(input: GetRoomInput) {
+		return this.deps.getRoom.execute(new GetRoomQuery(input));
+	}
+	public getRooms(input: GetRoomsInput) {
+		return this.deps.getRooms.execute(new GetRoomsQuery(input));
 	}
 
 	public inviteParticipant(input: InviteParticipantInput) {

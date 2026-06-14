@@ -1,6 +1,8 @@
 import {
 	AddUserMessageHandler,
 	CreateRoomHandler,
+	GetRoomHandler,
+	GetRoomsHandler,
 	InviteParticipantHandler,
 	RequestParticipantResponseHandler,
 } from "@briom/app";
@@ -33,5 +35,11 @@ export const applicationSlice = (container: ReturnType<typeof domainSlice>) => {
 				r["Repository:Participant"],
 				r["Repository:Turn"],
 			);
+		})
+		.add("Query:GetRooms", (r) => {
+			return new GetRoomsHandler(r["Client:Database"]);
+		})
+		.add("Query:GetRoom", (r) => {
+			return new GetRoomHandler(r["Client:Database"]);
 		});
 };
