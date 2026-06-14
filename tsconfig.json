@@ -21,6 +21,7 @@
 		"paths": {
 			// Shadcn
 			"@briom/*": ["./src/*"],
+			"@briom/animated/*": ["./src/components/animated/*"],
 			"@briom/components/*": ["./src/components/*"],
 			"@briom/ui/*": ["./src/components/ui/*"],
 			"@briom/libs/*": ["./src/libs/*"],

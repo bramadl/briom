@@ -1,4 +1,5 @@
 import { ThemeProvider } from "@briom/components/theme-provider";
+import { TooltipProvider } from "@briom/components/ui/tooltip";
 import type { Metadata } from "next";
 import { Fraunces, Geist, Space_Mono } from "next/font/google";
 
@@ -47,7 +48,7 @@ export default function RootLayout({
 					disableTransitionOnChange
 					enableSystem
 				>
-					<main>{children}</main>
+					<TooltipProvider>{children}</TooltipProvider>
 				</ThemeProvider>
 			</body>
 		</html>
