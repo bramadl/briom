@@ -1,9 +1,10 @@
 export const INTENT = {
-	RESPOND: "respond",
-	CRITIQUE: "critique",
-	SUMMARIZE: "summarize",
 	CHALLENGE: "challenge",
+	CRITIQUE: "critique",
+	DIRECT: "direct",
 	EXPAND: "expand",
+	RESPOND: "respond",
+	SUMMARIZE: "summarize",
 } as const;
 
 export type Intent = (typeof INTENT)[keyof typeof INTENT];
