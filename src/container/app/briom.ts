@@ -14,6 +14,9 @@ import {
 	InviteParticipantCommand,
 	type InviteParticipantHandler,
 	type InviteParticipantInput,
+	RenameRoomCommand,
+	type RenameRoomHandler,
+	type RenameRoomInput,
 	RequestParticipantResponseCommand,
 	type RequestParticipantResponseHandler,
 	type RequestParticipantResponseInput,
@@ -25,6 +28,7 @@ export interface BriomDeps {
 	getRoom: GetRoomHandler;
 	getRooms: GetRoomsHandler;
 	inviteParticipant: InviteParticipantHandler;
+	renameRoom: RenameRoomHandler;
 	requestParticipantResponse: RequestParticipantResponseHandler;
 }
 
@@ -50,6 +54,10 @@ export class Briom {
 		return this.deps.inviteParticipant.execute(
 			new InviteParticipantCommand(input),
 		);
+	}
+
+	public renameRoom(input: RenameRoomInput) {
+		return this.deps.renameRoom.execute(new RenameRoomCommand(input));
 	}
 
 	public requestParticipantResponse(input: RequestParticipantResponseInput) {

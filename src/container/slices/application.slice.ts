@@ -4,6 +4,7 @@ import {
 	GetRoomHandler,
 	GetRoomsHandler,
 	InviteParticipantHandler,
+	RenameRoomHandler,
 	RequestParticipantResponseHandler,
 } from "@briom/app";
 
@@ -28,6 +29,10 @@ export const applicationSlice = (container: ReturnType<typeof domainSlice>) => {
 				r["QueryService:TurnSequencer"],
 			);
 		})
+		.add(
+			"Command:RenameRoom",
+			(r) => new RenameRoomHandler(r["Repository:Room"]),
+		)
 		.add("Command:RequestParticipantResponse", (r) => {
 			return new RequestParticipantResponseHandler(
 				r["Service:Orchestrator"],

@@ -19,6 +19,7 @@ const container = pipe(
 			getRoom: r["Query:GetRoom"],
 			getRooms: r["Query:GetRooms"],
 			inviteParticipant: r["Command:InviteParticipant"],
+			renameRoom: r["Command:RenameRoom"],
 			requestParticipantResponse: r["Command:RequestParticipantResponse"],
 		});
 	})

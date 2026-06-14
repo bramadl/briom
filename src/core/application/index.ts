@@ -4,6 +4,8 @@ export * from "./commands/create-room/command";
 export * from "./commands/create-room/command.handler";
 export * from "./commands/invite-participant/command";
 export * from "./commands/invite-participant/command.handler";
+export * from "./commands/rename-room/command";
+export * from "./commands/rename-room/command.handler";
 export * from "./commands/request-participant-response/command";
 export * from "./commands/request-participant-response/command.handler";
 export * from "./queries/get-room/query";
