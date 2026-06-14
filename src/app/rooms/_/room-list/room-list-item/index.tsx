@@ -8,8 +8,13 @@ import {
 import { Separator } from "@briom/components/ui/separator";
 import type { RoomSummaryDTO } from "@briom/core/application";
 import { cn } from "@briom/libs/utils";
+import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import {
+	activityIndicatorColorMap,
+	getActivityStatus,
+} from "./activity-indicator";
 
 interface RoomListItemProps {
 	room: RoomSummaryDTO;
@@ -17,6 +22,36 @@ interface RoomListItemProps {
 
 export function RoomListItem({ room }: RoomListItemProps) {
 	const { roomId } = useParams();
+
+	const lastActivity = {
+		status: getActivityStatus(Date.toString()),
+		turn: {
+			model: "Gemma",
+			getMessage: () => {
+				const message =
+					"This is a vital distinction that brings a lot of clarity to the conversation. You are essentially separating the conceptual problem-solving from the technical implementation.";
+
+				if (message.length > 120) {
+					return `${message.slice(0, 120)}...`;
+				}
+
+				return message;
+			},
+		},
+	};
+
+	function getSummary() {
+		// When no Summary yet:
+		//   - show last 3 turns mini preview
+		//   - like “conversation smell”
+		return (
+			<>
+				<strong>AI Summary</strong>: <br /> “Exploring architectural tradeoffs
+				between DDD and MVP speed”
+			</>
+		);
+	}
+
 	return (
 		<HoverCard>
 			<HoverCardTrigger asChild>
@@ -35,29 +70,29 @@ export function RoomListItem({ room }: RoomListItemProps) {
 						<h2 className="font-serif text-base font-bold line-clamp-1">
 							{room.title}
 						</h2>
-						{/* 1d ago, 3mo ago, 1y ago💀 – kata GPT, kita gak "peduli tanggal dibuat, tapi tanggal terakhir 'bermain'" */}
 						<p className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
-							2h ago
+							{formatDistanceToNowStrict(parseISO(room.createdAt), {
+								addSuffix: true,
+							})}
 						</p>
 					</div>
 					<Separator />
-					{/* last activity snippet */}
 					<div className="flex flex-col gap-1">
-						<span className="font-medium font-mono text-sm">Gemma:</span>
+						<span className="font-medium font-mono text-sm">
+							{lastActivity.turn.model}:
+						</span>
 						<span className="line-clamp-2 text-muted-foreground text-xs">
-							This is a vital distinction that brings a lot of clarity to the
-							conversation. You are essentially separating the conceptual
-							problem-solving from the technical implementation.
+							{lastActivity.turn.getMessage()}
 						</span>
 					</div>
 					<Separator />
 					<div className="flex items-center justify-between gap-4">
-						{/*
-              green = active (last 10 min)
-              yellow = stale (1 day)
-              gray = dead
-            */}
-						<div className="size-3 bg-green-950 rounded-lg" />
+						<div
+							className={cn(
+								"size-3 rounded-lg",
+								activityIndicatorColorMap[lastActivity.status],
+							)}
+						/>
 						<div className="flex items-center gap-1 mx-1">
 							<span className="size-5 text-[10px] bg-blue-600 rounded-full flex items-center justify-center -mx-1">
 								G
@@ -73,13 +108,7 @@ export function RoomListItem({ room }: RoomListItemProps) {
 				</div>
 			</HoverCardTrigger>
 			<HoverCardContent align="center" side="right">
-				<strong>AI Summary</strong>: <br />
-				“Exploring architectural tradeoffs between DDD and MVP speed”
-				{/*
-          When no Summary yet:
-          - show last 3 turns mini preview
-          - like “conversation smell”
-        */}
+				{getSummary()}
 			</HoverCardContent>
 		</HoverCard>
 	);

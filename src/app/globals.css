@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@plugin "@tailwindcss/typography";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -71,6 +72,12 @@
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
   --color-destructive-foreground: var(--destructive-foreground);
+  /* custom theme */
+  --color-terracotta: var(--terracotta);
+  --color-dusty-blue: var(--dusty-blue);
+  --color-sage: var(--sage);
+  --color-muted-lavender: var(--muted-lavender);
+  --color-warm-sienna: var(--warm-sienna);
 }
 
 :root {
@@ -92,11 +99,11 @@
   --border: oklch(0.9128 0 0);
   --input: oklch(0.9128 0 0);
   --ring: oklch(0.7495 0.0880 80.2639);
-  --chart-1: oklch(0.7495 0.0880 80.2639);
-  --chart-2: oklch(0.6500 0.0749 82.1507);
-  --chart-3: oklch(0.5453 0.0612 82.2820);
-  --chart-4: oklch(0.4343 0.0462 84.0623);
-  --chart-5: oklch(0.3142 0.0296 81.5961);
+  --chart-1: #c4714a;
+  --chart-2: #5b8ab0;
+  --chart-3: #5a9e78;
+  --chart-4: #8b6db0;
+  --chart-5: #b07a5a;
   --radius: 0.5rem;
   --sidebar: oklch(1.0000 0 0);
   --sidebar-foreground: oklch(0.2138 0.0042 84.5889);
@@ -127,6 +134,12 @@
   --shadow-xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
   --shadow-2xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.13);
   --tracking-normal: 0.02em;
+  /* custom theme */
+  --terracotta: #c4714a;
+  --dusty-blue: #5b8ab0;
+  --sage: #5a9e78;
+  --muted-lavender: #8b6db0;
+  --warm-sienna: #b07a5a;
 }
 
 .dark {
@@ -200,5 +213,8 @@
   }
   main {
     @apply relative w-full min-h-svh flex flex-col;
+  }
+  button, [role="button"] {
+    cursor: pointer;
   }
 }

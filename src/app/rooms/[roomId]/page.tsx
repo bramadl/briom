@@ -1,18 +1,29 @@
-export default async function RoomPage({
-	params,
-}: PageProps<"/rooms/[roomId]">) {
+import { briom } from "@briom";
+import { notFound } from "next/navigation";
+
+import { RoomConversation } from "./_/room-conversation";
+import { RoomHeader } from "./_/room-header";
+import { RoomPanel } from "./_/room-panel";
+
+interface RoomPageProps {
+	params: Promise<{ roomId: string }>;
+}
+
+export default async function RoomPage({ params }: RoomPageProps) {
 	const { roomId } = await params;
+	const result = await briom.getRoom({ roomId });
+
+	const { room } = result.value();
+	if (result.isError() || !room) return notFound();
 
 	return (
-		<div className="flex flex-col gap-4">
-			Room Page :: {roomId}
-			<div className="flex flex-col gap-4">
-				{Array.from({ length: 24 }).map((_, index) => (
-					<div
-						className="aspect-video h-12 w-full rounded-lg bg-muted/50"
-						key={index.toString()}
-					/>
-				))}
+		<div className="flex flex-col h-full">
+			<div className="flex flex-col overflow-hidden">
+				<RoomHeader title={room.title} />
+				<div className="flex flex-1 overflow-hidden">
+					<RoomConversation initialRoom={room} />
+					<RoomPanel room={room} />
+				</div>
 			</div>
 		</div>
 	);
