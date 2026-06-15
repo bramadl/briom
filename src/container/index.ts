@@ -7,23 +7,23 @@ import { domainSlice } from "./slices/domain.slice";
 import { infrastructureSlice } from "./slices/infrastructure.slice";
 
 const container = pipe(
-	ContainerBuilder.create(),
-	infrastructureSlice,
-	domainSlice,
-	applicationSlice,
+  ContainerBuilder.create(),
+  infrastructureSlice,
+  domainSlice,
+  applicationSlice,
 )
-	.add("briom", (r) => {
-		return new Briom({
-			addUserMessage: r["Command:AddUserMessage"],
-			createRoom: r["Command:CreateRoom"],
-			getRoom: r["Query:GetRoom"],
-			getRooms: r["Query:GetRooms"],
-			inviteParticipant: r["Command:InviteParticipant"],
-			renameRoom: r["Command:RenameRoom"],
-			requestParticipantResponse: r["Command:RequestParticipantResponse"],
-		});
-	})
-	.build();
+  .add("briom", (r) => {
+    return new Briom({
+      addUserMessage: r["Command:AddUserMessage"],
+      createRoom: r["Command:CreateRoom"],
+      getRoom: r["Query:GetRoom"],
+      getRooms: r["Query:GetRooms"],
+      inviteParticipant: r["Command:InviteParticipant"],
+      renameRoom: r["Command:RenameRoom"],
+      streamParticipantResponse: r["Command:StreamParticipantResponse"],
+    });
+  })
+  .build();
 
 export const briom = container.briom;
 export type briomClient = typeof briom;
