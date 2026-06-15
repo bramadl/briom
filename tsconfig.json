@@ -29,6 +29,7 @@
 
 			// Client
 			"@briom": ["./src/container"],
+			"@briom/api/*": ["./src/app/api/*"],
 
 			// Core
 			"@briom/app": ["./src/core/application"],
