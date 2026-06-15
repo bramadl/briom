@@ -21,6 +21,7 @@ export function ExpandableContent({
   className,
 }: ExpandableContentProps) {
   const ref = useRef<HTMLDivElement>(null);
+  // Gunakan defaultCollapsed hanya sebagai INITIAL state
   const [expanded, setExpanded] = useState(!defaultCollapsed);
   const [fullHeight, setFullHeight] = useState<number | null>(null);
 
@@ -29,7 +30,12 @@ export function ExpandableContent({
     setFullHeight(ref.current.scrollHeight);
   };
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: Run before paint so ot never flashes unclamped content.
+  // Efek biar kalau ada chat baru masuk (isLatestTurn berubah), komponennya auto terbuka
+  useEffect(() => {
+    setExpanded(!defaultCollapsed);
+  }, [defaultCollapsed]);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: Run before paint so it never flashes unclamped content.
   useLayoutEffect(() => {
     measure();
   }, [children]);
@@ -45,9 +51,10 @@ export function ExpandableContent({
   const overflowing = fullHeight !== null && fullHeight > collapsedHeight + 1;
   const showFade = overflowing && !expanded;
 
+  // LOGIKA BARU: Jika tidak expanded dan kontennya overflowing, paksa potong ke collapsedHeight!
   const maxHeight = expanded
     ? (fullHeight ?? undefined)
-    : (overflowing || fullHeight === null) && defaultCollapsed
+    : overflowing
       ? collapsedHeight
       : undefined;
 
@@ -70,7 +77,7 @@ export function ExpandableContent({
         {children}
       </div>
 
-      {(overflowing || (fullHeight === null && defaultCollapsed)) && (
+      {overflowing && (
         <button
           className="mt-1.5 flex items-center gap-1 text-[11px] font-mono uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
           onClick={() => setExpanded((v) => !v)}
