@@ -1,10 +1,13 @@
 "use client";
 
+import { addUserMessage, getRoom, } from "@briom/api/rooms/actions";
 import type { RoomDTO } from "@briom/app/queries/get-room/query.dto";
+import { toast } from "sonner";
 import { useState } from "react";
 
 import { ConversationInput } from "./conversation-input";
 import { ConversationTimeline } from "./conversation-timeline";
+import { useStream } from "./use-stream";
 
 interface RoomConversationProps {
   initialRoom: RoomDTO;
@@ -12,49 +15,49 @@ interface RoomConversationProps {
 
 export function RoomConversation({ initialRoom }: RoomConversationProps) {
   const [room, setRoom] = useState(initialRoom);
-  const [generating, setGenerating] = useState(false);
+
+  const { streaming, streamingContent, streamingParticipantId, generate } =
+    useStream({
+      onError: (message) => {
+        toast.error(message, {
+          description: "The response wasn't saved — try again.",
+        });
+      },
+      onTurnComplete: async () => void await refreshRoom(),
+      roomId: room.id,
+    });
 
   async function refreshRoom() {
-    const res = await fetch(`/api/rooms/${room.id}`);
-    if (res.ok) {
-      const data = await res.json();
-      setRoom(data.room);
-    }
+    const updated = await getRoom(room.id);
+    if (updated.room) setRoom(updated.room);
   }
 
   async function handleUserMessage(content: string) {
-    await fetch(`/api/rooms/${room.id}/turns`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content }),
-    });
+    await addUserMessage(room.id, content);
     await refreshRoom();
   }
 
   async function handleSuggestion(participantId: string, intent: string) {
-    setGenerating(true);
-    try {
-      await fetch(`/api/rooms/${room.id}/turns/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ participantId, intent }),
-      });
-      await refreshRoom();
-    } finally {
-      setGenerating(false);
-    }
+    await generate(participantId, intent);
   }
 
   return (
-    <div className="flex flex-1 flex-col min-w-0">
+    <div className="flex flex-1 flex-col min-w-0 min-h-0">
       <ConversationTimeline
-        generating={generating}
+        generating={streaming}
         onSuggestionSelected={handleSuggestion}
         participants={room.participants}
+        streamingContent={streamingContent}
+        streamingParticipantId={streamingParticipantId}
         turns={room.turns}
       />
       <div className="sticky bottom-0 inset-x-0 p-4 md:p-8 pt-0!">
-        <ConversationInput disabled={generating} onSend={handleUserMessage} />
+        <ConversationInput
+          participants={room.participants}
+          disabled={streaming}
+          isStreaming={streaming}
+          onSend={handleUserMessage}
+        />
       </div>
     </div>
   );
