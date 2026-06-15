@@ -6,6 +6,9 @@
       "dependencies": {
         "@bprogress/next": "^3.2.12",
         "@gsap/react": "^2.1.2",
+        "@lexical/code": "^0.45.0",
+        "@lexical/list": "^0.45.0",
+        "@lexical/markdown": "^0.45.0",
         "@lexical/react": "^0.45.0",
         "@openrouter/sdk": "^0.12.79",
         "@wrksz/themes": "^0.9.3",
@@ -273,7 +276,11 @@
 
     "@lexical/clipboard": ["@lexical/clipboard@0.45.0", "", { "dependencies": { "@lexical/extension": "0.45.0", "@lexical/html": "0.45.0", "@lexical/internal": "0.45.0", "@lexical/list": "0.45.0", "@lexical/selection": "0.45.0", "@lexical/utils": "0.45.0", "@types/trusted-types": "^2.0.7", "lexical": "0.45.0" } }, "sha512-9oDu2SNj/EZGjpXJTruz74Ls3VzF2Q41v1QB7JnTq5lh24byvIOdgEpOFHtr/7WVHssfXCbMtgFb5tW8rMaZ2g=="],
 
+    "@lexical/code": ["@lexical/code@0.45.0", "", { "dependencies": { "@lexical/code-core": "0.45.0", "@lexical/code-prism": "0.45.0", "@lexical/extension": "0.45.0", "lexical": "0.45.0" } }, "sha512-vtD5IKbJvgIxhKIl96pWKqjlqialzg/WbWNUNbeoyuf9ht0/MQ6WFdEdCNnnXqx4rj7CTzafB3c0jup7h96b6A=="],
+
     "@lexical/code-core": ["@lexical/code-core@0.45.0", "", { "dependencies": { "@lexical/extension": "0.45.0", "@lexical/html": "0.45.0", "@lexical/internal": "0.45.0", "lexical": "0.45.0" } }, "sha512-zU3noYmfluSK38r0eBz3gHKzsgOksf9eHqoPIwXH6HovKCDo848HoW0i/hCRzRo9oPqydKikx0LIKUvWSaSNIw=="],
+
+    "@lexical/code-prism": ["@lexical/code-prism@0.45.0", "", { "dependencies": { "@lexical/code-core": "0.45.0", "@lexical/extension": "0.45.0", "lexical": "0.45.0", "prismjs": "^1.30.0" } }, "sha512-eevIcapWzWk4Kb2WE6mmMjTXjf+Mfn4pLXAJ92BkRO6gc5RPkYgpn7zsYTzSBWEM/GptKf7ta+XouLcnLXNOSQ=="],
 
     "@lexical/devtools-core": ["@lexical/devtools-core@0.45.0", "", { "dependencies": { "@lexical/html": "0.45.0", "@lexical/link": "0.45.0", "@lexical/mark": "0.45.0", "@lexical/table": "0.45.0", "@lexical/utils": "0.45.0", "lexical": "0.45.0" }, "peerDependencies": { "react": ">=17.x", "react-dom": ">=17.x" } }, "sha512-XiVedKif5nWbNj2CeNy30kokfk/iYb7Db+B1Z18bnr/uzp6IzkxpX6I4GeZu4HVbQJhGMCAdq19tFpYwXOx4sw=="],
 
@@ -1108,6 +1115,8 @@
     "powershell-utils": ["powershell-utils@0.1.0", "", {}, "sha512-dM0jVuXJPsDN6DvRpea484tCUaMiXWjuCn++HGTqUWzGDjv5tZkEZldAJ/UMlqRYGFrD/etByo4/xOuC/snX2A=="],
 
     "pretty-ms": ["pretty-ms@9.3.0", "", { "dependencies": { "parse-ms": "^4.0.0" } }, "sha512-gjVS5hOP+M3wMm5nmNOucbIrqudzs9v/57bWRHQWLYklXqoXKrVfYW2W9+glfGsqtPgpiz5WwyEEB+ksXIx3gQ=="],
+
+    "prismjs": ["prismjs@1.30.0", "", {}, "sha512-DEvV2ZF2r2/63V+tK8hQvrR2ZGn10srHbXviTlcv7Kpzw8jWiNTqbVgjO3IY8RxrrOUF8VPMQQFysYYYv0YZxw=="],
 
     "prompts": ["prompts@2.4.2", "", { "dependencies": { "kleur": "^3.0.3", "sisteransi": "^1.0.5" } }, "sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q=="],
 

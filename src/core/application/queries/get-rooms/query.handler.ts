@@ -1,7 +1,11 @@
 import { type IQuery, type IResult, Result } from "@briom/drimion";
 import type { Database } from "@briom/drizzle/client";
-import { participantsTable, turnsTable } from "@briom/drizzle/schema";
-import { eq, sql } from "drizzle-orm";
+import {
+	participantsTable,
+	roomsTable,
+	turnsTable,
+} from "@briom/drizzle/schema";
+import { countDistinct, desc, eq } from "drizzle-orm";
 
 import type { GetRoomsErrors, GetRoomsOutput, GetRoomsQuery } from "./query";
 import type { RoomSummaryDTO } from "./query.dto";
@@ -14,31 +18,28 @@ export class GetRoomsHandler
 	public async execute(
 		_: GetRoomsQuery,
 	): Promise<IResult<GetRoomsOutput, GetRoomsErrors>> {
-		const rooms = await this.db.query.roomsTable.findMany();
+		const rows = await this.db
+			.select({
+				id: roomsTable.id,
+				title: roomsTable.title,
+				createdAt: roomsTable.createdAt,
+				participantCount: countDistinct(participantsTable.id),
+				turnCount: countDistinct(turnsTable.id),
+			})
+			.from(roomsTable)
+			.leftJoin(participantsTable, eq(participantsTable.roomId, roomsTable.id))
+			.leftJoin(turnsTable, eq(turnsTable.roomId, roomsTable.id))
+			.groupBy(roomsTable.id)
+			.orderBy(desc(roomsTable.createdAt));
 
-		const summaries: RoomSummaryDTO[] = await Promise.all(
-			rooms.map(async (room) => {
-				const [participantCount, turnCount] = await Promise.all([
-					this.db
-						.select({ count: sql<number>`count(*)` })
-						.from(participantsTable)
-						.where(eq(participantsTable.roomId, room.id)),
-					this.db
-						.select({ count: sql<number>`count(*)` })
-						.from(turnsTable)
-						.where(eq(turnsTable.roomId, room.id)),
-				]);
+		const summaries: RoomSummaryDTO[] = rows.map((row) => ({
+			id: row.id,
+			title: row.title,
+			createdAt: row.createdAt.toISOString(),
+			participantCount: row.participantCount,
+			turnCount: row.turnCount,
+		}));
 
-				return {
-					id: room.id,
-					title: room.title,
-					createdAt: room.createdAt.toISOString(),
-					participantCount: Number(participantCount[0]?.count ?? 0),
-					turnCount: Number(turnCount[0]?.count ?? 0),
-				};
-			}),
-		);
-
-		return Result.success({ rooms: summaries });
+		return Result.success(summaries);
 	}
 }

@@ -1,4 +1,4 @@
-import type { Participant, RoomNotFoundError } from "@briom/domain";
+import type { RoomNotFoundError } from "@briom/domain";
 import type { DomainError } from "@briom/drimion";
 
 export type InviteParticipantInput = {
@@ -9,7 +9,9 @@ export type InviteParticipantInput = {
 };
 
 export type InviteParticipantErrors = RoomNotFoundError | DomainError;
-export type InviteParticipantOutput = Participant;
+export type InviteParticipantOutput = {
+	participantId: string;
+};
 
 export class InviteParticipantCommand {
 	constructor(public readonly input: InviteParticipantInput) {}

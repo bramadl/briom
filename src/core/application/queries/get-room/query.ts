@@ -8,9 +8,7 @@ export type GetRoomInput = {
 };
 
 export type GetRoomErrors = RoomNotFoundError | DomainError;
-export type GetRoomOutput = {
-	room: RoomDTO | null;
-};
+export type GetRoomOutput = RoomDTO;
 
 export class GetRoomQuery {
 	constructor(public readonly input: GetRoomInput) {}

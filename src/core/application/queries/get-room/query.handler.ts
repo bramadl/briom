@@ -25,9 +25,10 @@ export class GetRoomHandler
 		if (!room) return Result.error(new RoomNotFoundError(input.roomId));
 
 		const [participants, turns] = await Promise.all([
-			this.db.query.participantsTable.findMany({
-				where: eq(participantsTable.roomId, input.roomId),
-			}),
+			this.db
+				.select()
+				.from(participantsTable)
+				.where(eq(participantsTable.roomId, input.roomId)),
 			this.db
 				.select()
 				.from(turnsTable)
@@ -36,26 +37,24 @@ export class GetRoomHandler
 		]);
 
 		return Result.success({
-			room: {
-				id: room.id,
-				title: room.title,
-				createdAt: room.createdAt.toISOString(),
-				participants: participants.map((p) => ({
-					id: p.id,
-					displayName: p.displayName,
-					provider: p.provider,
-					model: p.model,
-				})),
-				turns: turns.map((t) => ({
-					id: t.id,
-					sequenceNumber: t.sequenceNumber,
-					role: t.authorType,
-					participantId: t.participantId,
-					intent: t.intent,
-					content: t.content,
-					createdAt: t.createdAt.toISOString(),
-				})),
-			},
+			id: room.id,
+			title: room.title,
+			createdAt: room.createdAt.toISOString(),
+			participants: participants.map((p) => ({
+				id: p.id,
+				displayName: p.displayName,
+				provider: p.provider,
+				model: p.model,
+			})),
+			turns: turns.map((t) => ({
+				id: t.id,
+				sequenceNumber: t.sequenceNumber,
+				role: t.authorType,
+				participantId: t.participantId,
+				intent: t.intent,
+				content: t.content,
+				createdAt: t.createdAt.toISOString(),
+			})),
 		});
 	}
 }

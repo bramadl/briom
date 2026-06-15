@@ -49,4 +49,12 @@ export const SDKError = {
 
 		throw new Error(`OpenRouter API Error: ${error.error.message}`);
 	},
+
+	throwError(error: unknown): never {
+		if (this.isSDKError(error)) this.processThenThrow(error);
+		console.error("[OpenRouter] Stream Error :: ", error);
+		throw new Error(
+			error instanceof Error ? error.message : "Internal provider error",
+		);
+	},
 };

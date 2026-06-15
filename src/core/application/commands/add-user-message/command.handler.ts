@@ -51,6 +51,6 @@ export class AddUserMessageHandler
 		const turn = turnResult.value();
 		await this.turnRepository.save(turn);
 
-		return Result.success(turn);
+		return Result.success({ turnId: turn.id.value() });
 	}
 }

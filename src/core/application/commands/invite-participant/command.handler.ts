@@ -54,6 +54,6 @@ export class InviteParticipantHandler
 		const participant = participantResult.value();
 		await this.participantRepository.save(participant);
 
-		return Result.success(participant);
+		return Result.success({ participantId: participant.id.value() });
 	}
 }

@@ -33,11 +33,7 @@ export class OpenRouterLlmGateway implements LlmGateway {
 				},
 			});
 		} catch (error) {
-			if (SDKError.isSDKError(error)) SDKError.processThenThrow(error);
-			console.error("[OpenRouter] Stream Error :: ", error);
-			throw new Error(
-				error instanceof Error ? error.message : "Internal provider error",
-			);
+			throw SDKError.throwError(error);
 		}
 	}
 }

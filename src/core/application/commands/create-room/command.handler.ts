@@ -26,6 +26,6 @@ export class CreateRoomHandler
 		const room = roomResult.value();
 		await this.roomRepository.save(room);
 
-		return Result.success(room);
+		return Result.success({ roomId: room.id.value() });
 	}
 }

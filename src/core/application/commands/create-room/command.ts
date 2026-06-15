@@ -1,4 +1,3 @@
-import type { Room } from "@briom/domain";
 import type { DomainError } from "@briom/drimion";
 
 export type CreateRoomInput = {
@@ -6,7 +5,9 @@ export type CreateRoomInput = {
 };
 
 export type CreateRoomErrors = DomainError;
-export type CreateRoomOutput = Room;
+export type CreateRoomOutput = {
+	roomId: string;
+};
 
 export class CreateRoomCommand {
 	constructor(public readonly input: CreateRoomInput) {}
