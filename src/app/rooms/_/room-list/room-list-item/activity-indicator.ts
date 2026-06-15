@@ -3,7 +3,7 @@ import { differenceInMinutes, parseISO } from "date-fns";
 export const activityIndicatorColorMap = {
 	ACTIVE: "bg-green-950",
 	STALE: "bg-yellow-950",
-	DEAD: "bg-olive-950",
+	DEAD: "bg-olive-600",
 };
 
 type ActivityStatus = keyof typeof activityIndicatorColorMap;
