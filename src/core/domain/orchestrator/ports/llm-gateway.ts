@@ -13,5 +13,5 @@ export interface Generation {
 }
 
 export interface LlmGateway {
-	generate(input: GenerateInput): Promise<Generation>;
+	stream(input: GenerateInput): Promise<ReadableStream<string>>;
 }

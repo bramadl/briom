@@ -1,3 +1,4 @@
+import { ProviderError } from "@briom/core/shared";
 import {
 	type Participant,
 	type ParticipantId,
@@ -13,7 +14,7 @@ import {
 } from "@briom/domain/turn";
 import { type DomainError, type IResult, Result } from "@briom/drimion";
 
-import type { LlmGateway } from "./ports";
+import type { GenerateInput, LlmGateway } from "./ports";
 import { Transcriptor } from "./transcriptor";
 
 export interface OrchestrateInput {
@@ -24,6 +25,11 @@ export interface OrchestrateInput {
 	turns: TurnType[];
 }
 
+export interface StreamResult {
+	persist: (content: string) => Promise<IResult<TurnType, DomainError>>;
+	stream: ReadableStream<string>;
+}
+
 export class Orchestrator {
 	private transcriptor = new Transcriptor();
 
@@ -32,15 +38,12 @@ export class Orchestrator {
 		private readonly sequencer: TurnSequencer,
 	) {}
 
-	public async orchestrate({
+	public buildPromptInput({
 		intent,
 		participants,
-		room,
-		targetParticipantId,
 		turns,
-	}: OrchestrateInput): Promise<
-		IResult<Turn, ParticipantNotFoundError | DomainError>
-	> {
+		targetParticipantId,
+	}: OrchestrateInput): IResult<GenerateInput, ParticipantNotFoundError> {
 		const participant = participants.find(
 			(p) => p.id.value() === targetParticipantId,
 		);
@@ -51,7 +54,7 @@ export class Orchestrator {
 			});
 		}
 
-		const generation = await this.llm.generate({
+		return Result.success({
 			qualifiedModel: participant.qualifiedModel,
 			systemPrompt: this.transcriptor.buildSystemPrompt({
 				currentParticipant: participant,
@@ -60,23 +63,49 @@ export class Orchestrator {
 			}),
 			messages: this.transcriptor.render({ participants, turns }),
 		});
+	}
 
-		const nextPosition = await this.sequencer.nextPositionFor(room.get("id"));
+	public async orchestrateStream(
+		input: OrchestrateInput,
+	): Promise<IResult<StreamResult, ParticipantNotFoundError | DomainError>> {
+		const promptResult = this.buildPromptInput(input);
+		if (promptResult.isError()) return Result.error(promptResult.error());
 
-		const turnResult = Turn.create({
-			id: TurnId(crypto.randomUUID()),
-			roomId: room.get("id"),
-			sequenceNumber: nextPosition,
-			author: {
-				type: "participant",
-				participantId: targetParticipantId,
-			},
-			intent,
-			content: generation.content,
-			createdAt: new Date(),
-		});
+		let stream: ReadableStream<string>;
+		try {
+			stream = await this.llm.stream(promptResult.value());
+		} catch (error) {
+			return Result.error(
+				new ProviderError(
+					error instanceof Error ? error.message : "Unknown provider error",
+					{ cause: error },
+				),
+			);
+		}
 
-		if (turnResult.isError()) return Result.error(turnResult.error());
-		return Result.success(turnResult.value());
+		const persist = async (
+			content: string,
+		): Promise<IResult<TurnType, DomainError>> => {
+			const nextPosition = await this.sequencer.nextPositionFor(
+				input.room.get("id"),
+			);
+
+			const turnResult = Turn.create({
+				id: TurnId(crypto.randomUUID()),
+				roomId: input.room.get("id"),
+				sequenceNumber: nextPosition,
+				author: {
+					type: "participant",
+					participantId: input.targetParticipantId,
+				},
+				intent: input.intent,
+				content,
+				createdAt: new Date(),
+			});
+
+			return turnResult;
+		};
+
+		return Result.success({ stream, persist });
 	}
 }

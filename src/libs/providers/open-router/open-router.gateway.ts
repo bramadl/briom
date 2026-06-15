@@ -1,8 +1,4 @@
-import type {
-	GenerateInput,
-	Generation,
-	LlmGateway,
-} from "@briom/domain/orchestrator";
+import type { GenerateInput, LlmGateway } from "@briom/domain/orchestrator";
 import type { OpenRouter } from "@openrouter/sdk";
 
 import { SDKError } from "./error.util";
@@ -10,10 +6,11 @@ import { SDKError } from "./error.util";
 export class OpenRouterLlmGateway implements LlmGateway {
 	public constructor(private readonly client: OpenRouter) {}
 
-	public async generate(input: GenerateInput): Promise<Generation> {
+	public async stream(input: GenerateInput): Promise<ReadableStream<string>> {
 		try {
-			const response = await this.client.chat.send({
+			const eventStream = await this.client.chat.send({
 				chatRequest: {
+					stream: true,
 					model: input.qualifiedModel,
 					messages: [
 						{ role: "system", content: input.systemPrompt },
@@ -22,15 +19,22 @@ export class OpenRouterLlmGateway implements LlmGateway {
 				},
 			});
 
-			const content = response.choices[0].message.content;
-			if (!content) {
-				throw new Error("OpenRouter returned empty content");
-			}
-
-			return { content };
+			return new ReadableStream<string>({
+				async start(controller) {
+					try {
+						for await (const chunk of eventStream) {
+							const delta = chunk.choices[0]?.delta?.content;
+							if (delta) controller.enqueue(delta);
+						}
+						controller.close();
+					} catch (err) {
+						controller.error(err);
+					}
+				},
+			});
 		} catch (error) {
 			if (SDKError.isSDKError(error)) SDKError.processThenThrow(error);
-			console.error("[OpenRouter] Unexpected Error :: ", error);
+			console.error("[OpenRouter] Stream Error :: ", error);
 			throw new Error(
 				error instanceof Error ? error.message : "Internal provider error",
 			);
