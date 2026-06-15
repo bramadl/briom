@@ -6,14 +6,14 @@ import { PrinciplesSection } from "./sections/principles.section";
 import { RoomPreviewSection } from "./sections/room-preview.section";
 
 export default function HomePage() {
-	return (
-		<main className="relative">
-			<Navigation />
-			<HeroSection />
-			<RoomPreviewSection />
-			<HowItWorksSection />
-			<PrinciplesSection />
-			<CtaSection />
-		</main>
-	);
+  return (
+    <main className="relative">
+      <Navigation />
+      <HeroSection />
+      <RoomPreviewSection />
+      <HowItWorksSection />
+      <PrinciplesSection />
+      <CtaSection />
+    </main>
+  );
 }
