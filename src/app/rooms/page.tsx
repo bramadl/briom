@@ -1,15 +1,8 @@
 import { Logo } from "@briom/components/logo";
-import { Button } from "@briom/components/ui/button";
-import { Plus } from "lucide-react";
 
-import { getAvailableModels } from "../api/rooms/actions";
-import { CreateRoomDialog } from "./_/create-room-dialog";
+import { RoomFormTrigger } from "./_/room-provider/create-room-form/room-form-trigger";
 
 export default async function RoomsPage() {
-	const result = await getAvailableModels();
-	if (!result.success) throw new Error(result.error.message);
-	const models = result.data;
-
 	return (
 		<div className="flex min-h-full flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
 			<Logo className="text-muted-foreground/40" size={36} />
@@ -27,12 +20,7 @@ export default async function RoomsPage() {
 				</p>
 			</div>
 
-			<CreateRoomDialog availableModels={models}>
-				<Button>
-					<Plus />
-					New room
-				</Button>
-			</CreateRoomDialog>
+			<RoomFormTrigger />
 		</div>
 	);
 }

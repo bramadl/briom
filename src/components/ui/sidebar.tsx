@@ -23,13 +23,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 import { Slot } from "radix-ui";
 import * as React from "react";
-
-const SIDEBAR_COOKIE_NAME = "sidebar_state";
-const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
-const SIDEBAR_WIDTH = "16rem";
-const SIDEBAR_WIDTH_MOBILE = "18rem";
-const SIDEBAR_WIDTH_ICON = "3rem";
-export const SIDEBAR_KEYBOARD_SHORTCUT = "/";
+import {
+	SIDEBAR_COOKIE_MAX_AGE,
+	SIDEBAR_COOKIE_NAME,
+	SIDEBAR_KEYBOARD_SHORTCUT,
+	SIDEBAR_WIDTH,
+	SIDEBAR_WIDTH_ICON,
+	SIDEBAR_WIDTH_MOBILE,
+} from "./sidebar.constants";
 
 type SidebarContextProps = {
 	state: "expanded" | "collapsed";
