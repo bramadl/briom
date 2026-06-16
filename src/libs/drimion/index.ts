@@ -27,6 +27,7 @@ export {
 	ContainerBuilder,
 	DomainClasses,
 	DomainError,
+	InfraError,
 	Result,
 	Utils,
 	UUID,
