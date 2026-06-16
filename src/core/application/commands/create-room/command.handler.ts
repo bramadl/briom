@@ -1,20 +1,21 @@
 import { Room, RoomId, type RoomRepository } from "@briom/domain";
-import { type ICommand, type IResult, Result } from "@briom/drimion";
+import {
+	type DomainError,
+	type ICommand,
+	type IResult,
+	Result,
+} from "@briom/drimion";
 
-import type {
-	CreateRoomCommand,
-	CreateRoomErrors,
-	CreateRoomOutput,
-} from "./command";
+import type { CreateRoomCommand, CreateRoomOutput } from "./command";
 
 export class CreateRoomHandler
-	implements ICommand<CreateRoomCommand, CreateRoomOutput, CreateRoomErrors>
+	implements ICommand<CreateRoomCommand, CreateRoomOutput, DomainError>
 {
 	public constructor(private readonly roomRepository: RoomRepository) {}
 
 	public async execute({
 		input,
-	}: CreateRoomCommand): Promise<IResult<CreateRoomOutput, CreateRoomErrors>> {
+	}: CreateRoomCommand): Promise<IResult<CreateRoomOutput, DomainError>> {
 		const roomResult = Room.create({
 			id: RoomId(crypto.randomUUID()),
 			title: input.title,

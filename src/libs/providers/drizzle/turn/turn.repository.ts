@@ -1,5 +1,10 @@
 import type { RoomId } from "@briom/domain/room";
-import type { Turn, TurnRepository } from "@briom/domain/turn";
+import type {
+	Turn,
+	TurnId,
+	TurnRepository,
+	TurnStatus,
+} from "@briom/domain/turn";
 import type { Database } from "@briom/drizzle/client";
 import { turnsTable } from "@briom/drizzle/schema";
 import { asc, eq } from "drizzle-orm";
@@ -26,7 +31,21 @@ export class DrizzleTurnRepository implements TurnRepository {
 			.values(record)
 			.onConflictDoUpdate({
 				target: turnsTable.id,
-				set: { content: record.content },
+				set: { content: record.content, status: record.status },
 			});
+	}
+
+	async updateStatus(
+		id: TurnId,
+		status: TurnStatus,
+		content?: string,
+	): Promise<void> {
+		await this.db
+			.update(turnsTable)
+			.set({
+				status,
+				...(content !== undefined ? { content } : {}),
+			})
+			.where(eq(turnsTable.id, id as string));
 	}
 }

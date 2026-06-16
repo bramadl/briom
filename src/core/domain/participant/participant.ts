@@ -5,8 +5,9 @@ import {
 } from "@briom/domain/ai";
 import type { RoomId } from "@briom/domain/room";
 import { Entity, validator as v } from "@briom/drimion";
-import { EmptyFieldError } from "@briom/shared/errors";
 
+import { EmptyDisplayNameError } from "./empty-display-name.error";
+import { EmptyModelError } from "./empty-model.error";
 import type { ParticipantId } from "./participant-id";
 
 interface ParticipantProps {
@@ -20,19 +21,10 @@ interface ParticipantProps {
 export class Participant extends Entity<ParticipantProps> {
 	public static isValidProps(
 		props: ParticipantProps,
-	): EmptyFieldError | undefined {
+	): EmptyModelError | EmptyDisplayNameError | undefined {
+		if (v.string(props.model).isEmpty()) return new EmptyModelError();
 		if (v.string(props.displayName).isEmpty()) {
-			return new EmptyFieldError({
-				context: Participant.name,
-				field: "displayName",
-			});
-		}
-
-		if (v.string(props.model).isEmpty()) {
-			return new EmptyFieldError({
-				context: Participant.name,
-				field: "model",
-			});
+			return new EmptyDisplayNameError();
 		}
 	}
 

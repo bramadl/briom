@@ -1,16 +1,13 @@
-CREATE SCHEMA IF NOT EXISTS "enums";
+CREATE SCHEMA "enums";
 
 --> statement-breakpoint
-CREATE SCHEMA IF NOT EXISTS "participants";
+CREATE SCHEMA "participants";
 
 --> statement-breakpoint
-CREATE SCHEMA IF NOT EXISTS "rooms";
+CREATE SCHEMA "rooms";
 
 --> statement-breakpoint
-CREATE SCHEMA IF NOT EXISTS "turns";
-
---> statement-breakpoint
-CREATE TYPE "enums"."ai_provider" AS ENUM ('openai', 'anthropic', 'google');
+CREATE SCHEMA "turns";
 
 --> statement-breakpoint
 CREATE TYPE "enums"."author_type" AS ENUM ('user', 'participant');
@@ -21,15 +18,19 @@ CREATE TYPE "enums"."intent" AS ENUM (
   'critique',
   'summarize',
   'challenge',
-  'expand'
+  'expand',
+  'direct'
 );
+
+--> statement-breakpoint
+CREATE TYPE "enums"."turn_status" AS ENUM ('pending', 'settled', 'failed');
 
 --> statement-breakpoint
 CREATE TABLE
   "participants"."participants" (
     "id" text PRIMARY KEY NOT NULL,
     "room_id" text NOT NULL,
-    "provider" "enums"."ai_provider" NOT NULL,
+    "provider" text NOT NULL,
     "model" text NOT NULL,
     "display_name" text NOT NULL
   );
@@ -51,7 +52,8 @@ CREATE TABLE
     "author_type" "enums"."author_type" NOT NULL,
     "participant_id" text,
     "intent" "enums"."intent",
-    "content" text NOT NULL,
+    "content" text DEFAULT '' NOT NULL,
+    "status" "enums"."turn_status" DEFAULT 'settled' NOT NULL,
     "created_at" timestamp DEFAULT now () NOT NULL,
     CONSTRAINT "turns_room_sequence_unique" UNIQUE ("room_id", "sequence_number")
   );

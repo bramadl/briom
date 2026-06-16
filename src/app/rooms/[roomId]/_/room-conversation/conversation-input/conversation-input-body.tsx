@@ -10,7 +10,7 @@ import { ListPlugin } from "@lexical/react/LexicalListPlugin";
 import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
-import { ArrowUp, LoaderCircle, OctagonX } from "lucide-react";
+import { ArrowUpIcon, LoaderCircleIcon, SquareIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 
 import { KeyboardPlugin } from "./keyboard-plugin";
@@ -119,11 +119,11 @@ export function ConversationInputBody({
 					size="icon"
 				>
 					{isStreaming ? (
-						<OctagonX className="fill-current" />
+						<SquareIcon />
 					) : sending ? (
-						<LoaderCircle className="animate-spin" />
+						<LoaderCircleIcon className="animate-spin" />
 					) : (
-						<ArrowUp />
+						<ArrowUpIcon />
 					)}
 				</Button>
 			</div>

@@ -1,7 +1,7 @@
 import { DomainError } from "@briom/drimion";
 
 export class RoomNotFoundError extends DomainError {
-	constructor(roomId: string) {
-		super(`Room ${roomId} not found`);
+	public constructor(roomId: string) {
+		super(`Room with id of "${roomId}" cannot be found`, { context: "Room" });
 	}
 }

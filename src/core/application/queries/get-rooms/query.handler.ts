@@ -7,17 +7,13 @@ import {
 } from "@briom/drizzle/schema";
 import { countDistinct, desc, eq } from "drizzle-orm";
 
-import type { GetRoomsErrors, GetRoomsOutput, GetRoomsQuery } from "./query";
+import type { GetRoomsOutput, GetRoomsQuery } from "./query";
 import type { RoomSummaryDTO } from "./query.dto";
 
-export class GetRoomsHandler
-	implements IQuery<GetRoomsQuery, GetRoomsOutput, GetRoomsErrors>
-{
+export class GetRoomsHandler implements IQuery<GetRoomsQuery, GetRoomsOutput> {
 	public constructor(private readonly db: Database) {}
 
-	public async execute(
-		_: GetRoomsQuery,
-	): Promise<IResult<GetRoomsOutput, GetRoomsErrors>> {
+	public async execute(_: GetRoomsQuery): Promise<IResult<GetRoomsOutput>> {
 		const rows = await this.db
 			.select({
 				id: roomsTable.id,

@@ -4,7 +4,7 @@ import type { EditorThemeClasses } from "lexical";
 export type SendHandler = (
 	content: string,
 	mentionedParticipantId?: string,
-) => Promise<void>;
+) => Promise<boolean>;
 
 export interface ConversationInputProps {
 	disabled?: boolean;

@@ -19,8 +19,6 @@
  * ```
  */
 export abstract class InfraError extends Error {
-	abstract readonly __KIND: string;
-
 	public readonly context?: string;
 
 	/**

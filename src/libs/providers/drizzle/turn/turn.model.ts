@@ -1,6 +1,6 @@
 import { index, integer, text, timestamp, unique } from "drizzle-orm/pg-core";
 
-import { authorTypeEnum, intentEnum } from "../meta/db-enums";
+import { authorTypeEnum, intentEnum, turnStatusEnum } from "../meta/db-enums";
 import { turnsSchema } from "../meta/db-schema";
 import { participantsTable } from "../participant/participant.model";
 import { roomsTable } from "../room/room.model";
@@ -19,7 +19,8 @@ export const turnsTable = turnsSchema.table(
 			{ onDelete: "set null" },
 		),
 		intent: intentEnum("intent"),
-		content: text("content").notNull(),
+		content: text("content").notNull().default(""),
+		status: turnStatusEnum("status").notNull().default("settled"),
 		createdAt: timestamp("created_at").defaultNow().notNull(),
 	},
 	(table) => [

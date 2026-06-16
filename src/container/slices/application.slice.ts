@@ -1,5 +1,4 @@
 import {
-	AddUserMessageHandler,
 	CreateRoomHandler,
 	DeleteRoomHandler,
 	GetAvailableModelsHandler,
@@ -7,7 +6,8 @@ import {
 	GetRoomsHandler,
 	InviteParticipantHandler,
 	RenameRoomHandler,
-	StreamParticipantResponseHandler,
+	SendMessageHandler,
+	StreamResponseHandler,
 } from "@briom/app";
 
 import type { domainSlice } from "./domain.slice";
@@ -35,9 +35,9 @@ export const applicationSlice = (container: ReturnType<typeof domainSlice>) => {
 				),
 		)
 		.add(
-			"Command:AddUserMessage",
+			"Command:SendMessage",
 			(r) =>
-				new AddUserMessageHandler(
+				new SendMessageHandler(
 					r["Repository:Room"],
 					r["Repository:Turn"],
 					r["QueryService:TurnSequencer"],
@@ -48,9 +48,9 @@ export const applicationSlice = (container: ReturnType<typeof domainSlice>) => {
 			(r) => new RenameRoomHandler(r["Repository:Room"]),
 		)
 		.add(
-			"Command:StreamParticipantResponse",
+			"Command:StreamResponse",
 			(r) =>
-				new StreamParticipantResponseHandler(
+				new StreamResponseHandler(
 					r["Service:Orchestrator"],
 					r["Repository:Room"],
 					r["Repository:Participant"],

@@ -1,7 +1,4 @@
 import {
-	AddUserMessageCommand,
-	type AddUserMessageHandler,
-	type AddUserMessageInput,
 	CreateRoomCommand,
 	type CreateRoomHandler,
 	type CreateRoomInput,
@@ -23,13 +20,15 @@ import {
 	RenameRoomCommand,
 	type RenameRoomHandler,
 	type RenameRoomInput,
-	StreamParticipantResponseCommand,
-	type StreamParticipantResponseHandler,
-	type StreamParticipantResponseInput,
+	SendMessageCommand,
+	type SendMessageHandler,
+	type SendMessageInput,
+	StreamResponseCommand,
+	type StreamResponseHandler,
+	type StreamResponseInput,
 } from "@briom/app";
 
 export interface BriomDeps {
-	addUserMessage: AddUserMessageHandler;
 	createRoom: CreateRoomHandler;
 	deleteRoom: DeleteRoomHandler;
 	getAvailableModels: GetAvailableModelsHandler;
@@ -37,15 +36,12 @@ export interface BriomDeps {
 	getRooms: GetRoomsHandler;
 	inviteParticipant: InviteParticipantHandler;
 	renameRoom: RenameRoomHandler;
-	streamParticipantResponse: StreamParticipantResponseHandler;
+	sendMessage: SendMessageHandler;
+	streamResponse: StreamResponseHandler;
 }
 
 export class Briom {
 	constructor(private readonly deps: BriomDeps) {}
-
-	public addUserMessage(input: AddUserMessageInput) {
-		return this.deps.addUserMessage.execute(new AddUserMessageCommand(input));
-	}
 
 	public createRoom(input: CreateRoomInput) {
 		return this.deps.createRoom.execute(new CreateRoomCommand(input));
@@ -79,9 +75,11 @@ export class Briom {
 		return this.deps.renameRoom.execute(new RenameRoomCommand(input));
 	}
 
-	public streamParticipantResponse(input: StreamParticipantResponseInput) {
-		return this.deps.streamParticipantResponse.execute(
-			new StreamParticipantResponseCommand(input),
-		);
+	public sendMessage(input: SendMessageInput) {
+		return this.deps.sendMessage.execute(new SendMessageCommand(input));
+	}
+
+	public initiateStreaming(input: StreamResponseInput) {
+		return this.deps.streamResponse.execute(new StreamResponseCommand(input));
 	}
 }

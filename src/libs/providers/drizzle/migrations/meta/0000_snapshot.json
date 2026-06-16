@@ -1,5 +1,5 @@
 {
-  "id": "f5f3857a-1a92-4793-a8f8-5eedfaa16a6a",
+  "id": "fd533f6e-f69c-4fd2-b75d-54335a9fc89e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -22,8 +22,7 @@
         },
         "provider": {
           "name": "provider",
-          "type": "ai_provider",
-          "typeSchema": "enums",
+          "type": "text",
           "primaryKey": false,
           "notNull": true
         },
@@ -141,7 +140,16 @@
           "name": "content",
           "type": "text",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "''"
+        },
+        "status": {
+          "name": "status",
+          "type": "turn_status",
+          "typeSchema": "enums",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'settled'"
         },
         "created_at": {
           "name": "created_at",
@@ -221,15 +229,6 @@
     }
   },
   "enums": {
-    "enums.ai_provider": {
-      "name": "ai_provider",
-      "schema": "enums",
-      "values": [
-        "openai",
-        "anthropic",
-        "google"
-      ]
-    },
     "enums.author_type": {
       "name": "author_type",
       "schema": "enums",
@@ -246,7 +245,17 @@
         "critique",
         "summarize",
         "challenge",
-        "expand"
+        "expand",
+        "direct"
+      ]
+    },
+    "enums.turn_status": {
+      "name": "turn_status",
+      "schema": "enums",
+      "values": [
+        "pending",
+        "settled",
+        "failed"
       ]
     }
   },

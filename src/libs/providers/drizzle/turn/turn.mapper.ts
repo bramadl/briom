@@ -1,6 +1,7 @@
 import { ParticipantId } from "@briom/domain/participant";
 import { RoomId } from "@briom/domain/room";
-import { Turn, TurnId } from "@briom/domain/turn";
+import type { TurnStatus } from "@briom/domain/turn";
+import { Intent, Turn, TurnId } from "@briom/domain/turn";
 import type { TurnRecord } from "@briom/drizzle/schema";
 
 export const TurnMapper = {
@@ -16,8 +17,9 @@ export const TurnMapper = {
 							type: "participant",
 							participantId: ParticipantId(record.participantId as string),
 						},
-			intent: record.intent ?? undefined,
+			intent: record.intent ? Intent(record.intent) : undefined,
 			content: record.content,
+			status: (record.status ?? "settled") as TurnStatus,
 			createdAt: record.createdAt,
 		});
 
@@ -36,6 +38,7 @@ export const TurnMapper = {
 				author.type === "participant" ? (author.participantId as string) : null,
 			intent: turn.get("intent") ?? null,
 			content: turn.get("content"),
+			status: turn.get("status"),
 			createdAt: turn.get("createdAt"),
 		};
 	},

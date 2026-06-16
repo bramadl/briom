@@ -1,3 +1,5 @@
+import type { TurnStatus } from "@briom/core/domain";
+
 export type ParticipantDTO = {
 	id: string;
 	displayName: string;
@@ -12,6 +14,7 @@ export type TurnDTO = {
 	participantId: string | null;
 	intent: string | null;
 	content: string;
+	status: TurnStatus;
 	createdAt: string;
 };
 

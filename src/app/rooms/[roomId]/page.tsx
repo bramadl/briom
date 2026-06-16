@@ -1,4 +1,4 @@
-import { getRoom } from "@briom/api/rooms/actions";
+import { getRoom } from "@briom/app/api/actions";
 import { notFound } from "next/navigation";
 
 import { RoomActions } from "./_/room-actions";

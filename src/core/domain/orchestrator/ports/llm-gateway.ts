@@ -1,4 +1,5 @@
 import type { QualifiedModel } from "@briom/domain/ai";
+import type { InfraError, IResult } from "@briom/libs/drimion";
 
 import type { Message } from "../transcriptor/message";
 
@@ -8,10 +9,8 @@ export interface GenerateInput {
 	systemPrompt: string;
 }
 
-export interface Generation {
-	content: string;
-}
-
 export interface LlmGateway {
-	stream(input: GenerateInput): Promise<ReadableStream<string>>;
+	stream(
+		input: GenerateInput,
+	): Promise<IResult<ReadableStream<string>, InfraError>>;
 }

@@ -8,16 +8,16 @@ import {
 } from "@briom/drizzle/schema";
 import { asc, eq } from "drizzle-orm";
 
-import type { GetRoomErrors, GetRoomOutput, GetRoomQuery } from "./query";
+import type { GetRoomOutput, GetRoomQuery } from "./query";
 
 export class GetRoomHandler
-	implements IQuery<GetRoomQuery, GetRoomOutput, GetRoomErrors>
+	implements IQuery<GetRoomQuery, GetRoomOutput, RoomNotFoundError>
 {
 	public constructor(private readonly db: Database) {}
 
 	public async execute({
 		input,
-	}: GetRoomQuery): Promise<IResult<GetRoomOutput, GetRoomErrors>> {
+	}: GetRoomQuery): Promise<IResult<GetRoomOutput, RoomNotFoundError>> {
 		const room = await this.db.query.roomsTable.findFirst({
 			where: eq(roomsTable.id, input.roomId),
 		});
@@ -53,6 +53,7 @@ export class GetRoomHandler
 				participantId: t.participantId,
 				intent: t.intent,
 				content: t.content,
+				status: t.status ?? "settled",
 				createdAt: t.createdAt.toISOString(),
 			})),
 		});

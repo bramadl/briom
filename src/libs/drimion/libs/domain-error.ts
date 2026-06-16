@@ -18,9 +18,7 @@
  * });
  * ```
  */
-export abstract class DomainError extends Error {
-	abstract readonly __KIND: string;
-
+export class DomainError extends Error {
 	public readonly field?: string;
 	public readonly context?: string;
 

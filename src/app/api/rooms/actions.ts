@@ -2,7 +2,6 @@
 
 import { briom } from "@briom/container";
 import type {
-	AddUserMessageOutput,
 	AvailableModelDTO,
 	CreateRoomOutput,
 	DeleteRoomOutput,
@@ -11,16 +10,12 @@ import type {
 	GetRoomsOutput,
 	InviteParticipantOutput,
 	RenameRoomOutput,
+	SendMessageOutput,
 } from "@briom/core/application";
 import { revalidatePath } from "next/cache";
 
-export type ServerActionResult<T> =
-	| { success: true; data: T; error: null }
-	| {
-			success: false;
-			data: null;
-			error: { type: string; message: string };
-	  };
+import { toServerActionError } from "../contracts/errors";
+import type { ServerActionResult } from "../contracts/types";
 
 async function revalidateRoomPage(roomId: string) {
 	revalidatePath(`/rooms/${roomId}`, "page");
@@ -28,25 +23,6 @@ async function revalidateRoomPage(roomId: string) {
 
 async function revalidateRoomsLayout() {
 	revalidatePath("/rooms", "layout");
-}
-
-export async function addUserMessage(
-	roomId: string,
-	content: string,
-): Promise<ServerActionResult<AddUserMessageOutput>> {
-	const result = await briom.addUserMessage({ roomId, content });
-	if (result.isError()) {
-		return {
-			success: false,
-			data: null,
-			error: {
-				type: result.error().name,
-				message: result.error().message,
-			},
-		};
-	}
-
-	return { success: true, data: result.value(), error: null };
 }
 
 export async function createRoom(
@@ -58,17 +34,12 @@ export async function createRoom(
 		return {
 			success: false,
 			data: null,
-			error: {
-				type: roomResult.error().name,
-				message: roomResult.error().message,
-			},
+			error: toServerActionError(roomResult.error()),
 		};
 	}
 
 	if (participants) {
-		const room = roomResult.value();
-		const roomId = room.roomId;
-
+		const { roomId } = roomResult.value();
 		for (const participant of participants) {
 			const inviteResult = await briom.inviteParticipant({
 				displayName: participant.displayName,
@@ -76,15 +47,11 @@ export async function createRoom(
 				provider: participant.provider,
 				roomId,
 			});
-
 			if (inviteResult.isError()) {
 				return {
 					success: false,
 					data: null,
-					error: {
-						type: inviteResult.error().name,
-						message: inviteResult.error().message,
-					},
+					error: toServerActionError(inviteResult.error()),
 				};
 			}
 		}
@@ -102,10 +69,7 @@ export async function deleteRoom(
 		return {
 			success: false,
 			data: null,
-			error: {
-				type: result.error().name,
-				message: result.error().message,
-			},
+			error: toServerActionError(result.error()),
 		};
 	}
 
@@ -117,6 +81,14 @@ export async function getAvailableModels(): Promise<
 	ServerActionResult<GetAvailableModelsOutput>
 > {
 	const result = await briom.getAvailableModels({} as never);
+	if (result.isError()) {
+		return {
+			success: false,
+			data: null,
+			error: toServerActionError(result.error()),
+		};
+	}
+
 	return { success: true, data: result.value(), error: null };
 }
 
@@ -128,17 +100,23 @@ export async function getRoom(
 		return {
 			success: false,
 			data: null,
-			error: {
-				type: result.error().name,
-				message: result.error().message,
-			},
+			error: toServerActionError(result.error()),
 		};
 	}
+
 	return { success: true, data: result.value(), error: null };
 }
 
 export async function getRooms(): Promise<ServerActionResult<GetRoomsOutput>> {
 	const result = await briom.getRooms({} as never);
+	if (result.isError()) {
+		return {
+			success: false,
+			data: null,
+			error: toServerActionError(result.error()),
+		};
+	}
+
 	return { success: true, data: result.value(), error: null };
 }
 
@@ -154,11 +132,12 @@ export async function inviteParticipant(
 		model,
 		displayName,
 	});
+
 	if (result.isError()) {
 		return {
 			success: false,
 			data: null,
-			error: { type: result.error().name, message: result.error().message },
+			error: toServerActionError(result.error()),
 		};
 	}
 
@@ -175,11 +154,27 @@ export async function renameRoom(
 		return {
 			success: false,
 			data: null,
-			error: { type: result.error().name, message: result.error().message },
+			error: toServerActionError(result.error()),
 		};
 	}
 
 	await revalidateRoomsLayout();
 	await revalidateRoomPage(roomId);
+	return { success: true, data: result.value(), error: null };
+}
+
+export async function sendMessage(
+	roomId: string,
+	content: string,
+): Promise<ServerActionResult<SendMessageOutput>> {
+	const result = await briom.sendMessage({ roomId, content });
+	if (result.isError()) {
+		return {
+			success: false,
+			data: null,
+			error: toServerActionError(result.error()),
+		};
+	}
+
 	return { success: true, data: result.value(), error: null };
 }

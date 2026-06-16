@@ -14,7 +14,7 @@ const container = pipe(
 )
 	.add("briom", (r) => {
 		return new Briom({
-			addUserMessage: r["Command:AddUserMessage"],
+			sendMessage: r["Command:SendMessage"],
 			createRoom: r["Command:CreateRoom"],
 			deleteRoom: r["Command:DeleteRoom"],
 			getAvailableModels: r["Query:GetAvailableModels"],
@@ -22,7 +22,7 @@ const container = pipe(
 			getRooms: r["Query:GetRooms"],
 			inviteParticipant: r["Command:InviteParticipant"],
 			renameRoom: r["Command:RenameRoom"],
-			streamParticipantResponse: r["Command:StreamParticipantResponse"],
+			streamResponse: r["Command:StreamResponse"],
 		});
 	})
 	.build();

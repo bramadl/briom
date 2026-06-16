@@ -1,10 +1,11 @@
 import type { RoomId } from "@briom/domain/room";
-import { DomainError, Entity, validator as v } from "@briom/drimion";
-import { EmptyFieldError } from "@briom/shared/errors";
+import { Entity, validator as v } from "@briom/drimion";
 
+import { EmptyContentError, NegativeSequenceError } from "./errors";
 import type { Intent } from "./intent/intent";
 import type { TurnAuthor } from "./turn-author";
 import type { TurnId } from "./turn-id";
+import type { TurnStatus } from "./turn-status";
 
 interface TurnProps {
 	author: TurnAuthor;
@@ -14,19 +15,19 @@ interface TurnProps {
 	intent?: Intent;
 	roomId: RoomId;
 	sequenceNumber: number;
+	status: TurnStatus;
 }
 
 export class Turn extends Entity<TurnProps> {
-	public static isValidProps(props: TurnProps): DomainError | undefined {
-		if (v.string(props.content).isEmpty()) {
-			return new EmptyFieldError({ context: Turn.name, field: "content" });
+	public static isValidProps(
+		props: TurnProps,
+	): EmptyContentError | NegativeSequenceError | undefined {
+		if (props.status !== "pending" && v.string(props.content).isEmpty()) {
+			return new EmptyContentError();
 		}
 
 		if (v.number(props.sequenceNumber).isNegative()) {
-			return new DomainError("sequence number cannot be negative", {
-				context: Turn.name,
-				field: "sequenceNumber",
-			});
+			return new NegativeSequenceError();
 		}
 	}
 
@@ -36,5 +37,17 @@ export class Turn extends Entity<TurnProps> {
 
 	get isFromUser(): boolean {
 		return this.get("author").type === "user";
+	}
+
+	get isPending(): boolean {
+		return this.get("status") === "pending";
+	}
+
+	get isSettled(): boolean {
+		return this.get("status") === "settled";
+	}
+
+	get isFailed(): boolean {
+		return this.get("status") === "failed";
 	}
 }

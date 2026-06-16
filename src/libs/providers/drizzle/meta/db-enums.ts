@@ -11,4 +11,11 @@ export const intentEnum = enumsSchema.enum("intent", [
 	"summarize",
 	"challenge",
 	"expand",
+	"direct",
+]);
+
+export const turnStatusEnum = enumsSchema.enum("turn_status", [
+	"pending",
+	"settled",
+	"failed",
 ]);

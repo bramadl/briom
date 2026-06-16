@@ -1,16 +1,18 @@
 "use client";
 
-import { addUserMessage } from "@briom/api/rooms/actions";
+import { sendMessage } from "@briom/api/rooms/actions";
 import type { RoomDTO, TurnDTO } from "@briom/app/queries/get-room/query.dto";
 import { INTENT } from "@briom/core/domain";
 import { useIsHydrated } from "@briom/hooks/is-hydrated";
 import { cn } from "@briom/libs/utils";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
+
 import { ConversationInput } from "./conversation-input";
 import { pickAutoResponder } from "./conversation-message/responded-picker";
 import { ConversationTimeline } from "./conversation-timeline";
 import { RoomConversationLoading } from "./loading";
+import { StreamErrorBanner } from "./stream-error-banner";
 import { useStream } from "./use-stream";
 
 interface RoomConversationProps {
@@ -20,7 +22,11 @@ interface RoomConversationProps {
 export function RoomConversation({ initialRoom }: RoomConversationProps) {
 	const isHydrated = useIsHydrated();
 
-	const [turns, setTurns] = useState<TurnDTO[]>(initialRoom.turns);
+	const [streamError, setStreamError] = useState<string | null>(null);
+	const [turns, setTurns] = useState<TurnDTO[]>(
+		initialRoom.turns.filter((t) => t.status === "settled"),
+	);
+
 	const { participants, id: roomId } = initialRoom;
 
 	const onTurnComplete = useCallback(
@@ -30,6 +36,7 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 			intent: string,
 			turnId: string,
 		) => {
+			setStreamError(null);
 			setTurns((prev) => [
 				...prev,
 				{
@@ -39,6 +46,7 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 					participantId,
 					intent,
 					content,
+					status: "settled",
 					createdAt: new Date().toISOString(),
 				} satisfies TurnDTO,
 			]);
@@ -52,12 +60,11 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 		streamingContent,
 		streamingParticipantId,
 		generate,
+		retry,
+		retryInfo,
 	} = useStream({
-		onError: (message) => {
-			toast.error(message, {
-				description: "The response wasn't saved — try again.",
-			});
-		},
+		initialTurns: initialRoom.turns,
+		onError: setStreamError,
 		onTurnComplete,
 		roomId,
 	});
@@ -65,9 +72,11 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 	async function handleUserMessage(
 		content: string,
 		mentionedParticipantId?: string,
-	) {
+	): Promise<boolean> {
 		const stripped = content.replace(/@\S+/g, "").trim();
-		if (!stripped && !mentionedParticipantId) return;
+		if (!stripped && !mentionedParticipantId) return false;
+
+		setStreamError(null);
 
 		const tempId = crypto.randomUUID();
 		const optimisticTurn: TurnDTO = {
@@ -77,17 +86,18 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 			participantId: null,
 			intent: null,
 			content,
+			status: "settled",
 			createdAt: new Date().toISOString(),
 		};
 		setTurns((prev) => [...prev, optimisticTurn]);
 
-		const result = await addUserMessage(roomId, content);
+		const result = await sendMessage(roomId, content);
 		if (!result.success) {
+			setTurns((prev) => prev.filter((t) => t.id !== tempId));
 			toast.error("Failed to send message", {
 				description: result.error.message,
 			});
-			setTurns((prev) => prev.filter((t) => t.id !== tempId));
-			return;
+			return false;
 		}
 
 		setTurns((prev) =>
@@ -111,9 +121,12 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 				}
 			}
 		}
+
+		return true;
 	}
 
 	async function handleSuggestion(participantId: string, intent: string) {
+		setStreamError(null);
 		await generate(participantId, intent);
 	}
 
@@ -129,6 +142,13 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 				streamingParticipantId={streamingParticipantId}
 				turns={turns}
 			/>
+			{streamError && retryInfo && (
+				<StreamErrorBanner
+					message={streamError}
+					onDismiss={() => setStreamError(null)}
+					onRetry={retry}
+				/>
+			)}
 			<div className="sticky bottom-0 inset-x-0 p-4 md:p-8 pt-0!">
 				<ConversationInput
 					disabled={streaming}

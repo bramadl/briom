@@ -1,21 +1,20 @@
 import type { Orchestrator } from "@briom/domain/orchestrator";
-import type { ParticipantRepository } from "@briom/domain/participant";
+import type {
+	ParticipantNotFoundError,
+	ParticipantRepository,
+} from "@briom/domain/participant";
 import { ParticipantId } from "@briom/domain/participant";
 import {
 	RoomId,
 	RoomNotFoundError,
 	type RoomRepository,
 } from "@briom/domain/room";
-import type { TurnRepository } from "@briom/domain/turn";
-import { type IResult, Result } from "@briom/drimion";
+import { Turn, type TurnRepository } from "@briom/domain/turn";
+import { type InfraError, type IResult, Result } from "@briom/drimion";
 
-import type {
-	StreamParticipantResponseCommand,
-	StreamParticipantResponseErrors,
-	StreamParticipantResponseOutput,
-} from "./command";
+import type { StreamResponseCommand, StreamResponseOutput } from "./command";
 
-export class StreamParticipantResponseHandler {
+export class StreamResponseHandler {
 	public constructor(
 		private readonly orchestrator: Orchestrator,
 		private readonly roomRepository: RoomRepository,
@@ -25,8 +24,11 @@ export class StreamParticipantResponseHandler {
 
 	public async execute({
 		input,
-	}: StreamParticipantResponseCommand): Promise<
-		IResult<StreamParticipantResponseOutput, StreamParticipantResponseErrors>
+	}: StreamResponseCommand): Promise<
+		IResult<
+			StreamResponseOutput,
+			RoomNotFoundError | ParticipantNotFoundError | InfraError
+		>
 	> {
 		const roomId = RoomId(input.roomId);
 
@@ -48,15 +50,37 @@ export class StreamParticipantResponseHandler {
 
 		if (result.isError()) return Result.error(result.error());
 
-		const { stream, persist } = result.value();
+		const { stream, turnId, turnToPersist } = result.value();
+		const pendingTurnResult = Turn.create({
+			id: turnId,
+			roomId,
+			sequenceNumber: 0,
+			author: {
+				type: "participant",
+				participantId: ParticipantId(input.targetParticipantId),
+			},
+			intent: input.intent,
+			content: "",
+			status: "pending",
+			createdAt: new Date(),
+		});
+
+		if (pendingTurnResult.isError()) {
+			return Result.error(pendingTurnResult.error() as InfraError);
+		}
+
+		await this.turnRepository.save(pendingTurnResult.value());
+
 		return Result.success({
 			stream,
+			turnId: turnId as string,
 			persist: async (content: string) => {
-				const turnResult = await persist(content);
-				if (turnResult.isError()) throw turnResult.error();
-				const turn = turnResult.value();
+				const turn = await turnToPersist(content);
 				await this.turnRepository.save(turn);
 				return turn.id.value();
+			},
+			markFailed: async () => {
+				await this.turnRepository.updateStatus(turnId, "failed");
 			},
 		});
 	}

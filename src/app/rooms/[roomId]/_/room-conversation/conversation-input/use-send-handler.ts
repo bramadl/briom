@@ -102,18 +102,24 @@ export function useSendHandler({
 
 		setSending(true);
 		try {
-			await onSend(content, firstMentionedParticipantId ?? undefined);
-			editor.update(() => {
-				const root = $getRoot();
-				root.clear();
-				const paragraph = $createParagraphNode();
-				root.append(paragraph);
-				paragraph.select();
-				const selection = $getSelection();
-				if ($isRangeSelection(selection)) {
-					selection.setFormat(0);
-				}
-			});
+			const sent = await onSend(
+				content,
+				firstMentionedParticipantId ?? undefined,
+			);
+
+			if (sent) {
+				editor.update(() => {
+					const root = $getRoot();
+					root.clear();
+					const paragraph = $createParagraphNode();
+					root.append(paragraph);
+					paragraph.select();
+					const selection = $getSelection();
+					if ($isRangeSelection(selection)) {
+						selection.setFormat(0);
+					}
+				});
+			}
 		} finally {
 			setSending(false);
 			onAfterSend?.();

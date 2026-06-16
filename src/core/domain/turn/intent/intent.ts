@@ -8,3 +8,4 @@ export const INTENT = {
 } as const;
 
 export type Intent = (typeof INTENT)[keyof typeof INTENT];
+export const Intent = (value: string): Intent => value.toLowerCase() as Intent;

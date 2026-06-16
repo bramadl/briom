@@ -8,11 +8,15 @@ import {
 	RoomNotFoundError,
 	type RoomRepository,
 } from "@briom/domain";
-import { type ICommand, type IResult, Result } from "@briom/drimion";
+import {
+	type DomainError,
+	type ICommand,
+	type IResult,
+	Result,
+} from "@briom/drimion";
 
 import type {
 	InviteParticipantCommand,
-	InviteParticipantErrors,
 	InviteParticipantOutput,
 } from "./command";
 
@@ -21,7 +25,7 @@ export class InviteParticipantHandler
 		ICommand<
 			InviteParticipantCommand,
 			InviteParticipantOutput,
-			InviteParticipantErrors
+			RoomNotFoundError | DomainError
 		>
 {
 	public constructor(
@@ -32,7 +36,7 @@ export class InviteParticipantHandler
 	public async execute({
 		input,
 	}: InviteParticipantCommand): Promise<
-		IResult<InviteParticipantOutput, InviteParticipantErrors>
+		IResult<InviteParticipantOutput, RoomNotFoundError | DomainError>
 	> {
 		const roomId = RoomId(input.roomId);
 

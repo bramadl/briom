@@ -1,4 +1,3 @@
-import { ProviderError } from "@briom/core/shared";
 import {
 	type Participant,
 	type ParticipantId,
@@ -10,9 +9,8 @@ import {
 	Turn,
 	TurnId,
 	type TurnSequencer,
-	type Turn as TurnType,
 } from "@briom/domain/turn";
-import { type DomainError, type IResult, Result } from "@briom/drimion";
+import { type InfraError, type IResult, Result, UUID } from "@briom/drimion";
 
 import type { GenerateInput, LlmGateway } from "./ports";
 import { Transcriptor } from "./transcriptor";
@@ -22,12 +20,13 @@ export interface OrchestrateInput {
 	participants: Participant[];
 	room: Room;
 	targetParticipantId: ParticipantId;
-	turns: TurnType[];
+	turns: Turn[];
 }
 
 export interface StreamResult {
-	persist: (content: string) => Promise<IResult<TurnType, DomainError>>;
 	stream: ReadableStream<string>;
+	turnId: TurnId;
+	turnToPersist: (content: string) => Promise<Turn>;
 }
 
 export class Orchestrator {
@@ -38,7 +37,7 @@ export class Orchestrator {
 		private readonly sequencer: TurnSequencer,
 	) {}
 
-	public buildPromptInput({
+	private buildPromptInput({
 		intent,
 		participants,
 		turns,
@@ -49,9 +48,7 @@ export class Orchestrator {
 		);
 
 		if (!participant) {
-			return Result.error(new ParticipantNotFoundError(targetParticipantId), {
-				identifier: targetParticipantId,
-			});
+			return Result.error(new ParticipantNotFoundError(targetParticipantId));
 		}
 
 		return Result.success({
@@ -67,31 +64,22 @@ export class Orchestrator {
 
 	public async orchestrateStream(
 		input: OrchestrateInput,
-	): Promise<IResult<StreamResult, ParticipantNotFoundError | DomainError>> {
+	): Promise<IResult<StreamResult, ParticipantNotFoundError | InfraError>> {
 		const promptResult = this.buildPromptInput(input);
 		if (promptResult.isError()) return Result.error(promptResult.error());
 
-		let stream: ReadableStream<string>;
-		try {
-			stream = await this.llm.stream(promptResult.value());
-		} catch (error) {
-			return Result.error(
-				new ProviderError(
-					error instanceof Error ? error.message : "Unknown provider error",
-					{ cause: error },
-				),
-			);
-		}
+		const streamResult = await this.llm.stream(promptResult.value());
+		if (streamResult.isError()) return Result.error(streamResult.error());
+		const stream = streamResult.value();
 
-		const persist = async (
-			content: string,
-		): Promise<IResult<TurnType, DomainError>> => {
-			const nextPosition = await this.sequencer.nextPositionFor(
-				input.room.get("id"),
-			);
+		const turnId = TurnId(UUID());
+		const nextPosition = await this.sequencer.nextPositionFor(
+			input.room.get("id"),
+		);
 
+		const turnToPersist = async (content: string): Promise<Turn> => {
 			const turnResult = Turn.create({
-				id: TurnId(crypto.randomUUID()),
+				id: turnId,
 				roomId: input.room.get("id"),
 				sequenceNumber: nextPosition,
 				author: {
@@ -100,12 +88,13 @@ export class Orchestrator {
 				},
 				intent: input.intent,
 				content,
+				status: "settled",
 				createdAt: new Date(),
 			});
 
-			return turnResult;
+			return turnResult.value();
 		};
 
-		return Result.success({ stream, persist });
+		return Result.success({ stream, turnId, turnToPersist });
 	}
 }

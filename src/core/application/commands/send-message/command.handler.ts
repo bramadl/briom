@@ -7,17 +7,22 @@ import {
 	type TurnRepository,
 	type TurnSequencer,
 } from "@briom/domain";
-import { type ICommand, type IResult, Result } from "@briom/drimion";
+import {
+	type DomainError,
+	type ICommand,
+	type IResult,
+	Result,
+} from "@briom/drimion";
 
-import type {
-	AddUserMessageCommand,
-	AddUserMessageErrors,
-	AddUserMessageOutput,
-} from "./command";
+import type { SendMessageCommand, SendMessageOutput } from "./command";
 
-export class AddUserMessageHandler
+export class SendMessageHandler
 	implements
-		ICommand<AddUserMessageCommand, AddUserMessageOutput, AddUserMessageErrors>
+		ICommand<
+			SendMessageCommand,
+			SendMessageOutput,
+			RoomNotFoundError | DomainError
+		>
 {
 	public constructor(
 		private readonly roomRepository: RoomRepository,
@@ -27,8 +32,8 @@ export class AddUserMessageHandler
 
 	public async execute({
 		input,
-	}: AddUserMessageCommand): Promise<
-		IResult<AddUserMessageOutput, AddUserMessageErrors>
+	}: SendMessageCommand): Promise<
+		IResult<SendMessageOutput, RoomNotFoundError | DomainError>
 	> {
 		const roomId = RoomId(input.roomId);
 

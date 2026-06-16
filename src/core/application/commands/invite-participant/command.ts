@@ -1,6 +1,3 @@
-import type { RoomNotFoundError } from "@briom/domain";
-import type { DomainError } from "@briom/drimion";
-
 export type InviteParticipantInput = {
 	roomId: string;
 	provider: string;
@@ -8,7 +5,6 @@ export type InviteParticipantInput = {
 	displayName: string;
 };
 
-export type InviteParticipantErrors = RoomNotFoundError | DomainError;
 export type InviteParticipantOutput = {
 	participantId: string;
 };
