@@ -16,6 +16,7 @@ import { EmptyConversation } from "./empty-conversation";
 const SCROLL_THRESHOLD = 120;
 
 interface ConversationTimelineProps {
+	className?: string;
 	generating?: boolean;
 	onSuggestionSelected: (participantId: string, intent: string) => void;
 	participants: ParticipantDTO[];
@@ -25,6 +26,7 @@ interface ConversationTimelineProps {
 }
 
 export function ConversationTimeline({
+	className,
 	generating,
 	onSuggestionSelected,
 	participants,
@@ -99,7 +101,7 @@ export function ConversationTimeline({
 	const isEmpty = turns.length === 0 && !generating;
 
 	return (
-		<div className="relative flex-1 min-h-0">
+		<div className={cn("relative flex-1 min-h-0", className)}>
 			<div
 				className={cn(
 					"h-full overflow-y-auto p-4 md:p-8 px-8 md:px-16",
