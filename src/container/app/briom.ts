@@ -5,6 +5,9 @@ import {
 	CreateRoomCommand,
 	type CreateRoomHandler,
 	type CreateRoomInput,
+	DeleteRoomCommand,
+	type DeleteRoomHandler,
+	type DeleteRoomInput,
 	type GetAvailableModelsHandler,
 	type GetAvailableModelsInput,
 	GetAvailableModelsQuery,
@@ -28,6 +31,7 @@ import {
 export interface BriomDeps {
 	addUserMessage: AddUserMessageHandler;
 	createRoom: CreateRoomHandler;
+	deleteRoom: DeleteRoomHandler;
 	getAvailableModels: GetAvailableModelsHandler;
 	getRoom: GetRoomHandler;
 	getRooms: GetRoomsHandler;
@@ -45,6 +49,10 @@ export class Briom {
 
 	public createRoom(input: CreateRoomInput) {
 		return this.deps.createRoom.execute(new CreateRoomCommand(input));
+	}
+
+	public deleteRoom(input: DeleteRoomInput) {
+		return this.deps.deleteRoom.execute(new DeleteRoomCommand(input));
 	}
 
 	public getAvailableModels(input: GetAvailableModelsInput) {

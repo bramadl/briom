@@ -16,6 +16,7 @@ const container = pipe(
 		return new Briom({
 			addUserMessage: r["Command:AddUserMessage"],
 			createRoom: r["Command:CreateRoom"],
+			deleteRoom: r["Command:DeleteRoom"],
 			getAvailableModels: r["Query:GetAvailableModels"],
 			getRoom: r["Query:GetRoom"],
 			getRooms: r["Query:GetRooms"],

@@ -1,6 +1,7 @@
 import {
 	AddUserMessageHandler,
 	CreateRoomHandler,
+	DeleteRoomHandler,
 	GetAvailableModelsHandler,
 	GetRoomHandler,
 	GetRoomsHandler,
@@ -20,6 +21,10 @@ export const applicationSlice = (container: ReturnType<typeof domainSlice>) => {
 		.add(
 			"Command:CreateRoom",
 			(r) => new CreateRoomHandler(r["Repository:Room"]),
+		)
+		.add(
+			"Command:DeleteRoom",
+			(r) => new DeleteRoomHandler(r["Repository:Room"]),
 		)
 		.add(
 			"Command:InviteParticipant",

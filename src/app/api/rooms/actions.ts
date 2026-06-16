@@ -5,6 +5,7 @@ import type {
 	AddUserMessageOutput,
 	AvailableModelDTO,
 	CreateRoomOutput,
+	DeleteRoomOutput,
 	GetAvailableModelsOutput,
 	GetRoomOutput,
 	GetRoomsOutput,
@@ -21,11 +22,11 @@ export type ServerActionResult<T> =
 			error: { type: string; message: string };
 	  };
 
-export async function revalidateRoomPath(roomId: string) {
+async function revalidateRoomPage(roomId: string) {
 	revalidatePath(`/rooms/${roomId}`, "page");
 }
 
-export async function revalidateRoomsPath() {
+async function revalidateRoomsLayout() {
 	revalidatePath("/rooms", "layout");
 }
 
@@ -89,8 +90,27 @@ export async function createRoom(
 		}
 	}
 
-	await revalidateRoomsPath();
+	await revalidateRoomsLayout();
 	return { success: true, data: roomResult.value(), error: null };
+}
+
+export async function deleteRoom(
+	roomId: string,
+): Promise<ServerActionResult<DeleteRoomOutput>> {
+	const result = await briom.deleteRoom({ roomId });
+	if (result.isError()) {
+		return {
+			success: false,
+			data: null,
+			error: {
+				type: result.error().name,
+				message: result.error().message,
+			},
+		};
+	}
+
+	await revalidateRoomsLayout();
+	return { success: true, data: result.value(), error: null };
 }
 
 export async function getAvailableModels(): Promise<
@@ -142,7 +162,7 @@ export async function inviteParticipant(
 		};
 	}
 
-	await revalidateRoomPath(roomId);
+	await revalidateRoomPage(roomId);
 	return { success: true, data: result.value(), error: null };
 }
 
@@ -159,7 +179,7 @@ export async function renameRoom(
 		};
 	}
 
-	await revalidateRoomsPath();
-	await revalidateRoomPath(roomId);
+	await revalidateRoomsLayout();
+	await revalidateRoomPage(roomId);
 	return { success: true, data: result.value(), error: null };
 }

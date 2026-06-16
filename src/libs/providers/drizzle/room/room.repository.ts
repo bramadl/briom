@@ -26,4 +26,15 @@ export class DrizzleRoomRepository implements RoomRepository {
 				set: { title: record.title },
 			});
 	}
+
+	async delete(room: Room): Promise<void> {
+		await this.db.delete(roomsTable).where(eq(roomsTable.id, room.id.value()));
+	}
+
+	// async archive(room: Room): Promise<void> {
+	// 	await this.db
+	// 		.update(roomsTable)
+	// 		.set({ deletedAt: new Date() })
+	// 		.where(eq(roomsTable.id, room.id.value()));
+	// }
 }
