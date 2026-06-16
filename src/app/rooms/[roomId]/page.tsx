@@ -1,4 +1,4 @@
-import { getRoom } from "@briom/app/api/actions";
+import { getRoom } from "@briom/api/rooms/actions";
 import { notFound } from "next/navigation";
 
 import { RoomActions } from "./_/room-actions";
@@ -15,7 +15,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
 
 	const result = await getRoom(roomId);
 	if (!result.success) {
-		if (result.error.type === "RoomNotFoundError") return notFound();
+		if (result.error.kind === "NOT_FOUND") return notFound();
 		throw new Error(result.error.message);
 	}
 

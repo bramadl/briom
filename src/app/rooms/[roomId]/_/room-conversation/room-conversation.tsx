@@ -69,7 +69,7 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 		roomId,
 	});
 
-	async function handleUserMessage(
+	async function handleSendMessage(
 		content: string,
 		mentionedParticipantId?: string,
 	): Promise<boolean> {
@@ -154,7 +154,7 @@ export function RoomConversation({ initialRoom }: RoomConversationProps) {
 					disabled={streaming}
 					isStreaming={streaming}
 					onAbort={abort}
-					onSend={handleUserMessage}
+					onSend={handleSendMessage}
 					participants={participants}
 				/>
 			</div>

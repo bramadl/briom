@@ -1,8 +1,8 @@
 import { getAvailableModels, getRooms } from "@briom/api/rooms/actions";
 import { SidebarInset, SidebarProvider } from "@briom/components/ui/sidebar";
 import { SIDEBAR_COOKIE_NAME } from "@briom/components/ui/sidebar.constants";
+import { ProgressProvider } from "@briom/libs/bprogress/provider";
 import { cookies } from "next/headers";
-
 import { RoomList } from "./_/room-list";
 import { RoomProvider } from "./_/room-provider";
 import { RoomSidebar } from "./_/room-sidebar";
@@ -20,19 +20,22 @@ export default async function RoomsLayout({
 	}
 
 	const cookieStore = await cookies();
-	const sidebarOpen = cookieStore.get(SIDEBAR_COOKIE_NAME)?.value !== "false";
+	const sidebarCookie = cookieStore.get(SIDEBAR_COOKIE_NAME);
+	const sidebarOpen = sidebarCookie ? sidebarCookie.value !== "false" : false;
 
 	return (
-		<SidebarProvider
-			defaultOpen={sidebarOpen}
-			style={{ "--sidebar-width": "350px" } as React.CSSProperties}
-		>
-			<RoomProvider availableModels={models.data}>
-				<RoomSidebar>
-					<RoomList rooms={rooms.data} />
-				</RoomSidebar>
-				<SidebarInset>{children}</SidebarInset>
-			</RoomProvider>
-		</SidebarProvider>
+		<ProgressProvider>
+			<SidebarProvider
+				defaultOpen={sidebarOpen}
+				style={{ "--sidebar-width": "350px" } as React.CSSProperties}
+			>
+				<RoomProvider availableModels={models.data}>
+					<RoomSidebar>
+						<RoomList rooms={rooms.data} />
+					</RoomSidebar>
+					<SidebarInset>{children}</SidebarInset>
+				</RoomProvider>
+			</SidebarProvider>
+		</ProgressProvider>
 	);
 }

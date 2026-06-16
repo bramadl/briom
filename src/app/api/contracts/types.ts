@@ -1,5 +1,6 @@
 export type ApiError =
 	| { kind: "DOMAIN_INVARIANT"; message: string }
+	| { kind: "NOT_FOUND"; message: string }
 	| { kind: "MODEL_NOT_FOUND"; message: string }
 	| { kind: "RATE_LIMITED"; message: string; retryAfter?: number }
 	| { kind: "STREAM_FAILURE"; message: string }

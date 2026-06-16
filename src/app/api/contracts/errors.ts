@@ -21,11 +21,16 @@ export function toServerActionError(error: unknown): ApiError {
 		error instanceof EmptyModelError ||
 		error instanceof EmptyDisplayNameError ||
 		error instanceof EmptyContentError ||
-		error instanceof NegativeSequenceError ||
+		error instanceof NegativeSequenceError
+	) {
+		return { kind: "DOMAIN_INVARIANT", message: error.message };
+	}
+
+	if (
 		error instanceof RoomNotFoundError ||
 		error instanceof ParticipantNotFoundError
 	) {
-		return { kind: "DOMAIN_INVARIANT", message: error.message };
+		return { kind: "NOT_FOUND", message: error.message };
 	}
 
 	if (error instanceof RateLimitedError) {

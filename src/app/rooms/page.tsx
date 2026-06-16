@@ -1,10 +1,19 @@
 import { Logo } from "@briom/components/logo";
-
+import { Button } from "@briom/components/ui/button";
+import { SidebarTrigger } from "@briom/components/ui/sidebar";
 import { RoomFormTrigger } from "./_/room-provider/create-room-form/room-form-trigger";
 
 export default async function RoomsPage() {
 	return (
-		<div className="flex min-h-full flex-1 flex-col items-center justify-center gap-6 px-6 py-24 text-center">
+		<div className="relative flex min-h-full flex-1 flex-col items-center justify-center gap-6 p-24 text-center">
+			<Button
+				asChild
+				className="absolute left-4 top-4 md:hidden"
+				variant="outline"
+			>
+				<SidebarTrigger />
+			</Button>
+
 			<Logo className="text-muted-foreground/40" size={36} />
 
 			<div className="flex flex-col gap-2">
