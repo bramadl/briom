@@ -7,9 +7,10 @@ import type {
 import { gsap, registerGsap } from "@briom/libs/gsap/register";
 import { Button } from "@briom/ui/button";
 import { useGSAP } from "@gsap/react";
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import { SUGGESTED_INTENTS } from "./suggested-intents";
+import { seededRandom, shuffleWithSeed } from "./suggestion.utils";
 
 interface SuggestionBubblesProps {
 	lastTurn: TurnDTO;
@@ -22,14 +23,80 @@ export function SuggestionBubbles({
 	participants,
 	onSelect,
 }: SuggestionBubblesProps) {
-	const shouldRender =
-		lastTurn.role === "participant" &&
-		participants.filter((p) => p.id !== lastTurn.participantId).length > 0;
-
 	const rootRef = useRef<HTMLDivElement>(null);
+
+	const otherParticipants = useMemo(
+		() => participants.filter((p) => p.id !== lastTurn.participantId),
+		[participants, lastTurn.participantId],
+	);
+
+	const shouldRender =
+		lastTurn.role === "participant" && otherParticipants.length > 0;
+
+	const suggestions = useMemo(() => {
+		if (!shouldRender) return [];
+
+		const seed = `${lastTurn.id}-${lastTurn.participantId}`;
+
+		const shuffledIntents = shuffleWithSeed(
+			SUGGESTED_INTENTS,
+			`${seed}-intents`,
+		);
+
+		const shuffledParticipants = shuffleWithSeed(
+			otherParticipants,
+			`${seed}-participants`,
+		);
+
+		const maxPossible = otherParticipants.length * SUGGESTED_INTENTS.length;
+		const count = Math.min(
+			4,
+			Math.max(1, Math.floor(seededRandom(`${seed}-count`) * 4) + 1),
+			maxPossible,
+		);
+
+		const picks: Array<{
+			act: string;
+			key: string;
+			model: string;
+			participant: ParticipantDTO;
+		}> = [];
+
+		const usedKeys = new Set<string>();
+
+		let attempts = 0;
+		while (picks.length < count && attempts < count * 10) {
+			attempts++;
+
+			const pIndex = Math.floor(
+				seededRandom(`${seed}-p${attempts}`) * shuffledParticipants.length,
+			);
+
+			const iIndex = Math.floor(
+				seededRandom(`${seed}-i${attempts}`) * shuffledIntents.length,
+			);
+
+			const participant = shuffledParticipants[pIndex];
+			const intent = shuffledIntents[iIndex];
+			const key = `${participant.id}-${intent}`;
+
+			if (usedKeys.has(key)) continue;
+
+			usedKeys.add(key);
+			picks.push({
+				act: intent,
+				key,
+				model: participant.displayName,
+				participant,
+			});
+		}
+
+		return picks;
+	}, [lastTurn.id, lastTurn.participantId, otherParticipants, shouldRender]);
+
 	useGSAP(
 		() => {
-			if (!shouldRender || !rootRef.current) return;
+			if (!shouldRender || suggestions.length === 0 || !rootRef.current) return;
 			registerGsap();
 			gsap.to("[data-suggestion]", {
 				opacity: 1,
@@ -40,30 +107,13 @@ export function SuggestionBubbles({
 			});
 		},
 		{
-			dependencies: [lastTurn.id, shouldRender],
+			dependencies: [lastTurn.id, shouldRender, suggestions.length],
 			revertOnUpdate: true,
 		},
 	);
 
-	if (lastTurn.role !== "participant") return null;
-	const otherParticipants = participants.filter(
-		(p) => p.id !== lastTurn.participantId,
-	);
-
 	if (!shouldRender) return null;
-	if (otherParticipants.length === 0) return null;
-
-	const suggestions = otherParticipants
-		.flatMap((p, pi) =>
-			SUGGESTED_INTENTS.slice(0, 2).map((intent, ii) => ({
-				act: SUGGESTED_INTENTS[(pi + ii) % SUGGESTED_INTENTS.length],
-				intent,
-				key: `${p.id}-${intent}`,
-				model: p.displayName,
-				participant: p,
-			})),
-		)
-		.slice(0, 4);
+	if (suggestions.length === 0) return null;
 
 	return (
 		<div className="flex flex-col items-end gap-1.5" ref={rootRef}>
