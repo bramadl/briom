@@ -1,6 +1,6 @@
 import { Entity, validator as v } from "@briom/drimion";
 
-import { EmptyRoomTitleError } from "./empty-room-title.error";
+import { EmptyRoomTitleError } from "./errors/empty-room-title.error";
 import type { RoomId } from "./room-id";
 
 interface RoomProps {

@@ -11,6 +11,7 @@ import { cn } from "@briom/libs/utils";
 import { formatDistanceToNowStrict, parseISO } from "date-fns";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { getActivityStatus } from "./activity-indicator";
 
@@ -21,31 +22,37 @@ interface RoomListItemProps {
 export function RoomListItem({ room }: RoomListItemProps) {
 	const { roomId } = useParams();
 
+	const [relativeTime, setRelativeTime] = useState<string>("");
+	useEffect(() => {
+		setRelativeTime(
+			formatDistanceToNowStrict(parseISO(room.createdAt), {
+				addSuffix: true,
+			}),
+		);
+
+		const interval = setInterval(() => {
+			setRelativeTime(
+				formatDistanceToNowStrict(parseISO(room.createdAt), {
+					addSuffix: true,
+				}),
+			);
+		}, 60000);
+		return () => clearInterval(interval);
+	}, [room.createdAt]);
+
 	const lastActivity = {
-		status: getActivityStatus(Date.toString()),
+		status: getActivityStatus(room.createdAt),
 		turn: {
 			model: "Gemma",
 			getMessage: () => {
 				const message =
 					"This is a vital distinction that brings a lot of clarity to the conversation. You are essentially separating the conceptual problem-solving from the technical implementation.";
 
-				if (message.length > 120) {
-					return `${message.slice(0, 120)}...`;
-				}
-
+				if (message.length > 120) return `${message.slice(0, 120)}...`;
 				return message;
 			},
 		},
 	};
-
-	function getSummary() {
-		return (
-			<>
-				<strong>AI Summary</strong>: <br /> “Exploring architectural tradeoffs
-				between DDD and MVP speed”
-			</>
-		);
-	}
 
 	return (
 		<HoverCard>
@@ -89,16 +96,15 @@ export function RoomListItem({ room }: RoomListItemProps) {
 							</span>
 						</div>
 						<p className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
-							Created at{" "}
-							{formatDistanceToNowStrict(parseISO(room.createdAt), {
-								addSuffix: true,
-							})}
+							Created at {relativeTime || "—"}{" "}
+							{/* ⬇️ Show placeholder until hydrated */}
 						</p>
 					</div>
 				</div>
 			</HoverCardTrigger>
 			<HoverCardContent align="center" side="right">
-				{getSummary()}
+				<strong>AI Summary</strong>: <br /> “Exploring architectural tradeoffs
+				between DDD and MVP speed”
 			</HoverCardContent>
 		</HoverCard>
 	);

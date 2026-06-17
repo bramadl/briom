@@ -37,6 +37,7 @@ export class OpenRouterLlmGateway implements LlmGateway {
 					messages: apiMessages,
 				},
 			});
+			// const { cancel } = eventStream
 		} catch (error) {
 			return Result.error(this.classifyError(error, input.qualifiedModel));
 		}

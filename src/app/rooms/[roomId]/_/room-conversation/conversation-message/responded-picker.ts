@@ -8,6 +8,8 @@ export function pickAutoResponder(
 		.reverse()
 		.find((t) => t.role === "participant");
 
+	if (participants.length === 1) return participants[0];
+
 	const candidates = participants.filter(
 		(p) => p.id !== lastParticipantTurn?.participantId,
 	);

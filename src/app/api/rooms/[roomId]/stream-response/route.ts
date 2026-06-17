@@ -3,6 +3,12 @@ import type { ApiError, StreamEventError } from "@briom/api/contracts/types";
 import { briom } from "@briom/container";
 import type { Intent } from "@briom/domain/turn";
 
+const ONE_MINUTE = 60000;
+const FIVETEEN_MINUTES = ONE_MINUTE * 15;
+
+const SERVER_TIMEOUT =
+	process.env.USE_FREE_MODELS === "true" ? FIVETEEN_MINUTES : ONE_MINUTE;
+
 function sseEvent(event: string, data: unknown): string {
 	return `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
 }
@@ -24,8 +30,6 @@ export async function POST(
 		intent: body.intent as Intent,
 	});
 
-	// Pre-stream error — participant not found, room not found, provider rejected
-	// before streaming. No pending row was written yet so no markFailed needed.
 	if (result.isError()) {
 		return new Response(
 			new ReadableStream({
@@ -44,70 +48,110 @@ export async function POST(
 	}
 
 	const { stream, turnId, persist, markFailed } = result.value();
-
 	const responseStream = new ReadableStream({
 		async start(controller) {
 			const reader = stream.getReader();
-			let fullContent = "";
+			let clientAborted = false;
+			let doneReceived = false;
 			let errored = false;
+			let fullContent = "";
+			let persisting = false;
 
-			// Emit the pre-allocated turnId immediately so the FE knows which
-			// pending row to watch — even before the first token arrives.
+			request.signal.addEventListener("abort", () => {
+				clientAborted = true;
+				clearTimeout(timeout);
+				reader.cancel().catch(() => {});
+
+				if (!errored && !doneReceived && !persisting) {
+					errored = true;
+					markFailed().catch(() => {});
+				}
+			});
+
+			const timeout = setTimeout(() => {
+				if (!errored && !doneReceived) {
+					errored = true;
+
+					if (!fullContent.trim()) markFailed().catch(() => {});
+					controller.enqueue(
+						sseError(enc, {
+							kind: "STREAM_FAILURE",
+							message: `Stream timed out after ${SERVER_TIMEOUT / 1000} seconds.`,
+						} satisfies ApiError),
+					);
+					controller.close();
+				}
+			}, SERVER_TIMEOUT);
+
 			controller.enqueue(enc.encode(sseEvent("start", { turnId })));
-
 			try {
-				// Consume stream tokens
 				while (true) {
+					if (clientAborted) break;
+
 					const { done, value } = await reader.read();
 					if (done) break;
+
 					fullContent += value;
 					controller.enqueue(enc.encode(sseEvent("token", { token: value })));
 				}
 
-				// Empty response check — model returned nothing
-				if (!fullContent.trim()) {
-					errored = true;
-					await markFailed();
-					controller.enqueue(
-						sseError(enc, {
-							kind: "STREAM_FAILURE",
-							message: "Model returned an empty response.",
-						} satisfies ApiError),
-					);
-					controller.close();
-					return;
-				}
+				if (!errored && !clientAborted) {
+					clearTimeout(timeout);
 
-				// Persist settled turn to DB
-				try {
-					const settledTurnId = await persist(fullContent);
-					controller.enqueue(
-						enc.encode(
-							sseEvent("done", { content: fullContent, turnId: settledTurnId }),
-						),
-					);
-				} catch {
-					// DB error post-stream — content streamed but not persisted
-					errored = true;
-					await markFailed();
-					controller.enqueue(
-						sseError(enc, {
-							kind: "SERVER_ERROR",
-							message: "Response received but could not be saved.",
-						} satisfies ApiError),
-					);
+					if (!fullContent.trim()) {
+						errored = true;
+						await markFailed();
+
+						controller.enqueue(
+							sseError(enc, {
+								kind: "STREAM_FAILURE",
+								message: "Model returned an empty response.",
+							} satisfies ApiError),
+						);
+
+						controller.close();
+						return;
+					}
+
+					try {
+						persisting = true;
+						const settledTurnId = await persist(fullContent);
+
+						doneReceived = true;
+						persisting = false;
+
+						controller.enqueue(
+							enc.encode(
+								sseEvent("done", {
+									content: fullContent,
+									turnId: settledTurnId,
+								}),
+							),
+						);
+					} catch {
+						persisting = false;
+						errored = true;
+
+						await markFailed();
+						controller.enqueue(
+							sseError(enc, {
+								kind: "SERVER_ERROR",
+								message: "Response received but could not be saved.",
+							} satisfies ApiError),
+						);
+					}
 				}
 
 				controller.close();
 			} catch (err) {
-				// Mid-stream error
-				if (!errored) {
+				if (!errored && !doneReceived) {
 					errored = true;
-					await markFailed().catch(() => {
-						// best-effort — don't let markFailed swallow the original error
-					});
+					clearTimeout(timeout);
+
+					await markFailed().catch(() => {});
+					controller.enqueue(sseError(enc, toStreamEventError(err)));
 				}
-				controller.enqueue(sseError(enc, toStreamEventError(err)));
+
 				controller.close();
 			}
 		},
