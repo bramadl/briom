@@ -6,6 +6,8 @@ import {
 	NegativeSequenceError,
 	ParticipantNotFoundError,
 	RoomNotFoundError,
+	TurnNotDeletableError,
+	TurnNotFoundError,
 } from "@briom/domain";
 import {
 	ModelNotFoundError,
@@ -21,14 +23,16 @@ export function toServerActionError(error: unknown): ApiError {
 		error instanceof EmptyModelError ||
 		error instanceof EmptyDisplayNameError ||
 		error instanceof EmptyContentError ||
-		error instanceof NegativeSequenceError
+		error instanceof NegativeSequenceError ||
+		error instanceof TurnNotDeletableError
 	) {
 		return { kind: "DOMAIN_INVARIANT", message: error.message };
 	}
 
 	if (
 		error instanceof RoomNotFoundError ||
-		error instanceof ParticipantNotFoundError
+		error instanceof ParticipantNotFoundError ||
+		error instanceof TurnNotFoundError
 	) {
 		return { kind: "NOT_FOUND", message: error.message };
 	}
@@ -69,5 +73,8 @@ export function toStreamEventError(error: unknown): StreamEventError {
 		return { kind: "STREAM_FAILURE", message: error.message };
 	}
 
-	return { kind: "STREAM_FAILURE", message: "Stream was interrupted." };
+	const message =
+		error instanceof Error ? error.message : "Stream was interrupted.";
+
+	return { kind: "STREAM_FAILURE", message };
 }
