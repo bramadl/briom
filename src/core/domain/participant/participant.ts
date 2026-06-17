@@ -1,34 +1,49 @@
-import {
-	type AiModel,
-	type AiProvider,
-	QualifiedModel,
-} from "@briom/domain/ai";
-import type { RoomId } from "@briom/domain/room";
-import { Entity, validator as v } from "@briom/drimion";
+import { Entity, type IResult, Result, validator as v } from "@briom/drimion";
 
-import { EmptyDisplayNameError } from "./empty-display-name.error";
-import { EmptyModelError } from "./empty-model.error";
-import type { ParticipantId } from "./participant-id";
+import type { RoomId } from "../room";
+
+import { EmptyDisplayNameError } from "./errors";
+import type { ParticipantModel } from "./models";
+import type { ParticipantId } from "./participant.id";
 
 interface ParticipantProps {
 	displayName: string;
 	id: ParticipantId;
-	model: AiModel;
-	provider: AiProvider;
+	model: ParticipantModel;
 	roomId: RoomId;
 }
 
 export class Participant extends Entity<ParticipantProps> {
-	public static isValidProps(
+	private constructor(props: ParticipantProps) {
+		super(props);
+	}
+
+	public static override isValidProps(
 		props: ParticipantProps,
-	): EmptyModelError | EmptyDisplayNameError | undefined {
-		if (v.string(props.model).isEmpty()) return new EmptyModelError();
+	): EmptyDisplayNameError | undefined {
 		if (v.string(props.displayName).isEmpty()) {
 			return new EmptyDisplayNameError();
 		}
+		return undefined;
 	}
 
-	public get qualifiedModel(): QualifiedModel {
-		return QualifiedModel(`${this.get("provider")}/${this.get("model")}`);
+	public get displayName(): string {
+		return this.get("displayName");
+	}
+
+	public get qualifiedModel(): string {
+		return this.get("model").qualify();
+	}
+
+	public rename(newName: string): IResult<Participant, EmptyDisplayNameError> {
+		const validation = Participant.isValidProps({
+			...this.toObject(),
+			displayName: newName,
+		} as ParticipantProps);
+
+		if (validation) return Result.error(validation);
+
+		this.change("displayName", newName);
+		return Result.success(this);
 	}
 }
