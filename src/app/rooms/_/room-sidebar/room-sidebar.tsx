@@ -43,7 +43,7 @@ export function RoomSidebar({
 						<SidebarMenuItem>
 							<SidebarMenuButton
 								asChild
-								className="relative md:p-0 h-8 transition-opacity group/trigger mt-1"
+								className="relative md:p-0 h-8 transition-opacity mt-1"
 								size="lg"
 								tooltip={{
 									children: (
@@ -59,10 +59,10 @@ export function RoomSidebar({
 							>
 								<div>
 									<Logo
-										className="ml-1 size-6! group-hover/trigger:opacity-0 transition-opacity"
+										className="ml-1 size-6! group-hover:opacity-0 transition-opacity"
 										size={20}
 									/>
-									<SidebarTrigger className="ml-0.5 mt-0.5 absolute inset-0 text-muted-foreground opacity-0 group-hover/trigger:opacity-100 transition-opacity" />
+									<SidebarTrigger className="ml-0.5 mt-0.5 absolute inset-0 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
 								</div>
 							</SidebarMenuButton>
 						</SidebarMenuItem>
