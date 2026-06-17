@@ -1,6 +1,11 @@
-import type { GenerateInput, LlmGateway } from "@briom/domain/orchestrator";
+import type {
+	GenerateInput,
+	LlmGateway,
+	Message,
+} from "@briom/domain/orchestrator";
 import { type IResult, Result } from "@briom/libs/drimion";
 import type { OpenRouter } from "@openrouter/sdk";
+import type { ChatMessages } from "@openrouter/sdk/models";
 import type { SendChatCompletionRequestResponse } from "@openrouter/sdk/models/operations";
 
 import {
@@ -21,24 +26,19 @@ export class OpenRouterLlmGateway implements LlmGateway {
 	public async stream(
 		input: GenerateInput,
 	): Promise<IResult<ReadableStream<string>, OpenRouterStreamErrors>> {
+		const apiMessages = this.toTranscriptMode(input);
+
 		let eventStream: SendChatCompletionRequestResponse;
 		try {
 			eventStream = await this.client.chat.send({
 				chatRequest: {
 					stream: true,
 					model: input.qualifiedModel,
-					messages: [
-						{ role: "system", content: input.systemPrompt },
-						...input.messages,
-					],
+					messages: apiMessages,
 				},
 			});
 		} catch (error) {
-			const errors: OpenRouterStreamErrors = this.classifyError(
-				error,
-				input.qualifiedModel,
-			);
-			return Result.error(errors);
+			return Result.error(this.classifyError(error, input.qualifiedModel));
 		}
 
 		const readable = new ReadableStream<string>({
@@ -69,23 +69,40 @@ export class OpenRouterLlmGateway implements LlmGateway {
 						model,
 						retryAfter ? Number(retryAfter) : undefined,
 					);
-				// case 400:
-				// case 401:
-				// case 402:
-				// case 403:
-				// case 408:
-				// case 413:
-				// case 422:
-				// case 500:
-				// case 502:
-				// case 503:
-				// case 524:
-				// case 529:
 				default:
 					return new StreamFailureError();
 			}
 		}
 
 		return new StreamFailureError();
+	}
+
+	private extractSpeaker(msg: Message): string {
+		const match = msg.content.match(/^\[([^\]]+)\]:/);
+		return match ? match[1] : msg.role === "user" ? "User" : "AI";
+	}
+
+	private stripSpeakerPrefix(content: string): string {
+		return content.replace(/^\[[^\]]+\]:\s*/, "");
+	}
+
+	private toTranscriptMode(input: GenerateInput): ChatMessages[] {
+		const transcript = input.messages
+			.map((m) => {
+				const speaker = this.extractSpeaker(m);
+				return `${speaker}: ${this.stripSpeakerPrefix(m.content)}`;
+			})
+			.join("\n\n");
+
+		return [
+			{
+				role: "system",
+				content: `${input.systemPrompt}\n\nYou are participating in a live moderated discussion. Below is the shared conversation history. Respond naturally as yourself. Only provide your own response. Do not narrate. Do not generate dialogue for others.`,
+			},
+			{
+				role: "user",
+				content: `Discussion so far:\n\n${transcript}\n\nContinue the discussion naturally.`,
+			},
+		];
 	}
 }

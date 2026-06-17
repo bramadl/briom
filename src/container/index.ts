@@ -17,10 +17,12 @@ const container = pipe(
 			sendMessage: r["Command:SendMessage"],
 			createRoom: r["Command:CreateRoom"],
 			deleteRoom: r["Command:DeleteRoom"],
+			deleteTurn: r["Command:DeleteTurn"],
 			getAvailableModels: r["Query:GetAvailableModels"],
 			getRoom: r["Query:GetRoom"],
 			getRooms: r["Query:GetRooms"],
 			inviteParticipant: r["Command:InviteParticipant"],
+			markStreamFailed: r["Command:MarkStreamFailed"],
 			renameRoom: r["Command:RenameRoom"],
 			streamResponse: r["Command:StreamResponse"],
 		});

@@ -2,7 +2,7 @@ import { type Participant, ParticipantRole } from "@briom/domain/participant";
 import type { Intent, Turn, TurnAuthorAsParticipant } from "@briom/domain/turn";
 
 import type { Message } from "./message";
-import { BasicPrompt } from "./prompts";
+import { NarrativePrompt } from "./prompts";
 
 interface RenderInput {
 	participants: Participant[];
@@ -26,7 +26,7 @@ export class Transcriptor {
 			.map((p) => `- ${p.get("displayName")}`)
 			.join("\n");
 
-		return BasicPrompt.build({
+		return NarrativePrompt.build({
 			displayName: currentParticipant.get("displayName"),
 			others,
 			intent,
@@ -38,23 +38,27 @@ export class Transcriptor {
 			participants.map((p) => [p.id.value(), p]),
 		);
 
-		return turns.map((turn): Message => {
-			if (turn.isFromUser) {
+		const messages = turns
+			.filter((t) => !t.isFailed && !t.isPending)
+			.map((turn): Message => {
+				if (turn.isFromUser) {
+					return {
+						role: ParticipantRole.USER,
+						content: `[User]:\n${turn.get("content")}`,
+					};
+				}
+
+				const author = turn.get("author") as TurnAuthorAsParticipant;
+				const speaker = participantMap.get(
+					author.participantId as string,
+				) as Participant;
+
 				return {
-					role: ParticipantRole.USER,
-					content: `[User]:\n${turn.get("content")}`,
+					role: ParticipantRole.ASSISTANT,
+					content: `[${speaker.get("displayName")}]:\n${turn.get("content")}`,
 				};
-			}
+			});
 
-			const author = turn.get("author") as TurnAuthorAsParticipant;
-			const speaker = participantMap.get(
-				author.participantId as string,
-			) as Participant;
-
-			return {
-				role: ParticipantRole.ASSISTANT,
-				content: `[${speaker.get("displayName")}]:\n${turn.get("content")}`,
-			};
-		});
+		return messages;
 	}
 }

@@ -9,7 +9,11 @@ import {
 	RoomNotFoundError,
 	type RoomRepository,
 } from "@briom/domain/room";
-import { Turn, type TurnRepository } from "@briom/domain/turn";
+import {
+	Turn,
+	type TurnRepository,
+	type TurnSequencer,
+} from "@briom/domain/turn";
 import { type InfraError, type IResult, Result } from "@briom/drimion";
 
 import type { StreamResponseCommand, StreamResponseOutput } from "./command";
@@ -20,6 +24,7 @@ export class StreamResponseHandler {
 		private readonly roomRepository: RoomRepository,
 		private readonly participantRepository: ParticipantRepository,
 		private readonly turnRepository: TurnRepository,
+		private readonly sequencer: TurnSequencer,
 	) {}
 
 	public async execute({
@@ -54,7 +59,7 @@ export class StreamResponseHandler {
 		const pendingTurnResult = Turn.create({
 			id: turnId,
 			roomId,
-			sequenceNumber: 0,
+			sequenceNumber: await this.sequencer.nextPositionFor(roomId),
 			author: {
 				type: "participant",
 				participantId: ParticipantId(input.targetParticipantId),

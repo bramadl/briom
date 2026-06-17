@@ -5,6 +5,9 @@ import {
 	DeleteRoomCommand,
 	type DeleteRoomHandler,
 	type DeleteRoomInput,
+	DeleteTurnCommand,
+	type DeleteTurnHandler,
+	type DeleteTurnInput,
 	type GetAvailableModelsHandler,
 	type GetAvailableModelsInput,
 	GetAvailableModelsQuery,
@@ -17,6 +20,9 @@ import {
 	InviteParticipantCommand,
 	type InviteParticipantHandler,
 	type InviteParticipantInput,
+	MarkStreamFailedCommand,
+	type MarkStreamFailedHandler,
+	type MarkStreamFailedInput,
 	RenameRoomCommand,
 	type RenameRoomHandler,
 	type RenameRoomInput,
@@ -31,10 +37,12 @@ import {
 export interface BriomDeps {
 	createRoom: CreateRoomHandler;
 	deleteRoom: DeleteRoomHandler;
+	deleteTurn: DeleteTurnHandler;
 	getAvailableModels: GetAvailableModelsHandler;
 	getRoom: GetRoomHandler;
 	getRooms: GetRoomsHandler;
 	inviteParticipant: InviteParticipantHandler;
+	markStreamFailed: MarkStreamFailedHandler;
 	renameRoom: RenameRoomHandler;
 	sendMessage: SendMessageHandler;
 	streamResponse: StreamResponseHandler;
@@ -51,6 +59,10 @@ export class Briom {
 		return this.deps.deleteRoom.execute(new DeleteRoomCommand(input));
 	}
 
+	public deleteTurn(input: DeleteTurnInput) {
+		return this.deps.deleteTurn.execute(new DeleteTurnCommand(input));
+	}
+
 	public getAvailableModels(input: GetAvailableModelsInput) {
 		return this.deps.getAvailableModels.execute(
 			new GetAvailableModelsQuery(input),
@@ -65,9 +77,19 @@ export class Briom {
 		return this.deps.getRooms.execute(new GetRoomsQuery(input));
 	}
 
+	public initiateStreaming(input: StreamResponseInput) {
+		return this.deps.streamResponse.execute(new StreamResponseCommand(input));
+	}
+
 	public inviteParticipant(input: InviteParticipantInput) {
 		return this.deps.inviteParticipant.execute(
 			new InviteParticipantCommand(input),
+		);
+	}
+
+	public markStreamFailed(input: MarkStreamFailedInput) {
+		return this.deps.markStreamFailed.execute(
+			new MarkStreamFailedCommand(input),
 		);
 	}
 
@@ -77,9 +99,5 @@ export class Briom {
 
 	public sendMessage(input: SendMessageInput) {
 		return this.deps.sendMessage.execute(new SendMessageCommand(input));
-	}
-
-	public initiateStreaming(input: StreamResponseInput) {
-		return this.deps.streamResponse.execute(new StreamResponseCommand(input));
 	}
 }

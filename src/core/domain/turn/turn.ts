@@ -22,7 +22,7 @@ export class Turn extends Entity<TurnProps> {
 	public static isValidProps(
 		props: TurnProps,
 	): EmptyContentError | NegativeSequenceError | undefined {
-		if (props.status !== "pending" && v.string(props.content).isEmpty()) {
+		if (props.status === "settled" && v.string(props.content).isEmpty()) {
 			return new EmptyContentError();
 		}
 
@@ -49,5 +49,13 @@ export class Turn extends Entity<TurnProps> {
 
 	get isFailed(): boolean {
 		return this.get("status") === "failed";
+	}
+
+	get isDeletable(): boolean {
+		return this.get("status") === "pending" || this.get("status") === "failed";
+	}
+
+	public markAsFailed() {
+		this.change("status", "failed");
 	}
 }
