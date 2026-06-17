@@ -218,3 +218,136 @@
     cursor: pointer;
   }
 }
+
+@layer components {  
+  /* Briom Highlight Theme — Muted, Elegant, Warm */
+  .hljs {
+    display: block;
+    overflow-x: auto;
+    padding: 0;
+    background: transparent;
+    color: hsl(var(--foreground));
+    font-family: var(--font-mono), ui-monospace, monospace;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  /* Comments — faded, unobtrusive */
+  .hljs-comment,
+  .hljs-quote {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+    opacity: 0.7;
+  }
+
+  /* Keywords — warm accent */
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-subst {
+    color: var(--terracotta);
+    font-weight: 500;
+  }
+
+  /* Strings — sage green */
+  .hljs-string,
+  .hljs-title,
+  .hljs-section,
+  .hljs-type,
+  .hljs-symbol,
+  .hljs-bullet,
+  .hljs-addition {
+    color: var(--sage);
+  }
+
+  /* Numbers, literals — dusty blue */
+  .hljs-number,
+  .hljs-literal,
+  .hljs-variable,
+  .hljs-template-variable,
+  .hljs-attribute {
+    color: var(--dusty-blue);
+  }
+
+  /* Functions, classes — muted lavender */
+  .hljs-function,
+  .hljs-class .hljs-title,
+  .hljs-tag,
+  .hljs-name {
+    color: var(--muted-lavender);
+  }
+
+  /* Operators, punctuation — subtle */
+  .hljs-operator,
+  .hljs-regexp,
+  .hljs-link,
+  .hljs-selector-attr,
+  .hljs-selector-pseudo {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Built-ins, params — warm sienna */
+  .hljs-built_in,
+  .hljs-params {
+    color: var(--warm-sienna);
+  }
+
+  /* Emphasis, strong */
+  .hljs-emphasis {
+    font-style: italic;
+  }
+
+  .hljs-strong {
+    font-weight: 600;
+  }
+
+  /* Deletion */
+  .hljs-deletion {
+    color: hsl(var(--destructive));
+    opacity: 0.8;
+  }
+}
+
+@layer components {
+  .ProseMirror.is-editor-empty::before {
+    content: attr(data-placeholder);
+    float: left;
+    color: var(--color-muted-foreground);
+    opacity: 0.30;
+    pointer-events: none;
+    height: 0;
+  }
+
+  .tiptap pre {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+  }
+
+  .tiptap pre code {
+    padding: 0;
+    background: transparent;
+  }
+}
+
+@layer components {
+  /* Reset prose interference on code blocks */
+  .prose-sm pre,
+  .prose-sm :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    margin: 0 !important;
+    padding: 0.875rem !important;
+    font-size: inherit !important;
+  }
+
+  .prose-sm code,
+  .prose-sm :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
+    font-size: 0.875rem;
+    font-weight: inherit;
+    color: inherit;
+  }
+
+  /* Remove prose's backtick pseudo-element on inline code */
+  .prose-sm :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::before,
+  .prose-sm :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::after {
+    content: none !important;
+  }
+}
