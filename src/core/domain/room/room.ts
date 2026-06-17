@@ -201,4 +201,13 @@ export class Room extends Aggregate<RoomProps> {
 		);
 		return Result.success(undefined);
 	}
+
+	public rename(newTitle: string): IResult<void, EmptyTitleError> {
+		if (v.string(newTitle).isEmpty()) {
+			return Result.error(new EmptyTitleError());
+		}
+
+		this.change("title", newTitle);
+		return Result.success(undefined);
+	}
 }
