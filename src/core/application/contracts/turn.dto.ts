@@ -1,6 +1,6 @@
 import type { IntentOption } from "@briom/core/domain";
 
-interface BaseTurnDTO {
+export interface BaseTurnDTO {
 	/**
 	 * @description
 	 * The markdown content sent by parties.

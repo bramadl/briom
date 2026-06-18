@@ -1,9 +1,17 @@
-export interface ParticipantDTO {
+interface BaseParticipantDTO {
 	/**
 	 * @description
 	 * An UUID assigned to the participant when first invited to a room.
 	 */
 	id: string;
+	/**
+	 * @description
+	 * Name that the moderator assigned onto upon invitation.
+	 */
+	name: string;
+}
+
+export interface ParticipantDTO extends BaseParticipantDTO {
 	/**
 	 * @description
 	 * Unique identifier of the model.
@@ -12,11 +20,6 @@ export interface ParticipantDTO {
 	 * gpt-4, sonnet-4.5, gemini-flash
 	 */
 	model: string;
-	/**
-	 * @description
-	 * Name that the moderator assigned onto upon invitation.
-	 */
-	name: string;
 	/**
 	 * @description
 	 * Provider who owns the model (in lowercase).
@@ -34,3 +37,5 @@ export interface ParticipantDTO {
 	 */
 	qualifiedModel: string;
 }
+
+export interface ParticipantBubbleDTO extends BaseParticipantDTO {}
