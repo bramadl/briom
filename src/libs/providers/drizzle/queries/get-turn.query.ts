@@ -12,9 +12,24 @@ import type { Database } from "@briom/drizzle/client";
 import { turnsTable } from "@briom/drizzle/schema";
 import { eq } from "drizzle-orm";
 
+/**
+ * @description
+ * `DrizzleGetTurnQuery` — Infrastructure Query
+ *
+ * PostgreSQL implementation of `GetTurnQuery`.
+ * Loads a single turn by ID with full state reconstruction.
+ */
 export class DrizzleGetTurnQuery implements GetTurnQuery {
 	constructor(private readonly db: Database) {}
 
+	/**
+	 * @description
+	 * Executes single turn lookup.
+	 *
+	 * @param input - Turn ID to retrieve
+	 * @returns TurnDTO with full state
+	 * @throws Error if turn not found
+	 */
 	async execute(input: GetTurnInput): Promise<GetTurnOutput> {
 		const record = await this.db.query.turnsTable.findFirst({
 			where: eq(turnsTable.id, input.turnId),

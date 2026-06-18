@@ -178,7 +178,7 @@ export interface GetTurnOutput {
 	 * @description
 	 * The requested turn.
 	 */
-	turn: TurnDTO;
+	turn: TurnDTO | null;
 }
 
 /**

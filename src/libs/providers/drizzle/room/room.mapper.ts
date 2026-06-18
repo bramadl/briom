@@ -15,7 +15,27 @@ import {
 import type { RoomRecord } from "@briom/drizzle/schema";
 import type { ParticipantRecord } from "./room.model";
 
+/**
+ * @description
+ * `ParticipantMapper` — Infrastructure Mapper
+ *
+ * Translates between `Participant` domain entities and database records.
+ * Handles the decomposition of `ParticipantModel` (Value Object) into
+ * separate provider/model columns for storage.
+ *
+ * **Mapping Rules**
+ * - Domain: `ParticipantModel` = { model: ParticipantModelAi, provider: ParticipantModelProvider }
+ * - DB: separate `model` and `provider` text columns
+ * - Domain ID (ParticipantId) ↔ DB `id` string
+ */
 export const ParticipantMapper = {
+	/**
+	 * @description
+	 * Reconstitutes a `Participant` entity from database record.
+	 *
+	 * @param record - Raw participant row from database
+	 * @returns Fully constructed `Participant` entity
+	 */
 	toDomain(record: ParticipantRecord): Participant {
 		return Participant.rehydrate({
 			id: ParticipantId(record.id),
@@ -28,6 +48,13 @@ export const ParticipantMapper = {
 		});
 	},
 
+	/**
+	 * @description
+	 * Flattens a `Participant` entity into database record shape.
+	 *
+	 * @param participant - Domain entity to persist
+	 * @returns Record suitable for `INSERT`/`UPDATE`
+	 */
 	toPersistence(participant: Participant): ParticipantRecord {
 		return {
 			id: participant.id.value(),
@@ -39,7 +66,29 @@ export const ParticipantMapper = {
 	},
 };
 
+/**
+ * @description
+ * `RoomMapper` — Infrastructure Mapper
+ *
+ * Translates between Room aggregate and database records.
+ * Handles the complex reconstitution of Room with its Participants and Turn IDs.
+ *
+ * **Note on Turn IDs**
+ * Turns are stored in a separate table. The mapper receives turn IDs
+ * as a separate array (queried by the repository) rather than joining
+ * them directly — this keeps the mapper pure and the repository in control
+ * of query strategy.
+ */
 export const RoomMapper = {
+	/**
+	 * @description
+	 * Reconstitutes a Room aggregate from database records.
+	 *
+	 * @param record - Raw room row from database
+	 * @param participantRecords - Associated participants (default empty)
+	 * @param turnIds - IDs of turns in this room (default empty)
+	 * @returns Fully constructed `Room` aggregate with all entities
+	 */
 	toDomain(
 		record: RoomRecord,
 		participantRecords: ParticipantRecord[] = [],
@@ -57,6 +106,16 @@ export const RoomMapper = {
 		});
 	},
 
+	/**
+	 * @description
+	 * Flattens a `Room` aggregate into database record shape.
+	 *
+	 * **Note**: Does NOT include participants or turn IDs — those are
+	 * persisted separately by the repository (cascade or explicit).
+	 *
+	 * @param room - Domain aggregate to persist
+	 * @returns Record suitable for `INSERT`/`UPDATE`
+	 */
 	toPersistence(room: Room): RoomRecord {
 		return {
 			id: room.id.value(),

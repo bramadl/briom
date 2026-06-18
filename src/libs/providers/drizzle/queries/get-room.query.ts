@@ -12,9 +12,32 @@ import {
 } from "@briom/drizzle/schema";
 import { asc, eq } from "drizzle-orm";
 
+/**
+ * @description
+ * `DrizzleGetRoomQuery` — Infrastructure Query
+ *
+ * PostgreSQL implementation of `GetRoomQuery`.
+ * Loads a single room with all relations (participants, turn IDs).
+ *
+ * **Query Strategy**
+ * 1. Primary room lookup by ID
+ * 2. Parallel queries for participants and turns
+ * 3. Assembly into `RoomDTO`
+ *
+ * **N+1 Avoidance**
+ * Participants and turns are loaded in parallel (Promise.all), not sequentially.
+ */
 export class DrizzleGetRoomQuery implements GetRoomQuery {
 	constructor(private readonly db: Database) {}
 
+	/**
+	 * @description
+	 * Executes room lookup with relations.
+	 *
+	 * @param input - Room ID to retrieve
+	 * @returns RoomDTO with all relations
+	 * @throws Error if room not found
+	 */
 	async execute(input: GetRoomInput): Promise<GetRoomOutput> {
 		const room = await this.db.query.roomsTable.findFirst({
 			where: eq(roomsTable.id, input.roomId),

@@ -12,9 +12,23 @@ import type { Database } from "@briom/drizzle/client";
 import { turnsTable } from "@briom/drizzle/schema";
 import { asc, eq } from "drizzle-orm";
 
+/**
+ * @description
+ * `DrizzleGetTurnsQuery` — Infrastructure Query
+ *
+ * PostgreSQL implementation of `GetTurnsQuery`.
+ * Loads all turns in a room, ordered by sequence ascending.
+ */
 export class DrizzleGetTurnsQuery implements GetTurnsQuery {
 	constructor(private readonly db: Database) {}
 
+	/**
+	 * @description
+	 * Executes turns list query for a room.
+	 *
+	 * @param input - Room ID to retrieve turns for
+	 * @returns All turns in sequence order
+	 */
 	async execute(input: GetTurnsInput): Promise<GetTurnsOutput> {
 		const records = await this.db
 			.select()

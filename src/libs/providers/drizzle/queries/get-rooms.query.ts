@@ -12,9 +12,30 @@ import {
 } from "@briom/drizzle/schema";
 import { desc, eq } from "drizzle-orm";
 
+/**
+ * @description
+ * `DrizzleGetRoomsQuery` — Infrastructure Query
+ *
+ * PostgreSQL implementation of `GetRoomsQuery`.
+ * Loads all rooms with their relations, ordered by creation time descending.
+ *
+ * **N+1 Warning Acknowledgement**
+ * This query loads rooms, then for each room loads participants and turns.
+ * For MVP (small room count) this is acceptable. For scale, this will be considered:
+ * - JOIN-based single query
+ * - Pagination (LIMIT/OFFSET)
+ * - Projected fields (exclude turn content)
+ */
 export class DrizzleGetRoomsQuery implements GetRoomsQuery {
 	constructor(private readonly db: Database) {}
 
+	/**
+	 * @description
+	 * Executes rooms list query.
+	 *
+	 * @param _input - Empty criteria (MVP lists all)
+	 * @returns All rooms with relations, newest first
+	 */
 	async execute(_input: GetRoomsInput): Promise<GetRoomsOutput> {
 		const rooms = await this.db
 			.select()

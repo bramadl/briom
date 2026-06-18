@@ -16,7 +16,20 @@ import {
 
 import type { TurnRecord } from "./turn.model";
 
+/**
+ * @description
+ * `TurnAuthorMapper` — Internal Mapper
+ *
+ * Reconstitutes `TurnAuthor` from database discriminated columns.
+ */
 const TurnAuthorMapper = {
+	/**
+	 * @description
+	 * Creates `TurnAuthor` from database record.
+	 *
+	 * @param record - Turn row with authorType, moderatorId, participantId
+	 * @returns `TurnAuthor` value object
+	 */
 	toDomain(record: TurnRecord): TurnAuthor {
 		if (record.authorType === "moderator") {
 			return TurnAuthor.asModerator(ModeratorId(record.moderatorId as string));
@@ -27,15 +40,34 @@ const TurnAuthorMapper = {
 	},
 };
 
+/**
+ * @description
+ * `TurnMapper` — Infrastructure Mapper
+ *
+ * Translates between `Turn` aggregate and database records.
+ * Handles the complex state-dependent reconstruction of `TurnPerspective`
+ * and `StreamError` from flat database columns.
+ *
+ **State-Dependent Mapping**
+ * - `SETTLED`/`STREAMING`: perspective content from `content` column
+ * - `FAILED`: error from `errorKind`/`errorMessage`/`errorRetryAfter`/`failedAt`
+ * - `PENDING`: empty perspective, no error
+ * - `ABANDONED`: empty perspective, no error (terminal)
+ */
 export const TurnMapper = {
+	/**
+	 * @description
+	 * Reconstitutes a `Turn` aggregate from database record.
+	 *
+	 * @param record - Raw turn row from database
+	 * @returns Fully constructed `Turn` aggregate with correct state
+	 */
 	toDomain(record: TurnRecord): Turn {
-		const author = TurnAuthorMapper.toDomain(record);
-
 		const props: TurnProps = {
 			id: TurnId(record.id),
 			roomId: RoomId(record.roomId),
 			sequence: TurnSequence.fromNumber(record.sequence),
-			author,
+			author: TurnAuthorMapper.toDomain(record),
 			intent: record.intent as IntentOption | null,
 			perspective: TurnPerspective.empty(),
 			status: record.status as TurnStatusOption,
@@ -49,6 +81,7 @@ export const TurnMapper = {
 			failedAt: record.failedAt,
 		};
 
+		// Reconstruct perspective for settled or streaming turns
 		if (record.status === "settled" || record.status === "streaming") {
 			props.perspective = TurnPerspective.rehydrate({
 				content: record.content,
@@ -56,6 +89,7 @@ export const TurnMapper = {
 			});
 		}
 
+		// Reconstruct error for failed turns
 		if (record.status === "failed" && record.failedAt && record.errorKind) {
 			props.error = StreamError.rehydrate({
 				kind: record.errorKind as (typeof STREAM_ERROR)[keyof typeof STREAM_ERROR],
@@ -68,6 +102,13 @@ export const TurnMapper = {
 		return Turn.rehydrate(props);
 	},
 
+	/**
+	 * @description
+	 * Flattens a `Turn` aggregate into database record shape.
+	 *
+	 * @param turn - Domain aggregate to persist
+	 * @returns Record suitable for `INSERT`/`UPDATE`
+	 */
 	toPersistence(turn: Turn): TurnRecord {
 		const author = turn.get("author");
 		const error = turn.get("error");
