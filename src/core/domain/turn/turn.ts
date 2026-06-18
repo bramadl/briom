@@ -83,6 +83,10 @@ export class Turn extends Aggregate<TurnProps> {
 		return undefined;
 	}
 
+	public static rehydrate(props: TurnProps): Turn {
+		return new Turn(props);
+	}
+
 	public static initiateModeratorTurn(props: {
 		id: TurnId;
 		roomId: RoomId;
