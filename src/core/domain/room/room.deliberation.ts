@@ -1,12 +1,11 @@
 import { type IResult, Result } from "@briom/libs/drimion";
-
-import type { Participant, ParticipantId } from "../participant";
 import {
 	INTENT_OPTION,
 	InvalidIntentForContextError,
 	type Turn,
 	TurnIntent,
 } from "../turn";
+import type { Participant, ParticipantId } from "./participant";
 
 import type { Room } from "./room";
 
@@ -63,8 +62,8 @@ export class RoomDeliberation {
 		}
 
 		const participantNotInRoom = !room
-			.get("participantIds")
-			.some((id) => id.isEqual(participantId));
+			.get("participants")
+			.some((p) => p.id.isEqual(participantId));
 
 		if (participantNotInRoom) {
 			return Result.error(

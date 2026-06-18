@@ -4,7 +4,6 @@ import {
 	ParticipantModel,
 	ParticipantModelAi,
 	ParticipantModelProvider,
-	type ParticipantRepository,
 	RoomId,
 	type RoomRepository,
 } from "@briom/domain";
@@ -27,7 +26,6 @@ export class InviteParticipantHandler
 {
 	constructor(
 		private readonly roomRepository: RoomRepository,
-		private readonly participantRepository: ParticipantRepository,
 		private readonly eventBus: IEventBus,
 	) {}
 
@@ -59,10 +57,9 @@ export class InviteParticipantHandler
 		}
 
 		const participant = participantResult.value();
-		const inviteResult = room.inviteParticipant(participantId);
+		const inviteResult = room.inviteParticipant(participant);
 		if (inviteResult.isError()) return Result.error(inviteResult.error());
 
-		await this.participantRepository.persist(participant);
 		await this.roomRepository.persist(room);
 
 		const roomEvents = room.pullEvents();

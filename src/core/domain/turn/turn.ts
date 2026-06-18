@@ -5,9 +5,8 @@ import {
 	Result,
 } from "@briom/libs/drimion";
 
-import type { ModeratorId } from "../moderator";
-import type { ParticipantId } from "../participant";
-import type { RoomId } from "../room";
+import type { ModeratorId, RoomId } from "../room";
+import type { ParticipantId } from "../room/participant";
 
 import {
 	EmptyPerspectiveError,
@@ -37,7 +36,7 @@ import { TurnIntent } from "./turn.intent";
 import { TurnPerspective } from "./turn.perspective";
 import type { TurnSequence } from "./turn.sequence";
 
-interface TurnProps {
+export interface TurnProps {
 	author: TurnAuthor;
 	createdAt: Date;
 	error: StreamError | null;

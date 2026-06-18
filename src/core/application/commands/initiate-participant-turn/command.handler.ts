@@ -1,7 +1,6 @@
 import {
 	type IntentOption,
 	ParticipantId,
-	type ParticipantRepository,
 	type RoomDeliberation,
 	RoomId,
 	type RoomRepository,
@@ -35,7 +34,6 @@ export class InitiateParticipantTurnHandler
 {
 	constructor(
 		private readonly roomRepository: RoomRepository,
-		private readonly participantRepository: ParticipantRepository,
 		private readonly turnRepository: TurnRepository,
 		private readonly sequencer: TurnSequencer,
 		private readonly orchestrator: TurnLifecycleOrchestrator,
@@ -65,10 +63,7 @@ export class InitiateParticipantTurnHandler
 			);
 		}
 
-		const participant = await this.participantRepository.findById(
-			ParticipantId(participantId),
-		);
-
+		const participant = room.findParticipantById(ParticipantId(participantId));
 		if (!participant) {
 			return Result.error(
 				new DomainError("Participant not found", {
@@ -78,7 +73,7 @@ export class InitiateParticipantTurnHandler
 		}
 
 		const turns = await this.turnRepository.findByRoom(room);
-		const participants = await this.participantRepository.findByRoom(room);
+		const participants = room.get("participants");
 
 		const turnIntent = TurnIntent.from(intent as IntentOption);
 		const validation = this.deliberation.validateIntent(

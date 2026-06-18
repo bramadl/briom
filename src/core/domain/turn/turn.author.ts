@@ -1,7 +1,7 @@
 import { ValueObject } from "@briom/drimion";
 
 import type { ModeratorId } from "../moderator";
-import type { ParticipantId } from "../participant";
+import type { ParticipantId } from "../room/participant";
 
 interface TurnAuthorProps {
 	moderatorId?: ModeratorId;

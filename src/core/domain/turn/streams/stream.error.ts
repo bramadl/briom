@@ -64,4 +64,8 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 			occurredAt: new Date(),
 		});
 	}
+
+	public static rehydrate(props: StreamErrorProps): StreamError {
+		return new StreamError(props);
+	}
 }

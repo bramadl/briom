@@ -16,7 +16,11 @@ export class ParticipantModel extends ValueObject<ParticipantModelProps> {
 	public static override isValidProps(
 		_props: unknown,
 	): DomainError | undefined {
-		return /* NO-OP */;
+		return undefined;
+	}
+
+	public static rehydrate(props: ParticipantModelProps): ParticipantModel {
+		return new ParticipantModel(props);
 	}
 
 	public get model(): ParticipantModelAi {

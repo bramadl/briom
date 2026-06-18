@@ -1,6 +1,6 @@
 import { Entity, type IResult, Result, validator as v } from "@briom/drimion";
 
-import type { RoomId } from "../room";
+import type { RoomId } from "../room.id";
 
 import { EmptyDisplayNameError } from "./errors";
 import type { ParticipantModel } from "./models";
@@ -25,6 +25,10 @@ export class Participant extends Entity<ParticipantProps> {
 			return new EmptyDisplayNameError();
 		}
 		return undefined;
+	}
+
+	public static rehydrate(props: ParticipantProps): Participant {
+		return new Participant(props);
 	}
 
 	public get displayName(): string {

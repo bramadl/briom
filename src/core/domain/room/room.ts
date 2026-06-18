@@ -5,11 +5,7 @@ import {
 	Result,
 	validator as v,
 } from "@briom/drimion";
-
-import type { ModeratorId } from "../moderator";
-import type { ParticipantId } from "../participant";
 import type { TurnId } from "../turn";
-
 import {
 	CannotConcludeRoomError,
 	CannotPauseRoomError,
@@ -29,6 +25,8 @@ import {
 	RoomFormed,
 	TurnRegistered,
 } from "./events";
+import type { ModeratorId } from "./moderator.id";
+import type { Participant, ParticipantId } from "./participant";
 import type { RoomId } from "./room.id";
 import { ROOM_STATUS_OPTION, type RoomStatusOption } from "./room.status";
 
@@ -36,7 +34,7 @@ interface RoomProps {
 	createdAt: Date;
 	id: RoomId;
 	moderatorId: ModeratorId;
-	participantIds: ParticipantId[];
+	participants: Participant[];
 	status: RoomStatusOption;
 	title: string;
 	topic: string | null;
@@ -56,12 +54,12 @@ export class Room extends Aggregate<RoomProps> {
 	}
 
 	public static form(
-		props: Omit<RoomProps, "topic" | "participantIds" | "turnIds" | "status">,
+		props: Omit<RoomProps, "topic" | "participants" | "turnIds" | "status">,
 	): IResult<Room, EmptyTitleError> {
 		const fullProps: RoomProps = {
 			...props,
 			topic: null,
-			participantIds: [],
+			participants: [],
 			turnIds: [],
 			status: ROOM_STATUS_OPTION.FORMING,
 		};
@@ -88,8 +86,12 @@ export class Room extends Aggregate<RoomProps> {
 		return this.get("status") === ROOM_STATUS_OPTION.DELIBERATING;
 	}
 
+	public findParticipantById(participantId: ParticipantId) {
+		return this.get("participants").find((p) => p.id.isEqual(participantId));
+	}
+
 	public inviteParticipant(
-		participantId: ParticipantId,
+		participant: Participant,
 	): IResult<
 		void,
 		ParticipateAfterDeliberation | ParticipantAlreadyInvitedError
@@ -98,15 +100,15 @@ export class Room extends Aggregate<RoomProps> {
 			return Result.error(new ParticipateAfterDeliberation());
 		}
 
-		const current = this.get("participantIds");
-		if (current.some((id) => id === participantId)) {
+		const current = this.get("participants");
+		if (current.some((p) => participant.id.equal(p.id))) {
 			return Result.error(new ParticipantAlreadyInvitedError());
 		}
 
-		this.change("participantIds", [...current, participantId]);
+		this.change("participants", [...current, participant]);
 		this.emit(
 			new ParticipantInvited(this.id.value(), {
-				participantId,
+				participantId: participant.id,
 				occurredAt: new Date(),
 				roomId: this.id,
 			}),
@@ -127,7 +129,7 @@ export class Room extends Aggregate<RoomProps> {
 			);
 		}
 
-		if (this.get("participantIds").length === 0) {
+		if (this.get("participants").length === 0) {
 			return Result.error(
 				new CannotStartDeliberationError(
 					"Cannot start deliberation without participants",

@@ -1,6 +1,6 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import type { ParticipantId } from "../../participant";
+import type { ParticipantId } from "../participant";
 import { Room } from "../room";
 
 import type { BaseRoomDomainEventPayload } from "./base.event";
