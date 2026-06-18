@@ -10,6 +10,21 @@ import type { TurnLifecycleOrchestrator } from "../../services/turn-lifecycle.or
 
 import type { AbandonTurnCommand } from "./command";
 
+/**
+ * @description
+ * `AbandonTurnHandler` — Command Handler
+ *
+ * Executes the permanent abandonment of a failed turn.
+ *
+ * **Flow**
+ * 1. Delegate to `TurnLifecycleOrchestrator.abandon()`
+ *
+ * **Invariant Enforcement**
+ * - Turn must exist (enforced by orchestrator)
+ * - Turn must be in `FAILED` status (enforced by Turn.abandon)
+ *
+ * @see TurnLifecycleOrchestrator.abandon — for lifecycle management
+ */
 export class AbandonTurnHandler
 	implements ICommand<AbandonTurnCommand, void, DomainError>
 {
@@ -17,6 +32,13 @@ export class AbandonTurnHandler
 		private readonly orchestrator: TurnLifecycleOrchestrator,
 	) {}
 
+	/**
+	 * @description
+	 * Abandons a failed turn permanently.
+	 *
+	 * @param command - Turn ID to abandon
+	 * @returns Result containing void, or domain error
+	 */
 	public async execute(
 		command: AbandonTurnCommand,
 	): Promise<IResult<void, DomainError>> {

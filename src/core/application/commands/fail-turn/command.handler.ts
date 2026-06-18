@@ -10,6 +10,28 @@ import type { TurnLifecycleOrchestrator } from "../../services/turn-lifecycle.or
 
 import type { FailTurnCommand } from "./command";
 
+/**
+ * @description
+ * `FailTurnHandler` — Command Handler
+ *
+ * Executes the failure of a turn with classified error details.
+ *
+ * **Flow**
+ * 1. Map input kind to domain StreamError
+ * 2. Delegate to `TurnLifecycleOrchestrator.fail()`
+ *
+ * **Error Classification**
+ * Maps command-level error kinds to domain StreamError factory methods:
+ * - timeout → StreamError.timeout()
+ * - rate_limited → StreamError.rateLimited()
+ * - model_not_found → StreamError.modelNotFound()
+ * - stream_failure → StreamError.streamFailure()
+ * - aborted → StreamError.aborted()
+ * - empty_response → StreamError.emptyResponse()
+ *
+ * @see TurnLifecycleOrchestrator.fail — for lifecycle management
+ * @see StreamError — for error taxonomy
+ */
 export class FailTurnHandler
 	implements ICommand<FailTurnCommand, void, DomainError>
 {
@@ -17,6 +39,13 @@ export class FailTurnHandler
 		private readonly orchestrator: TurnLifecycleOrchestrator,
 	) {}
 
+	/**
+	 * @description
+	 * Fails a turn with classified error.
+	 *
+	 * @param command - Turn ID, error kind, and optional details
+	 * @returns Result containing void, or domain error
+	 */
 	public async execute(
 		command: FailTurnCommand,
 	): Promise<IResult<void, DomainError>> {

@@ -20,15 +20,48 @@ import type {
 	InviteParticipantOutput,
 } from "./command";
 
+/**
+ * @description
+ * `InviteParticipantHandler` — Command Handler
+ *
+ * Executes the invitation of an AI participant into a room.
+ *
+ * **Flow**
+ * 1. Find room by ID
+ * 2. Create Participant entity (model + provider + display name)
+ * 3. Delegate to `Room.inviteParticipant()` domain method
+ * 4. Persist room (cascades to participant)
+ * 5. Publish `ParticipantInvited` domain event
+ *
+ * **Invariant Enforcement**
+ * - Room must exist
+ * - Room must be in `FORMING` status (enforced by `Room.inviteParticipant`)
+ * - Participant ID must not duplicate existing participant (enforced by `Room`)
+ * - Participant Model must not duplicate existing participant (enforced by `Room`)
+ * - Display name must be non-empty (enforced by `Participant.create`)
+ *
+ * **Events Published**
+ * - `ParticipantInvited` — signals new AI perspective available
+ *
+ * @see Room.inviteParticipant — for domain rules
+ * @see RoomSseSubscriber — for event forwarding
+ */
 export class InviteParticipantHandler
 	implements
 		ICommand<InviteParticipantCommand, InviteParticipantOutput, DomainError>
 {
-	constructor(
+	public constructor(
 		private readonly roomRepository: RoomRepository,
 		private readonly eventBus: IEventBus,
 	) {}
 
+	/**
+	 * @description
+	 * Invites an AI participant into a room.
+	 *
+	 * @param command - Participant details and target room
+	 * @returns Result containing participantId, or domain error
+	 */
 	public async execute(
 		command: InviteParticipantCommand,
 	): Promise<IResult<InviteParticipantOutput, DomainError>> {

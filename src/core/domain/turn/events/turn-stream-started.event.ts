@@ -5,6 +5,13 @@ import { Turn } from "../turn";
 
 import type { BaseTurnEventPayload } from "./base.event";
 
+/**
+ * @description
+ * Emitted when a pending turn transitions to streaming status.
+ *
+ * Signals that the LLM connection is established and tokens will begin
+ * flowing. Used by SSE subscribers to update UI from "thinking" to "streaming".
+ */
 export interface TurnStreamStartedPayload extends BaseTurnEventPayload {
 	roomId: RoomId;
 }

@@ -4,6 +4,12 @@ import { Room } from "../room";
 
 import type { BaseRoomDomainEventPayload } from "./base.event";
 
+/**
+ * @description
+ * Emitted when the moderator pauses deliberation.
+ *
+ * No new turns can be initiated until deliberation is resumed.
+ */
 export interface DeliberationPausedPayload extends BaseRoomDomainEventPayload {}
 
 export class DeliberationPaused extends BaseDomainEvent<DeliberationPausedPayload> {

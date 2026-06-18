@@ -52,11 +52,79 @@ export interface TurnProps {
 	tokens: string[];
 }
 
+/**
+ * @description
+ * `Turn` — Aggregate Root
+ *
+ * A single contribution within a deliberation. The `Turn` is the atomic unit of
+ * collaborative thinking: it has an author (moderator or participant), an intent
+ * (why this contribution now), a perspective (the actual content), and a lifecycle
+ * status that tracks its progression from initiation through streaming to settlement.
+ *
+ * **Lifecycle State Machine**
+ * ```
+ * `PENDING` → `STREAMING` → `SETTLED`
+ *      ↓            ↓
+ *  `FAILED` ←───────┘
+ *      ↓
+ * `ABANDONED`
+ * ```
+ *
+ * **Turn vs Message**
+ * A `Turn` is NOT a message. A `Turn` carries intent, participates in a deliberation,
+ * and has a stateful lifecycle. A message is a chat paradigm concept — passive,
+ * stateless, and without purpose beyond transmission.
+ *
+ * **Human-Led Principle**
+ * Only the moderator decides when a turn initiates. The `Turn` aggregate ensures
+ * that once initiated, it follows a valid lifecycle path. It cannot autonomously
+ * transition states — all transitions are explicit domain operations.
+ *
+ * **Ubiquitous Language**
+ * - `Turn`: single contribution dalam deliberation (NOT "message", "response", "reply")
+ * - `Intent`: purpose dari turn — mengapa participant ini speak sekarang?
+ * - `Perspective`: the unique reasoning contribution (NOT "answer", "output", "generation")
+ * - `Settle`: completing a turn after streaming (NOT "send", "submit")
+ * - `Stream`: the process of accumulating tokens from an LLM (NOT "generate", "respond")
+ *
+ * @example
+ * ```typescript
+ * // Moderator turn (immediately settled)
+ * const modTurn = Turn.initiateModeratorTurn({
+ *   id: TurnId(),
+ *   roomId: RoomId("room-1"),
+ *   sequence: TurnSequence.first(),
+ *   moderatorId: ModeratorId("user-1"),
+ *   content: "Let's discuss CQRS vs Event Sourcing"
+ * }).value();
+ *
+ * // Participant turn (pending → streaming → settled)
+ * const aiTurn = Turn.initiateParticipantTurn({
+ *   id: TurnId(),
+ *   roomId: RoomId("room-1"),
+ *   sequence: TurnSequence.next(prevSequence),
+ *   participantId: ParticipantId("gpt-4"),
+ *   intent: TurnIntent.from(INTENT_OPTION.RESPOND)
+ * }).value();
+ *
+ * aiTurn.startStream();
+ * aiTurn.accumulate("I think CQRS works best when...");
+ * aiTurn.settle("I think CQRS works best when write and read models diverge significantly.");
+ * ```
+ */
 export class Turn extends Aggregate<TurnProps> {
 	private constructor(props: TurnProps) {
 		super(props);
 	}
 
+	/**
+	 * @description
+	 * Validates turn construction invariants:
+	 * - Sequence must be ≥ 1
+	 * - Moderator turns cannot have intent
+	 * - Participant turns must have intent
+	 * - Settled turns must have non-empty perspective content
+	 */
 	public static override isValidProps(
 		props: TurnProps,
 	): DomainError | undefined {
@@ -67,8 +135,7 @@ export class Turn extends Aggregate<TurnProps> {
 		const author = props.author;
 		if (author.isModerator && props.intent !== null) {
 			return new InvalidAuthorError("Moderator turn cannot have intent");
-		}
-		if (author.isParticipant && props.intent === null) {
+		} else if (author.isParticipant && props.intent === null) {
 			return new MissingIntentError();
 		}
 
@@ -82,10 +149,26 @@ export class Turn extends Aggregate<TurnProps> {
 		return undefined;
 	}
 
+	/**
+	 * @description
+	 * Rehydrates a `Turn` from persistence. Does not emit events.
+	 */
 	public static rehydrate(props: TurnProps): Turn {
 		return new Turn(props);
 	}
 
+	/**
+	 * @description
+	 * Factory for moderator turns.
+	 *
+	 * Moderator turns are immediately settled because the moderator's content
+	 * is provided synchronously (no LLM streaming).
+	 *
+	 * @param props - `Turn` properties including moderator ID and content
+	 * @returns Result containing the settled Turn or domain error
+	 * @emits `TurnSettled` domain event.
+	 * @emits `TurnInitiated` domain event.
+	 */
 	public static initiateModeratorTurn(props: {
 		id: TurnId;
 		roomId: RoomId;
@@ -136,6 +219,17 @@ export class Turn extends Aggregate<TurnProps> {
 		return result;
 	}
 
+	/**
+	 * @description
+	 * Factory for participant turns.
+	 *
+	 * Participant starts in `PENDING` status. The LLM stream will later transition
+	 * it through `STREAMING` to `SETTLED` (or `FAILED`).
+	 *
+	 * @param props - Turn properties including participant ID and intent
+	 * @returns Result containing the pending Turn or domain error
+	 * @emits `TurnInitiated` domain event.
+	 */
 	public static initiateParticipantTurn(props: {
 		id: TurnId;
 		roomId: RoomId;
@@ -175,8 +269,117 @@ export class Turn extends Aggregate<TurnProps> {
 		return result;
 	}
 
+	/**
+	 * @description
+	 * Whether this turn is awaiting stream start.
+	 */
+	public get isPending(): boolean {
+		return this.get("status") === TURN_STATUS_OPTION.PENDING;
+	}
+
+	/**
+	 * @description
+	 * Whether this turn is actively receiving tokens from LLM.
+	 */
+	public get isStreaming(): boolean {
+		return this.get("status") === TURN_STATUS_OPTION.STREAMING;
+	}
+
+	/**
+	 * @description
+	 * Whether this turn has completed with final perspective content.
+	 */
+	public get isSettled(): boolean {
+		return this.get("status") === TURN_STATUS_OPTION.SETTLED;
+	}
+
+	/**
+	 * @description
+	 * Whether this turn encountered an unrecoverable stream error.
+	 */
+	public get isFailed(): boolean {
+		return this.get("status") === TURN_STATUS_OPTION.FAILED;
+	}
+
+	/**
+	 * @description
+	 * Whether this turn was permanently abandoned after failure.
+	 */
+	public get isAbandoned(): boolean {
+		return this.get("status") === TURN_STATUS_OPTION.ABANDONED;
+	}
+
+	/**
+	 * @description
+	 * Whether this turn was authored by the moderator.
+	 */
+	public get isFromModerator(): boolean {
+		return this.get("author").isModerator;
+	}
+
+	/**
+	 * @description
+	 * Whether this turn was authored by a participant.
+	 */
+	public get isFromParticipant(): boolean {
+		return this.get("author").isParticipant;
+	}
+
+	/**
+	 * @description
+	 * Whether this failed turn can be retried.
+	 */
+	public get canRetry(): boolean {
+		return this.isFailed;
+	}
+
+	/**
+	 * @description
+	 * Whether this failed turn can be abandoned.
+	 */
+	public get canAbandon(): boolean {
+		return this.isFailed;
+	}
+
+	/**
+	 * @description
+	 * The participant ID if this is a participant turn, null otherwise.
+	 */
+	public get participantId(): ParticipantId | null {
+		return this.get("author").participantId;
+	}
+
+	/**
+	 * @description
+	 * The moderator ID if this is a moderator turn, null otherwise.
+	 */
+	public get moderatorId(): ModeratorId | null {
+		return this.get("author").moderatorId;
+	}
+
+	/**
+	 * @description
+	 * Returns the current perspective content based on status.
+	 *
+	 * - `SETTLED`: final perspective content
+	 * - `STREAMING/PENDING`: accumulated tokens joined (partial content)
+	 * - `FAILED/ABANDONED`: empty string
+	 */
+	public get currentContent(): string {
+		if (this.isSettled) return this.get("perspective").get("content");
+		if (this.isStreaming || this.isPending) return this.get("tokens").join("");
+		return "";
+	}
+
+	/**
+	 * @description
+	 * Transitions from `PENDING` to `STREAMING`.
+	 *
+	 * **Invariant**: Must be in `PENDING` status.
+	 * @emits `TurnStreamStarted` domain event.
+	 */
 	public startStream(): IResult<void, InvalidStateTransitionError> {
-		if (this.get("status") !== TURN_STATUS_OPTION.PENDING) {
+		if (!this.isPending) {
 			return Result.error(
 				new InvalidStateTransitionError(
 					this.get("status"),
@@ -198,8 +401,18 @@ export class Turn extends Aggregate<TurnProps> {
 		return Result.success(undefined);
 	}
 
+	/**
+	 * @description
+	 * Accumulates a token from the LLM stream into this turn's perspective.
+	 *
+	 * **Invariant**: Must be in `STREAMING` status.
+	 * Updates the perspective incrementally from accumulated tokens.
+	 *
+	 * @param token - A chunk of text from the LLM response stream
+	 * @emits `TurnTokenAccumulated` event for each token.
+	 */
 	public accumulate(token: string): IResult<void, InvalidStateTransitionError> {
-		if (this.get("status") !== TURN_STATUS_OPTION.STREAMING) {
+		if (!this.isStreaming) {
 			return Result.error(
 				new InvalidStateTransitionError(
 					this.get("status"),
@@ -227,8 +440,19 @@ export class Turn extends Aggregate<TurnProps> {
 		return Result.success(undefined);
 	}
 
+	/**
+	 * @description
+	 * Finalizes the turn by transitioning from `STREAMING` to `SETTLED`.
+	 *
+	 * **Invariant**: Must be in `STREAMING` status.
+	 * **Invariant**: Final content must be non-empty.
+	 * Clears tokens (now persisted in perspective) and records settlement time.
+	 *
+	 * @param content - The complete, final perspective content
+	 * @emits `TurnSettled` domain event.
+	 */
 	public settle(content: string): IResult<void, DomainError> {
-		if (this.get("status") !== TURN_STATUS_OPTION.STREAMING) {
+		if (!this.isStreaming) {
 			return Result.error(
 				new InvalidStateTransitionError(
 					this.get("status"),
@@ -259,6 +483,16 @@ export class Turn extends Aggregate<TurnProps> {
 		return Result.success(undefined);
 	}
 
+	/**
+	 * @description
+	 * Marks the turn as failed due to a stream error.
+	 *
+	 * **Invariant**: Must be in `PENDING` or `STREAMING` status.
+	 * Records the error and failure timestamp. Clears partial tokens.
+	 *
+	 * @param error - The stream error that caused failure
+	 * @emits `TurnFailed` domain event.
+	 */
 	public fail(error: StreamError): IResult<void, InvalidStateTransitionError> {
 		if (!this.isPending && !this.isStreaming) {
 			return Result.error(
@@ -286,8 +520,15 @@ export class Turn extends Aggregate<TurnProps> {
 		return Result.success(undefined);
 	}
 
+	/**
+	 * @description
+	 * Abandons a failed turn, permanently retiring it from the deliberation.
+	 *
+	 * **Invariant**: Must be in `FAILED` status.
+	 * @emits `TurnAbandoned` domain event.
+	 */
 	public abandon(): IResult<void, InvalidStateTransitionError> {
-		if (!this.isFailed) {
+		if (!this.canAbandon) {
 			return Result.error(
 				new InvalidStateTransitionError(
 					this.get("status"),
@@ -304,8 +545,19 @@ export class Turn extends Aggregate<TurnProps> {
 		return Result.success(undefined);
 	}
 
+	/**
+	 * @description
+	 * Retries a failed turn by resetting it to `PENDING` status.
+	 *
+	 * **Invariant**: Must be in `FAILED` status.
+	 * **Invariant**: Must be a participant turn (moderator turns are synchronous).
+	 * Clears all error state and partial content.
+	 *
+	 * @emits `TurnRetried` domain event.
+	 * @emits `TurnInitiated` domain events.
+	 */
 	public retry(): IResult<void, DomainError> {
-		if (!this.isFailed) {
+		if (!this.canRetry) {
 			return Result.error(
 				new InvalidStateTransitionError(
 					this.get("status"),
@@ -315,8 +567,7 @@ export class Turn extends Aggregate<TurnProps> {
 			);
 		}
 
-		const author = this.get("author");
-		if (!author.isParticipant) {
+		if (!this.isFromModerator) {
 			return Result.error(
 				new InvalidAuthorError("Only participant turns can be retried"),
 			);
@@ -344,55 +595,5 @@ export class Turn extends Aggregate<TurnProps> {
 		);
 
 		return Result.success(undefined);
-	}
-
-	public get isPending(): boolean {
-		return this.get("status") === TURN_STATUS_OPTION.PENDING;
-	}
-
-	public get isStreaming(): boolean {
-		return this.get("status") === TURN_STATUS_OPTION.STREAMING;
-	}
-
-	public get isSettled(): boolean {
-		return this.get("status") === TURN_STATUS_OPTION.SETTLED;
-	}
-
-	public get isFailed(): boolean {
-		return this.get("status") === TURN_STATUS_OPTION.FAILED;
-	}
-
-	public get isAbandoned(): boolean {
-		return this.get("status") === TURN_STATUS_OPTION.ABANDONED;
-	}
-
-	public get isFromModerator(): boolean {
-		return this.get("author").isModerator;
-	}
-
-	public get isFromParticipant(): boolean {
-		return this.get("author").isParticipant;
-	}
-
-	public get canRetry(): boolean {
-		return this.isFailed;
-	}
-
-	public get canAbandon(): boolean {
-		return this.isFailed;
-	}
-
-	public get participantId(): ParticipantId | null {
-		return this.get("author").participantId;
-	}
-
-	public get moderatorId(): ModeratorId | null {
-		return this.get("author").moderatorId;
-	}
-
-	public get currentContent(): string {
-		if (this.isSettled) return this.get("perspective").get("content");
-		if (this.isStreaming || this.isPending) return this.get("tokens").join("");
-		return "";
 	}
 }

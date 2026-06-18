@@ -17,11 +17,39 @@ import type { TurnLifecycleOrchestrator } from "../../services/turn-lifecycle.or
 
 import type { RetryTurnCommand, RetryTurnOutput } from "./command";
 
+/**
+ * @description
+ * `RetryTurnHandler` — Command Handler
+ *
+ * Executes the retry of a failed participant turn.
+ *
+ * **Flow**
+ * 1. Orchestrator retries the turn (`FAILED` → `PENDING`)
+ * 2. Find the retried turn and its room
+ * 3. Rebuild LLM context (system prompt + message history)
+ * 4. Call LLM gateway for new streaming response
+ * 5. Stream, accumulate, and settle (same as `InitiateParticipantTurn`)
+ *
+ * **Why Full Re-stream?**
+ * Retry regenerates the perspective from scratch. The original failed tokens
+ * are discarded. This ensures the turn is a coherent, complete contribution.
+ *
+ * **Events Published**
+ * - `TurnRetried` — signals retry initiation
+ * - `TurnInitiated` — signals reset to PENDING
+ * - `TurnStreamStarted` — LLM connection established
+ * - `TurnTokenAccumulated` — each token during re-streaming
+ * - `TurnSettled` — retry succeeded
+ * - `TurnFailed` — retry also failed
+ *
+ * @see TurnLifecycleOrchestrator.retry — for state reset
+ * @see InitiateParticipantTurnHandler — for similar streaming logic
+ */
 export class RetryTurnHandler
 	implements
 		ICommand<RetryTurnCommand, RetryTurnOutput, DomainError | StreamError>
 {
-	constructor(
+	public constructor(
 		private readonly roomRepository: RoomRepository,
 		private readonly turnRepository: TurnRepository,
 		private readonly orchestrator: TurnLifecycleOrchestrator,
@@ -29,6 +57,13 @@ export class RetryTurnHandler
 		private readonly llmGateway: LlmGateway,
 	) {}
 
+	/**
+	 * @description
+	 * Retries a failed participant turn with fresh LLM streaming.
+	 *
+	 * @param command - Turn ID to retry
+	 * @returns Result containing newTurnId, or domain/stream error
+	 */
 	public async execute(
 		command: RetryTurnCommand,
 	): Promise<IResult<RetryTurnOutput, DomainError | StreamError>> {

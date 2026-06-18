@@ -6,6 +6,14 @@ interface PromptInput {
 	others: string;
 }
 
+/**
+ * @description
+ * `BasicPrompt` — System prompt template for standard LLM interaction.
+ *
+ * Treats the LLM as a participant in a collaborative discussion room.
+ * Emphasizes that the discussion is human-moderated and the participant
+ * should never speak for others.
+ */
 export const BasicPrompt = {
 	build({ displayName, intent, others }: PromptInput): string {
 		return `
@@ -24,6 +32,14 @@ Never speak for other participants or the user.
 	},
 };
 
+/**
+ * @description
+ * `NarrativePrompt` — System prompt template for immersive discussion framing.
+ *
+ * Frames the LLM as a specific named participant reading a live transcript
+ * and responding naturally. Stronger guardrails against meta-commentary or
+ * narrating the scene.
+ */
 export const NarrativePrompt = {
 	build({ displayName, intent, others }: PromptInput): string {
 		return `

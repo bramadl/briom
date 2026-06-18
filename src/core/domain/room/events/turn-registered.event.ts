@@ -5,6 +5,12 @@ import { Room } from "../room";
 
 import type { BaseRoomDomainEventPayload } from "./base.event";
 
+/**
+ * @description
+ * Emitted when a `Turn` is registered within this room's deliberation history.
+ *
+ * Maintains the ordered sequence of contributions for shared context reconstruction.
+ */
 export interface TurnRegisteredPayload extends BaseRoomDomainEventPayload {
 	readonly turnId: TurnId;
 }

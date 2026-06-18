@@ -5,6 +5,14 @@ import { Turn } from "../turn";
 
 import type { BaseTurnEventPayload } from "./base.event";
 
+/**
+ * @description
+ * Emitted for each token received from the LLM stream.
+ *
+ * Carries the actual text chunk for real-time UI updates via SSE.
+ * These events are frequent during streaming; subscribers should handle
+ * them efficiently.
+ */
 export interface TurnTokenAccumulatedPayload extends BaseTurnEventPayload {
 	readonly roomId: RoomId;
 	readonly token: string;

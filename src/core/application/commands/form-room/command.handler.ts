@@ -9,6 +9,27 @@ import {
 
 import type { FormRoomCommand, FormRoomOutput } from "./command";
 
+/**
+ * @description
+ * `FormRoomHandler` — Command Handler
+ *
+ * Executes the creation of a new `Room` aggregate.
+ *
+ * **Flow**
+ * 1. Delegate to `Room.form()` domain factory
+ * 2. Persist room via repository
+ * 3. Publish `RoomFormed` domain event
+ *
+ * **Invariant Enforcement**
+ * - Title must be non-empty (enforced by `Room.isValidProps`)
+ * - ModeratorId is required (no anonymous rooms in MVP)
+ *
+ * **Events Published**
+ * - `RoomFormed` — signals that a new thinking space is available
+ *
+ * @see Room.form — for domain construction rules
+ * @see RoomSseSubscriber — for event forwarding to clients
+ */
 export class FormRoomHandler
 	implements ICommand<FormRoomCommand, FormRoomOutput, DomainError>
 {
@@ -17,6 +38,13 @@ export class FormRoomHandler
 		private readonly eventBus: IEventBus,
 	) {}
 
+	/**
+	 * @description
+	 * Creates a new room.
+	 *
+	 * @param command - Room title and moderator ID
+	 * @returns Result containing roomId on success, or EmptyTitleError
+	 */
 	public async execute(
 		command: FormRoomCommand,
 	): Promise<IResult<FormRoomOutput, DomainError>> {

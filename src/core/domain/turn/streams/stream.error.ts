@@ -9,11 +9,26 @@ interface StreamErrorProps {
 	retryAfter?: number;
 }
 
+/**
+ * @description
+ * `StreamError` — Value Object
+ *
+ * Represents a failure during LLM streaming. Captures the error kind, message,
+ * timestamp, and optional retry guidance for the application layer.
+ *
+ * **Why a Value Object?**
+ * Stream errors are fully defined by their properties. Two identical errors
+ * (same kind, message, timestamp) are interchangeable.
+ */
 export class StreamError extends ValueObject<StreamErrorProps> {
 	private constructor(props: StreamErrorProps) {
 		super(props);
 	}
 
+	/**
+	 * @description
+	 * Creates a timeout error for turns that exceed the duration threshold.
+	 */
 	public static timeout(message?: string): StreamError {
 		return new StreamError({
 			kind: STREAM_ERROR.TIMEOUT,
@@ -22,6 +37,10 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 		});
 	}
 
+	/**
+	 * @description
+	 * Creates a rate limit error with optional retry-after guidance.
+	 */
 	public static rateLimited(retryAfter?: number): StreamError {
 		return new StreamError({
 			kind: STREAM_ERROR.RATE_LIMITED,
@@ -33,6 +52,10 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 		});
 	}
 
+	/**
+	 * @description
+	 * Creates an error when the requested model is unavailable.
+	 */
 	public static modelNotFound(model: string): StreamError {
 		return new StreamError({
 			kind: STREAM_ERROR.MODEL_NOT_FOUND,
@@ -41,6 +64,10 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 		});
 	}
 
+	/**
+	 * @description
+	 * Creates a generic stream interruption error.
+	 */
 	public static streamFailure(message?: string): StreamError {
 		return new StreamError({
 			kind: STREAM_ERROR.STREAM_FAILURE,
@@ -49,6 +76,10 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 		});
 	}
 
+	/**
+	 * @description
+	 * Creates an error when the stream was aborted by moderator action.
+	 */
 	public static aborted(message?: string): StreamError {
 		return new StreamError({
 			kind: STREAM_ERROR.ABORTED,
@@ -57,6 +88,10 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 		});
 	}
 
+	/**
+	 * @description
+	 * Creates an error when the model returns empty content.
+	 */
 	public static emptyResponse(): StreamError {
 		return new StreamError({
 			kind: STREAM_ERROR.EMPTY_RESPONSE,
@@ -65,6 +100,10 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 		});
 	}
 
+	/**
+	 * @description
+	 * Rehydrates from persistence.
+	 */
 	public static rehydrate(props: StreamErrorProps): StreamError {
 		return new StreamError(props);
 	}

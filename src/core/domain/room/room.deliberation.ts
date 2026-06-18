@@ -1,25 +1,43 @@
 import { type IResult, Result } from "@briom/libs/drimion";
+
 import {
 	INTENT_OPTION,
 	InvalidIntentForContextError,
 	type Turn,
 	TurnIntent,
 } from "../turn";
-import type { Participant, ParticipantId } from "./participant";
 
+import type { Participant, ParticipantId } from "./participant";
 import type { Room } from "./room";
 
+/**
+ * @description
+ * Input context for deliberation validation and proposal generation.
+ */
 type ParticipantIntent = {
 	participantId: ParticipantId;
 	intent: TurnIntent;
 };
 
+/**
+ * @description
+ * Context bundle containing all state needed to evaluate intent validity
+ * or generate turn proposals within a room.
+ */
 export interface DeliberationContext {
 	participants: Participant[];
 	room: Room;
 	turns: Turn[];
 }
 
+/**
+ * @description
+ * Proposed next turn with confidence scoring and rationale.
+ *
+ * Used by the application layer to optionally suggest which participant
+ * should speak next, while preserving human-led orchestration (the moderator
+ * always has final authority on who speaks).
+ */
 export interface TurnProposal {
 	confidence: number;
 	intent: TurnIntent;
@@ -27,7 +45,40 @@ export interface TurnProposal {
 	rationale: string;
 }
 
+/**
+ * @description
+ * `RoomDeliberation` — Domain Service
+ *
+ * Encapsulates deliberation rules that span multiple aggregates (`Room`, `Turn`)
+ * or require complex evaluation of turn history. Unlike the `Room` aggregate which
+ * guards its own invariants, this service evaluates cross-cutting concerns:
+ *
+ * - Intent validation: Is a participant's requested intent valid given context?
+ * - Turn proposal: Which participants might contribute next, and how?
+ *
+ * **Why a Domain Service, not Aggregate method?**
+ * These rules need read-only access to turn history and cross-aggregate data.
+ * Putting them in Room would bloat the aggregate with query logic; putting them
+ * in application would leak domain rules outward.
+ *
+ * **Human-Led Principle**
+ * All proposals are suggestions. The moderator decides whether to act on them.
+ * This service never autonomously initiates turns.
+ */
 export class RoomDeliberation {
+	/**
+	 * @description
+	 * Validates whether a participant's intent is appropriate given current deliberation state.
+	 *
+	 * **Rules**:
+	 * - `SUMMARIZE` requires at least 2 settled turns (needs substance to synthesize)
+	 * - `CRITIQUE/CHALLENGE` require a previous participant turn to respond to
+	 * - Participant must actually be in the room
+	 *
+	 * @param context - Current deliberation state (room, turns, participants)
+	 * @param participantIntent - The intent and participant to validate
+	 * @returns Result containing void or InvalidIntentForContextError
+	 */
 	public validateIntent(
 		context: DeliberationContext,
 		{ intent, participantId }: ParticipantIntent,
@@ -74,6 +125,17 @@ export class RoomDeliberation {
 		return Result.success(undefined);
 	}
 
+	/**
+	 * @description
+	 * Generates turn proposals for eligible participants.
+	 *
+	 * Suggests which participants could speak next and with what intent,
+	 * ranked by confidence. Excludes the most recent speaker to encourage
+	 * perspective diversity.
+	 *
+	 * @param context - Current deliberation state
+	 * @returns Array of proposals, sorted by confidence descending, limited to top 4
+	 */
 	public proposeNextTurns(context: DeliberationContext): TurnProposal[] {
 		const { room, turns, participants } = context;
 		if (!room.isDeliberating) return [];
@@ -83,7 +145,7 @@ export class RoomDeliberation {
 		const lastParticipantId = lastTurn?.participantId;
 
 		for (const participant of participants) {
-			if (lastParticipantId && participant.id.equal(lastParticipantId)) {
+			if (lastParticipantId && participant.id.isEqual(lastParticipantId)) {
 				continue;
 			}
 
@@ -105,6 +167,13 @@ export class RoomDeliberation {
 		return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 4);
 	}
 
+	/**
+	 * @description
+	 * Suggests appropriate intents for a participant based on their deliberation history.
+	 *
+	 * First-time contributors get `RESPOND`/`EXPAND`; experienced contributors get
+	 * the full range including `CRITIQUE` and `CHALLENGE`.
+	 */
 	private suggestIntentsForParticipant(
 		context: DeliberationContext,
 		participantId: ParticipantId,
@@ -134,13 +203,17 @@ export class RoomDeliberation {
 		];
 	}
 
+	/**
+	 * @description
+	 * Generates human-readable rationale for why a participant might take a given intent.
+	 */
 	private generateRationale(
 		context: DeliberationContext,
 		participantId: ParticipantId,
 		intent: TurnIntent,
 	): string {
 		const participant = context.participants.find((p) =>
-			p.id.equal(participantId),
+			p.id.isEqual(participantId),
 		);
 
 		const name = participant?.get("displayName") || "AI";
@@ -160,6 +233,14 @@ export class RoomDeliberation {
 		}
 	}
 
+	/**
+	 * @description
+	 * Calculates confidence score (0.0–1.0) for a proposal.
+	 *
+	 * Factors:
+	 * - Usage penalty: participants who have spoken many times get lower confidence
+	 * - Variety bonus: intents not recently used get higher confidence
+	 */
 	private calculateConfidence(
 		context: DeliberationContext,
 		participantId: ParticipantId,
@@ -167,7 +248,7 @@ export class RoomDeliberation {
 	): number {
 		const { turns } = context;
 		const participantTurns = turns.filter((t) =>
-			t.participantId ? participantId.equal(t.participantId) : false,
+			t.participantId ? participantId.isEqual(t.participantId) : false,
 		);
 
 		const usagePenalty = Math.min(participantTurns.length * 0.1, 0.3);
