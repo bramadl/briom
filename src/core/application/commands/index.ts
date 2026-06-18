@@ -14,6 +14,8 @@ export * from "./initiate-moderator-turn/command";
 export * from "./initiate-moderator-turn/command.handler";
 export * from "./initiate-participant-turn/command";
 export * from "./initiate-participant-turn/command.handler";
+export * from "./invite-participant/command";
+export * from "./invite-participant/command.handler";
 export * from "./pause-deliberation/command";
 export * from "./pause-deliberation/command.handler";
 export * from "./rename-room/command";
