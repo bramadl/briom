@@ -4,5 +4,6 @@ export * from "./cannot-resume-room.error";
 export * from "./cannot-start-deliberation.error";
 export * from "./empty-title.error";
 export * from "./empty-topic.error";
+export * from "./maximum-participant-reached.error";
 export * from "./participant-already-invited.error";
 export * from "./participate-after-deliberation.error";

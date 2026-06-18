@@ -15,8 +15,9 @@ import {
 	CannotStartDeliberationError,
 	EmptyTitleError,
 	EmptyTopicError,
+	MaximumParticipantReachedError,
 	ParticipantAlreadyInvitedError,
-	ParticipateAfterDeliberation,
+	ParticipateAfterDeliberationError,
 } from "./errors";
 import {
 	DeliberationConcluded,
@@ -86,6 +87,8 @@ interface RoomProps {
  * ```
  */
 export class Room extends Aggregate<RoomProps> {
+	private readonly MAXIMUM_PARTICIPANTS = 4;
+
 	private constructor(props: RoomProps) {
 		super(props);
 	}
@@ -170,6 +173,14 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
+	 * Whether the `Room` has reached maximum participants
+	 */
+	public get isMaximumParticipantsReached(): boolean {
+		return this.get("participants").length === this.MAXIMUM_PARTICIPANTS;
+	}
+
+	/**
+	 * @description
 	 * Whether the `Room` has participants.
 	 */
 	public get hasParticipants(): boolean {
@@ -188,6 +199,8 @@ export class Room extends Aggregate<RoomProps> {
 	 * @description
 	 * Invites a participant into the room.
 	 *
+	 * **Invariant**: For MVP, maximum of 4 participants can be invited
+	 *
 	 * **Invariant**: Can only invite while `FORMING`. Once deliberation starts,
 	 * the participant set is frozen to preserve deliberation context integrity.
 	 *
@@ -202,10 +215,14 @@ export class Room extends Aggregate<RoomProps> {
 		participantToInvite: Participant,
 	): IResult<
 		void,
-		ParticipateAfterDeliberation | ParticipantAlreadyInvitedError
+		ParticipateAfterDeliberationError | ParticipantAlreadyInvitedError
 	> {
 		if (!this.isForming) {
-			return Result.error(new ParticipateAfterDeliberation());
+			return Result.error(new ParticipateAfterDeliberationError());
+		}
+
+		if (this.isMaximumParticipantsReached) {
+			return Result.error(new MaximumParticipantReachedError());
 		}
 
 		const currentParticipants = this.get("participants");
