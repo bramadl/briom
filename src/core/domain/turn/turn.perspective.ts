@@ -40,4 +40,8 @@ export class TurnPerspective extends ValueObject<TurnPerspectiveProps> {
 
 		return Result.success(perspective);
 	}
+
+	public static rehydrate(props: TurnPerspectiveProps): TurnPerspective {
+		return new TurnPerspective(props);
+	}
 }
