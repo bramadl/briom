@@ -1,13 +1,14 @@
 import { type IResult, Result } from "@briom/libs/drimion";
 
 import type { Participant, ParticipantId } from "../participant";
-import type { Room } from "../room";
 import {
 	INTENT_OPTION,
 	InvalidIntentForContextError,
 	type Turn,
 	TurnIntent,
 } from "../turn";
+
+import type { Room } from "./room";
 
 type ParticipantIntent = {
 	participantId: ParticipantId;
@@ -27,7 +28,7 @@ export interface TurnProposal {
 	rationale: string;
 }
 
-export class DeliberationOrchestrator {
+export class RoomDeliberation {
 	public validateIntent(
 		context: DeliberationContext,
 		{ intent, participantId }: ParticipantIntent,

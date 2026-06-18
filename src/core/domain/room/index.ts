@@ -1,6 +1,7 @@
 export * from "./errors";
 export * from "./events";
 export * from "./room";
+export * from "./room.deliberation";
 export * from "./room.id";
 export * from "./room.repository";
 export * from "./room.status";
