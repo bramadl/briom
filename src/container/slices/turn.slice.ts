@@ -2,6 +2,8 @@ import {
 	AbandonTurnHandler,
 	AccumulateTokenHandler,
 	FailTurnHandler,
+	GetTurnHandler,
+	GetTurnsHandler,
 	InitiateModeratorTurnHandler,
 	InitiateParticipantTurnHandler,
 	RetryTurnHandler,
@@ -16,6 +18,8 @@ import {
 } from "@briom/core/domain";
 import { TurnContext } from "@briom/libs/briom/contexts/turn.context";
 import {
+	DrizzleGetTurnQuery,
+	DrizzleGetTurnsQuery,
 	DrizzleTurnRepository,
 	DrizzleTurnSequencer,
 } from "@briom/libs/providers/drizzle";
@@ -26,6 +30,12 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 	return container
 		.add("Repository:Turn", (r) => {
 			return new DrizzleTurnRepository(r["Client:Database"]);
+		})
+		.add("Query:GetTurn", (r) => {
+			return new DrizzleGetTurnQuery(r["Client:Database"]);
+		})
+		.add("Query:GetTurns", (r) => {
+			return new DrizzleGetTurnsQuery(r["Client:Database"]);
 		})
 		.add("Adapter:TurnSequencer", (r) => {
 			return new DrizzleTurnSequencer(r["Client:Database"]);
@@ -58,6 +68,12 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 		.add("Handler:FailTurn", (r) => {
 			return new FailTurnHandler(r["Orchestrator:TurnLifecycle"]);
 		})
+		.add("Handler:GetTurn", (r) => {
+			return new GetTurnHandler(r["Query:GetTurn"]);
+		})
+		.add("Handler:GetTurns", (r) => {
+			return new GetTurnsHandler(r["Query:GetTurns"]);
+		})
 		.add("Handler:InitiateModeratorTurn", (r) => {
 			return new InitiateModeratorTurnHandler(
 				r["Repository:Room"],
@@ -85,7 +101,6 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				r["Orchestrator:TurnLifecycle"],
 				r["Policy:TranscriptorRenderer"],
 				r["Adapter:LlmGateway"],
-				r["Adapter:EventBus"],
 			);
 		})
 		.add("Handler:SettleTurn", (r) => {
@@ -99,8 +114,10 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				abandon: r["Handler:AbandonTurn"],
 				accumulate: r["Handler:AccumulateToken"],
 				fail: r["Handler:FailTurn"],
+				get: r["Handler:GetTurn"],
 				initiateModeratorTurn: r["Handler:InitiateModeratorTurn"],
 				initiateParticipantTurn: r["Handler:InitiateParticipantTurn"],
+				list: r["Handler:GetTurns"],
 				retry: r["Handler:RetryTurn"],
 				settle: r["Handler:SettleTurn"],
 				stream: r["Handler:StartStream"],

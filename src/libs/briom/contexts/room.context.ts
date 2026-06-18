@@ -8,6 +8,10 @@ import {
 	FormRoomCommand,
 	type FormRoomHandler,
 	type FormRoomInput,
+	type GetRoomHandler,
+	type GetRoomInput,
+	type GetRoomsHandler,
+	type GetRoomsInput,
 	InviteParticipantCommand,
 	type InviteParticipantHandler,
 	type InviteParticipantInput,
@@ -29,7 +33,9 @@ interface RoomContextDeps {
 	conclude: ConcludeDeliberationHandler;
 	delete: DeleteRoomHandler;
 	form: FormRoomHandler;
+	get: GetRoomHandler;
 	inviteParticipant: InviteParticipantHandler;
+	list: GetRoomsHandler;
 	pause: PauseDeliberationHandler;
 	rename: RenameRoomHandler;
 	resume: ResumeDeliberationHandler;
@@ -61,12 +67,26 @@ export class RoomContext {
 	}
 
 	/**
+	 * Get one single room
+	 */
+	public async get(input: GetRoomInput) {
+		return this.deps.get.execute(input);
+	}
+
+	/**
 	 * Add AI to room
 	 */
 	public async inviteParticipant(input: InviteParticipantInput) {
 		return this.deps.inviteParticipant.execute(
 			new InviteParticipantCommand(input),
 		);
+	}
+
+	/**
+	 * Get list of all rooms
+	 */
+	public async list(input: GetRoomsInput) {
+		return this.deps.list.execute(input);
 	}
 
 	/**

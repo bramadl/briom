@@ -76,7 +76,7 @@ export class RoomDeliberation {
 
 	public proposeNextTurns(context: DeliberationContext): TurnProposal[] {
 		const { room, turns, participants } = context;
-		if (room.isDeliberating) return [];
+		if (!room.isDeliberating) return [];
 
 		const proposals: TurnProposal[] = [];
 		const lastTurn = turns[turns.length - 1];

@@ -8,6 +8,10 @@ import {
 	FailTurnCommand,
 	type FailTurnHandler,
 	type FailTurnInput,
+	type GetTurnHandler,
+	type GetTurnInput,
+	type GetTurnsHandler,
+	type GetTurnsInput,
 	InitiateModeratorTurnCommand,
 	type InitiateModeratorTurnHandler,
 	type InitiateModeratorTurnInput,
@@ -29,8 +33,10 @@ interface TurnContextDeps {
 	abandon: AbandonTurnHandler;
 	accumulate: AccumulateTokenHandler;
 	fail: FailTurnHandler;
+	get: GetTurnHandler;
 	initiateModeratorTurn: InitiateModeratorTurnHandler;
 	initiateParticipantTurn: InitiateParticipantTurnHandler;
+	list: GetTurnsHandler;
 	retry: RetryTurnHandler;
 	settle: SettleTurnHandler;
 	stream: StartStreamHandler;
@@ -61,6 +67,13 @@ export class TurnContext {
 	}
 
 	/**
+	 * Get one single turn
+	 */
+	public async get(input: GetTurnInput) {
+		return this.deps.get.execute(input);
+	}
+
+	/**
 	 * Moderator sends message
 	 */
 	public async initiateModeratorTurn(input: InitiateModeratorTurnInput) {
@@ -76,6 +89,13 @@ export class TurnContext {
 		return this.deps.initiateParticipantTurn.execute(
 			new InitiateParticipantTurnCommand(input),
 		);
+	}
+
+	/**
+	 * Get list of all turns within a room
+	 */
+	public async list(input: GetTurnsInput) {
+		return this.deps.list.execute(input);
 	}
 
 	/**

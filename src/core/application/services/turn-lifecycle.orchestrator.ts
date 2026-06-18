@@ -175,10 +175,7 @@ export class TurnLifecycleOrchestrator {
 		return Result.success(undefined);
 	}
 
-	public async retry(
-		turnId: TurnId,
-		newId: TurnId,
-	): Promise<IResult<Turn, DomainError>> {
+	public async retry(turnId: TurnId): Promise<IResult<void, DomainError>> {
 		const turn = await this.repository.findById(turnId);
 		if (!turn) {
 			return Result.error(
@@ -190,20 +187,14 @@ export class TurnLifecycleOrchestrator {
 
 		this.cancelTimeout(turnId);
 
-		const result = turn.retry(newId);
+		const result = turn.retry();
 		if (result.isError()) return result;
 
-		const newTurn = result.value();
 		await this.repository.persist(turn);
-		await this.repository.persist(newTurn);
-
-		// NOTE: Do NOT schedule timeout here. The retry handler will immediately
-		// start streaming (same flow as initiateParticipantTurn). Scheduling timeout
-		// here would create a race condition between timeout and stream start.
+		this.scheduleTimeout(turn);
 		await this.publishEvents(turn);
-		await this.publishEvents(newTurn);
 
-		return Result.success(newTurn);
+		return Result.success(undefined);
 	}
 
 	public async handleTimeout(

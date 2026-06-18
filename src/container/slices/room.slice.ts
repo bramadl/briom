@@ -2,6 +2,8 @@ import {
 	ConcludeDeliberationHandler,
 	DeleteRoomHandler,
 	FormRoomHandler,
+	GetRoomHandler,
+	GetRoomsHandler,
 	InviteParticipantHandler,
 	PauseDeliberationHandler,
 	RenameRoomHandler,
@@ -9,7 +11,11 @@ import {
 	StartDeliberationHandler,
 } from "@briom/core/application";
 import { RoomContext } from "@briom/libs/briom/contexts/room.context";
-import { DrizzleRoomRepository } from "@briom/libs/providers/drizzle";
+import {
+	DrizzleGetRoomQuery,
+	DrizzleGetRoomsQuery,
+	DrizzleRoomRepository,
+} from "@briom/libs/providers/drizzle";
 
 import type { infrastructureSlice } from "./infrastructure.slice";
 
@@ -20,6 +26,12 @@ export const roomSlice = (
 		.add("Repository:Room", (r) => {
 			return new DrizzleRoomRepository(r["Client:Database"]);
 		})
+		.add("Query:GetRoom", (r) => {
+			return new DrizzleGetRoomQuery(r["Client:Database"]);
+		})
+		.add("Query:GetRooms", (r) => {
+			return new DrizzleGetRoomsQuery(r["Client:Database"]);
+		})
 		.add("Handler:ConcludeDeliberation", (r) => {
 			return new ConcludeDeliberationHandler(
 				r["Repository:Room"],
@@ -28,6 +40,12 @@ export const roomSlice = (
 		})
 		.add("Handler:DeleteRoom", (r) => {
 			return new DeleteRoomHandler(r["Repository:Room"]);
+		})
+		.add("Handler:GetRoom", (r) => {
+			return new GetRoomHandler(r["Query:GetRoom"]);
+		})
+		.add("Handler:GetRooms", (r) => {
+			return new GetRoomsHandler(r["Query:GetRooms"]);
 		})
 		.add("Handler:FormRoom", (r) => {
 			return new FormRoomHandler(r["Repository:Room"], r["Adapter:EventBus"]);
@@ -64,7 +82,9 @@ export const roomSlice = (
 				conclude: r["Handler:ConcludeDeliberation"],
 				delete: r["Handler:DeleteRoom"],
 				form: r["Handler:FormRoom"],
+				get: r["Handler:GetRoom"],
 				inviteParticipant: r["Handler:InviteParticipant"],
+				list: r["Handler:GetRooms"],
 				pause: r["Handler:PauseDeliberation"],
 				rename: r["Handler:RenameRoom"],
 				resume: r["Handler:ResumeDeliberation"],

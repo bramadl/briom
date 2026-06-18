@@ -32,7 +32,7 @@ import {
 import type { StreamError } from "./streams";
 import { TurnAuthor } from "./turn.author";
 import type { TurnId } from "./turn.id";
-import { TurnIntent } from "./turn.intent";
+import type { TurnIntent } from "./turn.intent";
 import { TurnPerspective } from "./turn.perspective";
 import type { TurnSequence } from "./turn.sequence";
 
@@ -304,7 +304,7 @@ export class Turn extends Aggregate<TurnProps> {
 		return Result.success(undefined);
 	}
 
-	public retry(newId: TurnId): IResult<Turn, DomainError> {
+	public retry(): IResult<void, DomainError> {
 		if (!this.isFailed) {
 			return Result.error(
 				new InvalidStateTransitionError(
@@ -322,35 +322,28 @@ export class Turn extends Aggregate<TurnProps> {
 			);
 		}
 
-		const participantId = author.participantId;
-		if (!participantId) {
-			return Result.error(new InvalidAuthorError("Participant ID missing"));
-		}
+		this.change("status", TURN_STATUS_OPTION.PENDING);
+		this.change("error", null);
+		this.change("failedAt", null);
+		this.change("tokens", []);
+		this.change("perspective", TurnPerspective.empty());
 
-		const intent = this.get("intent");
-		if (!intent) {
-			return Result.error(new MissingIntentError());
-		}
+		this.emit(
+			new TurnRetried(this.id.value(), {
+				turnId: this.id,
+			}),
+		);
 
-		const result = Turn.initiateParticipantTurn({
-			id: newId,
-			roomId: this.get("roomId"),
-			sequence: this.get("sequence"),
-			participantId,
-			intent: TurnIntent.from(intent),
-			previousTurnId: this.get("id"),
-		});
+		this.emit(
+			new TurnInitiated(this.id.value(), {
+				authorType: "participant",
+				roomId: this.get("roomId"),
+				sequence: this.get("sequence"),
+				turnId: this.id,
+			}),
+		);
 
-		if (result.isSuccess()) {
-			this.emit(
-				new TurnRetried(this.id.value(), {
-					newTurnId: newId,
-					previousTurnId: this.id,
-				}),
-			);
-		}
-
-		return result;
+		return Result.success(undefined);
 	}
 
 	public get isPending(): boolean {

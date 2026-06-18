@@ -5,10 +5,8 @@ import type { TurnId } from "../turn.id";
 
 import type { BaseTurnEventPayload } from "./base.event";
 
-export interface TurnRetriedPayload
-	extends Omit<BaseTurnEventPayload, "turnId"> {
-	readonly newTurnId: TurnId;
-	readonly previousTurnId: TurnId;
+export interface TurnRetriedPayload extends BaseTurnEventPayload {
+	readonly turnId: TurnId;
 }
 
 export class TurnRetried extends BaseDomainEvent<TurnRetriedPayload> {
