@@ -80,6 +80,10 @@ export class Room extends Aggregate<RoomProps> {
 		return Result.success(room);
 	}
 
+	public static rehydrate(props: RoomProps): Room {
+		return new Room(props);
+	}
+
 	public get isDeliberating(): boolean {
 		return this.get("status") === ROOM_STATUS_OPTION.DELIBERATING;
 	}
