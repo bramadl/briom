@@ -1,7 +1,6 @@
+import { Briom } from "@briom/client";
 import { ContainerBuilder } from "@briom/drimion";
 import { pipe } from "@briom/utils";
-
-import { Briom } from "../libs/briom/briom.client";
 
 import { infrastructureSlice } from "./slices/infrastructure.slice";
 import { roomSlice } from "./slices/room.slice";

@@ -1,7 +1,6 @@
 import type { ContainerBuilder } from "@briom/drimion";
 import { db } from "@briom/drizzle/client";
-import { BriomEventBus } from "@briom/libs/briom/briom.event-bus";
-import { BriomScheduler } from "@briom/libs/briom/scheduler/in-memory.scheduler";
+import { BriomEventBus, BriomScheduler } from "@briom/libs/briom/wrappers";
 import { OpenRouterLlmGateway } from "@briom/open-router";
 import { openRouter } from "@briom/open-router/client";
 

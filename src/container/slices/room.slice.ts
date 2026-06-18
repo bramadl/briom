@@ -10,7 +10,7 @@ import {
 	ResumeDeliberationHandler,
 	StartDeliberationHandler,
 } from "@briom/core/application";
-import { RoomContext } from "@briom/libs/briom/contexts/room.context";
+import { RoomContext } from "@briom/libs/briom/contexts";
 import {
 	DrizzleGetRoomQuery,
 	DrizzleGetRoomsQuery,

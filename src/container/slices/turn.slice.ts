@@ -16,7 +16,7 @@ import {
 	TranscriptorRenderer,
 	TurnTimeoutPolicy,
 } from "@briom/core/domain";
-import { TurnContext } from "@briom/libs/briom/contexts/turn.context";
+import { TurnContext } from "@briom/libs/briom/contexts";
 import {
 	DrizzleGetTurnQuery,
 	DrizzleGetTurnsQuery,
