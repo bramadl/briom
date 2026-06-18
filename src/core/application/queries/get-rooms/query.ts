@@ -1,12 +1,12 @@
-import type { RoomOverviewDTO } from "../../contracts/room.dto";
+import type { RoomDTO } from "../get-room/query";
 
 export interface GetRoomsInput {
-	moderatorId: string;
+	// EMPTY — no criteria yet, FE will filter/sort client-side or boundary layer adds auth
+	criteria?: never;
 }
 
 export interface GetRoomsOutput {
-	count: number;
-	rooms: RoomOverviewDTO[];
+	rooms: RoomDTO[];
 }
 
 export interface GetRoomsQuery {
