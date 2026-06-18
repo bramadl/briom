@@ -20,4 +20,8 @@ export class TurnSequence extends ValueObject<number> {
 	public static next(previous: TurnSequence): TurnSequence {
 		return new TurnSequence(previous.get("value") + 1);
 	}
+
+	public static fromNumber(value: number): TurnSequence {
+		return new TurnSequence(value);
+	}
 }

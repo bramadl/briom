@@ -125,6 +125,7 @@ export class Turn extends Aggregate<TurnProps> {
 				new TurnSettled(turn.id.value(), {
 					content: turn.get("perspective").get("content"),
 					turnId: turn.id,
+					roomId: turn.get("roomId"),
 				}),
 			);
 		}
@@ -208,7 +209,11 @@ export class Turn extends Aggregate<TurnProps> {
 		);
 
 		this.emit(
-			new TurnTokenAccumulated(this.id.value(), { token, turnId: this.id }),
+			new TurnTokenAccumulated(this.id.value(), {
+				token,
+				turnId: this.id,
+				roomId: this.get("roomId"),
+			}),
 		);
 
 		return Result.success(undefined);
@@ -235,7 +240,13 @@ export class Turn extends Aggregate<TurnProps> {
 		this.change("tokens", []);
 		this.change("settledAt", new Date());
 
-		this.emit(new TurnSettled(this.id.value(), { content, turnId: this.id }));
+		this.emit(
+			new TurnSettled(this.id.value(), {
+				content,
+				turnId: this.id,
+				roomId: this.get("roomId"),
+			}),
+		);
 
 		return Result.success(undefined);
 	}
@@ -256,7 +267,13 @@ export class Turn extends Aggregate<TurnProps> {
 		this.change("failedAt", new Date());
 		this.change("tokens", []);
 
-		this.emit(new TurnFailed(this.id.value(), { error, turnId: this.id }));
+		this.emit(
+			new TurnFailed(this.id.value(), {
+				error,
+				turnId: this.id,
+				roomId: this.get("roomId"),
+			}),
+		);
 
 		return Result.success(undefined);
 	}
