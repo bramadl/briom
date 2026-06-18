@@ -1,9 +1,13 @@
-import type { RoomDTO } from "./query.dto";
+import type { RoomDTO } from "../../contracts/room.dto";
 
-export type GetRoomInput = { roomId: string };
+export interface GetRoomInput {
+	roomId: string;
+}
 
-export type GetRoomOutput = RoomDTO;
+export interface GetRoomOutput {
+	room: RoomDTO;
+}
 
-export class GetRoomQuery {
-	constructor(public readonly input: GetRoomInput) {}
+export interface GetRoomQuery {
+	execute(input: GetRoomInput): Promise<GetRoomOutput>;
 }

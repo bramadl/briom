@@ -40,7 +40,7 @@ export class SendMessageHandler
 		const room = await this.roomRepository.findById(roomId);
 		if (!room) return Result.error(new RoomNotFoundError(input.roomId));
 
-		const nextPosition = await this.sequencer.nextPositionFor(roomId);
+		const nextPosition = await this.sequencer.nextPositionInside(room);
 
 		const turnResult = Turn.create({
 			id: TurnId(crypto.randomUUID()),

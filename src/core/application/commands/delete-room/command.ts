@@ -1,7 +1,7 @@
-export type DeleteRoomInput = { roomId: string };
-
-export type DeleteRoomOutput = never;
+export interface DeleteRoomInput {
+	roomId: string;
+}
 
 export class DeleteRoomCommand {
-	public constructor(public readonly input: DeleteRoomInput) {}
+	constructor(public readonly input: DeleteRoomInput) {}
 }

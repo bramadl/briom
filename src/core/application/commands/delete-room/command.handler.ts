@@ -1,26 +1,23 @@
-import {
-	RoomId,
-	RoomNotFoundError,
-	type RoomRepository,
-} from "@briom/core/domain";
+import { RoomId, type RoomRepository } from "@briom/domain";
 import { type ICommand, type IResult, Result } from "@briom/libs/drimion";
 
-import type { DeleteRoomCommand, DeleteRoomOutput } from "./command";
+import type { DeleteRoomCommand } from "./command";
 
 export class DeleteRoomHandler
-	implements ICommand<DeleteRoomCommand, DeleteRoomOutput, RoomNotFoundError>
+	implements ICommand<DeleteRoomCommand, void, never>
 {
 	public constructor(private readonly roomRepository: RoomRepository) {}
 
-	public async execute({
-		input,
-	}: DeleteRoomCommand): Promise<IResult<never, RoomNotFoundError>> {
-		const roomId = RoomId(input.roomId);
+	public async execute(
+		command: DeleteRoomCommand,
+	): Promise<IResult<void, never>> {
+		const { roomId } = command.input;
 
-		const room = await this.roomRepository.findById(roomId);
-		if (!room) return Result.error(new RoomNotFoundError(roomId));
+		const room = await this.roomRepository.findById(RoomId(roomId));
+		if (!room) return Result.success(undefined);
 
-		await this.roomRepository.delete(room);
-		return Result.success({} as never);
+		await this.roomRepository.close(room);
+
+		return Result.success(undefined);
 	}
 }

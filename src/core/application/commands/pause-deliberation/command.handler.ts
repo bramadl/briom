@@ -1,5 +1,5 @@
 import {
-	type EmptyTitleError,
+	type CannotPauseRoomError,
 	RoomId,
 	type RoomRepository,
 } from "@briom/domain";
@@ -11,10 +11,10 @@ import {
 	Result,
 } from "@briom/libs/drimion";
 
-import type { RenameRoomCommand } from "./command";
+import type { PauseDeliberationCommand } from "./command";
 
-export class RenameRoomHandler
-	implements ICommand<RenameRoomCommand, void, EmptyTitleError>
+export class PauseDeliberationHandler
+	implements ICommand<PauseDeliberationCommand, void, CannotPauseRoomError>
 {
 	constructor(
 		private readonly roomRepository: RoomRepository,
@@ -22,18 +22,18 @@ export class RenameRoomHandler
 	) {}
 
 	public async execute(
-		command: RenameRoomCommand,
-	): Promise<IResult<void, EmptyTitleError>> {
-		const { roomId, newTitle } = command.input;
+		command: PauseDeliberationCommand,
+	): Promise<IResult<void, CannotPauseRoomError>> {
+		const { roomId } = command.input;
 
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) {
 			return Result.error(
-				new DomainError("Room not found", { context: "RenameRoom" }),
+				new DomainError("Room not found", { context: "PauseDeliberation" }),
 			);
 		}
 
-		const result = room.rename(newTitle);
+		const result = room.pause();
 		if (result.isError()) return Result.error(result.error());
 
 		await this.roomRepository.persist(room);

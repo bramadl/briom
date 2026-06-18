@@ -1,37 +1,28 @@
-import { AiModel, AiProvider } from "@briom/core/domain";
 import { type IQuery, type IResult, Result } from "@briom/libs/drimion";
-import type { OpenRouter } from "@openrouter/sdk";
 
 import type {
 	GetAvailableModelsOutput,
 	GetAvailableModelsQuery,
 } from "./query";
-import { filterFreeModels } from "./query.service";
 
 export class GetAvailableModelsHandler
-	implements IQuery<GetAvailableModelsQuery, GetAvailableModelsOutput>
+	implements IQuery<void, GetAvailableModelsOutput>
 {
-	public constructor(
-		private readonly client: OpenRouter,
-		private readonly forceFreeModels?: boolean,
+	constructor(
+		private readonly query: GetAvailableModelsQuery,
+		private readonly useFreeModels?: boolean,
 	) {}
 
-	public async execute(
-		_input: GetAvailableModelsQuery,
-	): Promise<IResult<GetAvailableModelsOutput>> {
-		const { data } = await this.client.models.list();
-
-		const models = this.forceFreeModels ? filterFreeModels(data) : data;
-		return Result.success(
-			models.map((m) => {
-				const [provider, model] = m.id.split("/") as [string, string];
-				return {
-					id: m.id,
-					displayName: m.name,
-					model: AiModel(model),
-					provider: AiProvider(provider),
-				};
-			}),
-		);
+	public async execute(): Promise<IResult<GetAvailableModelsOutput>> {
+		const output = await this.query.execute();
+		if (this.useFreeModels) {
+			output.models = output.models.filter(
+				(m) =>
+					Object.values(m.pricing)
+						.map(Number)
+						.reduce((sum, value) => sum + value, 0) === 0,
+			);
+		}
+		return Result.success(output);
 	}
 }

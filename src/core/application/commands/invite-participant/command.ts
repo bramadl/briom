@@ -1,13 +1,13 @@
-export type InviteParticipantInput = {
-	roomId: string;
-	provider: string;
-	model: string;
+export interface InviteParticipantInput {
 	displayName: string;
-};
+	model: string;
+	provider: string;
+	roomId: string;
+}
 
-export type InviteParticipantOutput = {
+export interface InviteParticipantOutput {
 	participantId: string;
-};
+}
 
 export class InviteParticipantCommand {
 	constructor(public readonly input: InviteParticipantInput) {}

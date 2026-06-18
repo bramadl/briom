@@ -1,5 +1,5 @@
 import {
-	type EmptyTitleError,
+	type CannotConcludeRoomError,
 	RoomId,
 	type RoomRepository,
 } from "@briom/domain";
@@ -11,29 +11,30 @@ import {
 	Result,
 } from "@briom/libs/drimion";
 
-import type { RenameRoomCommand } from "./command";
+import type { ConcludeDeliberationCommand } from "./command";
 
-export class RenameRoomHandler
-	implements ICommand<RenameRoomCommand, void, EmptyTitleError>
+export class ConcludeDeliberationHandler
+	implements
+		ICommand<ConcludeDeliberationCommand, void, CannotConcludeRoomError>
 {
-	constructor(
+	public constructor(
 		private readonly roomRepository: RoomRepository,
 		private readonly eventBus: IEventBus,
 	) {}
 
 	public async execute(
-		command: RenameRoomCommand,
-	): Promise<IResult<void, EmptyTitleError>> {
-		const { roomId, newTitle } = command.input;
+		command: ConcludeDeliberationCommand,
+	): Promise<IResult<void, CannotConcludeRoomError>> {
+		const { roomId } = command.input;
 
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) {
 			return Result.error(
-				new DomainError("Room not found", { context: "RenameRoom" }),
+				new DomainError("Room not found", { context: "ConcludeDeliberation" }),
 			);
 		}
 
-		const result = room.rename(newTitle);
+		const result = room.conclude();
 		if (result.isError()) return Result.error(result.error());
 
 		await this.roomRepository.persist(room);

@@ -1,10 +1,8 @@
-export type RenameRoomInput = {
+export interface RenameRoomInput {
+	newTitle: string;
 	roomId: string;
-	title: string;
-};
-
-export type RenameRoomOutput = never;
+}
 
 export class RenameRoomCommand {
-	public constructor(public readonly input: RenameRoomInput) {}
+	constructor(public readonly input: RenameRoomInput) {}
 }

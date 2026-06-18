@@ -1,9 +1,14 @@
-import type { RoomSummaryDTO } from "./query.dto";
+import type { RoomOverviewDTO } from "../../contracts/room.dto";
 
-export type GetRoomsInput = never;
+export interface GetRoomsInput {
+	moderatorId: string;
+}
 
-export type GetRoomsOutput = RoomSummaryDTO[];
+export interface GetRoomsOutput {
+	count: number;
+	rooms: RoomOverviewDTO[];
+}
 
-export class GetRoomsQuery {
-	public constructor(public readonly input: GetRoomsInput) {}
+export interface GetRoomsQuery {
+	execute(input: GetRoomsInput): Promise<GetRoomsOutput>;
 }

@@ -1,19 +1,20 @@
 import {
-	AiModel,
-	AiProvider,
 	Participant,
 	ParticipantId,
+	ParticipantModel,
+	ParticipantModelAi,
+	ParticipantModelProvider,
 	type ParticipantRepository,
 	RoomId,
-	RoomNotFoundError,
 	type RoomRepository,
 } from "@briom/domain";
 import {
-	type DomainError,
+	DomainError,
 	type ICommand,
+	type IEventBus,
 	type IResult,
 	Result,
-} from "@briom/drimion";
+} from "@briom/libs/drimion";
 
 import type {
 	InviteParticipantCommand,
@@ -22,33 +23,35 @@ import type {
 
 export class InviteParticipantHandler
 	implements
-		ICommand<
-			InviteParticipantCommand,
-			InviteParticipantOutput,
-			RoomNotFoundError | DomainError
-		>
+		ICommand<InviteParticipantCommand, InviteParticipantOutput, DomainError>
 {
-	public constructor(
+	constructor(
 		private readonly roomRepository: RoomRepository,
 		private readonly participantRepository: ParticipantRepository,
+		private readonly eventBus: IEventBus,
 	) {}
 
-	public async execute({
-		input,
-	}: InviteParticipantCommand): Promise<
-		IResult<InviteParticipantOutput, RoomNotFoundError | DomainError>
-	> {
-		const roomId = RoomId(input.roomId);
+	public async execute(
+		command: InviteParticipantCommand,
+	): Promise<IResult<InviteParticipantOutput, DomainError>> {
+		const { roomId, displayName, model, provider } = command.input;
 
-		const room = await this.roomRepository.findById(roomId);
-		if (!room) return Result.error(new RoomNotFoundError(input.roomId));
+		const room = await this.roomRepository.findById(RoomId(roomId));
+		if (!room) {
+			return Result.error(
+				new DomainError("Room not found", { context: "InviteParticipant" }),
+			);
+		}
 
+		const participantId = ParticipantId();
 		const participantResult = Participant.create({
-			id: ParticipantId(crypto.randomUUID()),
-			roomId,
-			provider: AiProvider(input.provider),
-			model: AiModel(input.model),
-			displayName: input.displayName,
+			id: participantId,
+			roomId: RoomId(roomId),
+			displayName,
+			model: ParticipantModel.create({
+				model: ParticipantModelAi(model),
+				provider: ParticipantModelProvider(provider),
+			}).value(),
 		});
 
 		if (participantResult.isError()) {
@@ -56,8 +59,15 @@ export class InviteParticipantHandler
 		}
 
 		const participant = participantResult.value();
-		await this.participantRepository.save(participant);
+		const inviteResult = room.inviteParticipant(participantId);
+		if (inviteResult.isError()) return Result.error(inviteResult.error());
 
-		return Result.success({ participantId: participant.id.value() });
+		await this.participantRepository.persist(participant);
+		await this.roomRepository.persist(room);
+
+		const roomEvents = room.pullEvents();
+		await this.eventBus.publishAll([...roomEvents]);
+
+		return Result.success({ participantId: participantId.value() });
 	}
 }

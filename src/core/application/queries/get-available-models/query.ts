@@ -1,9 +1,9 @@
-import type { AvailableModelDTO } from "./query.dto";
+import type { Model } from "@openrouter/sdk/models";
 
-export type GetAvailableModelsInput = never;
+export interface GetAvailableModelsOutput {
+	models: Model[];
+}
 
-export type GetAvailableModelsOutput = AvailableModelDTO[];
-
-export class GetAvailableModelsQuery {
-	public constructor(public readonly input: GetAvailableModelsInput) {}
+export interface GetAvailableModelsQuery {
+	execute(): Promise<GetAvailableModelsOutput>;
 }
