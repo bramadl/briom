@@ -4,7 +4,7 @@ import type {
 	IEventBus as IDrimionEventBus,
 } from "@briom/libs/drimion";
 
-export class IEventBus implements IDrimionEventBus {
+export class BriomEventBus implements IDrimionEventBus {
 	private readonly subscribers = new Map<
 		string,
 		Array<(event: DomainEvent) => Promise<void> | void>

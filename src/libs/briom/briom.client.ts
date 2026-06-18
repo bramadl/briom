@@ -9,11 +9,11 @@ export interface BriomDeps {
 export class Briom {
 	public constructor(private readonly deps: BriomDeps) {}
 
-	public rooms() {
+	public get rooms() {
 		return this.deps.rooms;
 	}
 
-	public turns() {
+	public get turns() {
 		return this.deps.turns;
 	}
 }

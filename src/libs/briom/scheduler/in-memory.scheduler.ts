@@ -2,7 +2,7 @@ import type { IScheduler } from "@briom/core/application";
 
 export type ScheduledTaskId = string;
 
-export class InMemoryScheduler implements IScheduler {
+export class BriomScheduler implements IScheduler {
 	private readonly tasks = new Map<ScheduledTaskId, NodeJS.Timeout>();
 
 	public schedule(
@@ -17,7 +17,7 @@ export class InMemoryScheduler implements IScheduler {
 			try {
 				await task();
 			} catch (error) {
-				console.error(`[InMemoryScheduler] Task ${taskId} failed`, error);
+				console.error(`[BriomScheduler] Task ${taskId} failed`, error);
 			}
 		}, delayMs);
 
