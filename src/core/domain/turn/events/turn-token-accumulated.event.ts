@@ -1,8 +1,8 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
 import type { RoomId } from "../../room";
-
 import { Turn } from "../turn";
+
 import type { BaseTurnEventPayload } from "./base.event";
 
 export interface TurnTokenAccumulatedPayload extends BaseTurnEventPayload {

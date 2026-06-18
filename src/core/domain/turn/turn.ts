@@ -185,7 +185,12 @@ export class Turn extends Aggregate<TurnProps> {
 
 		this.change("status", TURN_STATUS_OPTION.STREAMING);
 
-		this.emit(new TurnStreamStarted(this.id.value(), { turnId: this.id }));
+		this.emit(
+			new TurnStreamStarted(this.id.value(), {
+				turnId: this.id,
+				roomId: this.get("roomId"),
+			}),
+		);
 
 		return Result.success(undefined);
 	}
