@@ -15,9 +15,9 @@ export interface ISseForwarder {
 	sendToClient(clientId: string, event: SseEvent): void;
 
 	/**
-	 * Register client connection to room
+	 * Register client connection to room — returns SSE Response for HTTP connection
 	 */
-	subscribeClient(clientId: string, roomId: string): void;
+	subscribeClient(clientId: string, roomId: string): Response;
 
 	/**
 	 * Remove client connection

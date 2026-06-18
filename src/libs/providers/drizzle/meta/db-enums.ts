@@ -1,21 +1,25 @@
-import { enumsSchema } from "./db-schema";
+import {
+	INTENT_OPTION,
+	type IntentOption,
+	TURN_STATUS_OPTION,
+	type TurnStatusOption,
+} from "@briom/core/domain";
+import { pgEnum } from "drizzle-orm/pg-core";
 
-export const authorTypeEnum = enumsSchema.enum("author_type", [
-	"user",
+export const authorTypeEnum = pgEnum("author_type", [
+	"moderator",
 	"participant",
 ]);
 
-export const intentEnum = enumsSchema.enum("intent", [
-	"respond",
-	"critique",
-	"summarize",
-	"challenge",
-	"expand",
-	"direct",
-]);
+export const intentEnum = pgEnum(
+	"intent",
+	Object.values(INTENT_OPTION) as [IntentOption, ...IntentOption[]],
+);
 
-export const turnStatusEnum = enumsSchema.enum("turn_status", [
-	"pending",
-	"settled",
-	"failed",
-]);
+export const turnStatusEnum = pgEnum(
+	"turn_status",
+	Object.values(TURN_STATUS_OPTION) as [
+		TurnStatusOption,
+		...TurnStatusOption[],
+	],
+);

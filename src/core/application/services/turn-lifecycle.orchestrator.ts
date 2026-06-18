@@ -197,7 +197,9 @@ export class TurnLifecycleOrchestrator {
 		await this.repository.persist(turn);
 		await this.repository.persist(newTurn);
 
-		this.scheduleTimeout(newTurn);
+		// NOTE: Do NOT schedule timeout here. The retry handler will immediately
+		// start streaming (same flow as initiateParticipantTurn). Scheduling timeout
+		// here would create a race condition between timeout and stream start.
 		await this.publishEvents(turn);
 		await this.publishEvents(newTurn);
 

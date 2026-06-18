@@ -2,6 +2,7 @@ export * from "./errors";
 export * from "./events";
 export * from "./options";
 export * from "./streams";
+export * from "./transcriptor";
 export * from "./turn";
 export * from "./turn.author";
 export * from "./turn.id";
