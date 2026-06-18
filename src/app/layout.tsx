@@ -1,7 +1,7 @@
 import { ThemeProvider } from "@briom/components/theme-provider";
 import { Toaster } from "@briom/components/ui/sonner";
 import { TooltipProvider } from "@briom/components/ui/tooltip";
-import { ProgressProvider } from "@briom/libs/bprogress/provider";
+import { ProgressProvider } from "@briom/libs/next/bprogress/provider";
 import type { Metadata } from "next";
 import { Fraunces, Geist, Space_Mono } from "next/font/google";
 
