@@ -1,6 +1,6 @@
 {
-  "id": "ea30b185-af44-4ab2-867b-b10c66f4fd1e",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "05e9dc1f-489a-41a8-bd3f-b2962128e0b5",
+  "prevId": "ea30b185-af44-4ab2-867b-b10c66f4fd1e",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -39,7 +39,23 @@
           "notNull": true
         }
       },
-      "indexes": {},
+      "indexes": {
+        "participants_room_id_idx": {
+          "name": "participants_room_id_idx",
+          "columns": [
+            {
+              "expression": "room_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {
         "participants_room_id_rooms_id_fk": {
           "name": "participants_room_id_rooms_id_fk",
@@ -105,7 +121,23 @@
           "default": "now()"
         }
       },
-      "indexes": {},
+      "indexes": {
+        "rooms_moderator_id_idx": {
+          "name": "rooms_moderator_id_idx",
+          "columns": [
+            {
+              "expression": "moderator_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
