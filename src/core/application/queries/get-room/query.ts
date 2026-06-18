@@ -38,9 +38,39 @@ export interface RoomDTO {
 
 	/**
 	 * @description
-	 * IDs of invited AI participants. Empty during `FORMING` status.
+	 * The invited AI participants. Empty during `FORMING` status.
 	 */
-	participantIds: string[];
+	participants: {
+		/**
+		 * @description
+		 * Unique participant identifier.
+		 */
+		id: string;
+
+		/**
+		 * @description
+		 * Name of the participant set by the moderator.
+		 */
+		name: string;
+
+		/**
+		 * @description
+		 * The external provider of the AI model.
+		 */
+		provider: string;
+
+		/**
+		 * @description
+		 * The model of the AI used.
+		 */
+		model: string;
+
+		/**
+		 * @description
+		 * Returns fully qualified model string for LLM gateway calls.
+		 */
+		qualifiedModel: string;
+	}[];
 
 	/**
 	 * @description

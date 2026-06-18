@@ -11,7 +11,9 @@ import type { GetRoomsInput, GetRoomsOutput, GetRoomsQuery } from "./query";
  *
  * @see GetRoomsQuery — for data retrieval logic
  */
-export class GetRoomsHandler implements IQuery<GetRoomsInput, GetRoomsOutput> {
+export class GetRoomsHandler
+	implements IQuery<GetRoomsInput, GetRoomsOutput, never>
+{
 	public constructor(private readonly query: GetRoomsQuery) {}
 
 	/**
@@ -21,7 +23,9 @@ export class GetRoomsHandler implements IQuery<GetRoomsInput, GetRoomsOutput> {
 	 * @param input - Empty criteria (reserved for future filtering)
 	 * @returns Result wrapping all rooms
 	 */
-	public async execute(input: GetRoomsInput): Promise<IResult<GetRoomsOutput>> {
+	public async execute(
+		input: GetRoomsInput,
+	): Promise<IResult<GetRoomsOutput, never>> {
 		const output = await this.query.execute(input);
 		return Result.success(output);
 	}

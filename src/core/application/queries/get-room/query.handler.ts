@@ -16,7 +16,9 @@ import type { GetRoomInput, GetRoomOutput, GetRoomQuery } from "./query";
  *
  * @see GetRoomQuery — for the actual data retrieval logic
  */
-export class GetRoomHandler implements IQuery<GetRoomInput, GetRoomOutput> {
+export class GetRoomHandler
+	implements IQuery<GetRoomInput, GetRoomOutput, never>
+{
 	public constructor(private readonly query: GetRoomQuery) {}
 
 	/**
@@ -26,7 +28,9 @@ export class GetRoomHandler implements IQuery<GetRoomInput, GetRoomOutput> {
 	 * @param input - Room ID to retrieve
 	 * @returns Result wrapping the room DTO
 	 */
-	public async execute(input: GetRoomInput): Promise<IResult<GetRoomOutput>> {
+	public async execute(
+		input: GetRoomInput,
+	): Promise<IResult<GetRoomOutput, never>> {
 		const output = await this.query.execute(input);
 		return Result.success(output);
 	}

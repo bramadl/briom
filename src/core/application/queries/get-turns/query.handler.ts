@@ -11,7 +11,9 @@ import type { GetTurnsInput, GetTurnsOutput, GetTurnsQuery } from "./query";
  *
  * @see GetTurnsQuery — for data retrieval logic
  */
-export class GetTurnsHandler implements IQuery<GetTurnsInput, GetTurnsOutput> {
+export class GetTurnsHandler
+	implements IQuery<GetTurnsInput, GetTurnsOutput, never>
+{
 	public constructor(private readonly query: GetTurnsQuery) {}
 
 	/**
@@ -21,7 +23,9 @@ export class GetTurnsHandler implements IQuery<GetTurnsInput, GetTurnsOutput> {
 	 * @param input - Room ID to retrieve turns for
 	 * @returns Result wrapping all turns in sequence order
 	 */
-	public async execute(input: GetTurnsInput): Promise<IResult<GetTurnsOutput>> {
+	public async execute(
+		input: GetTurnsInput,
+	): Promise<IResult<GetTurnsOutput, never>> {
 		const output = await this.query.execute(input);
 		return Result.success(output);
 	}

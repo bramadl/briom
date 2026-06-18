@@ -11,7 +11,9 @@ import type { GetTurnInput, GetTurnOutput, GetTurnQuery } from "./query";
  *
  * @see GetTurnQuery — for data retrieval logic
  */
-export class GetTurnHandler implements IQuery<GetTurnInput, GetTurnOutput> {
+export class GetTurnHandler
+	implements IQuery<GetTurnInput, GetTurnOutput, never>
+{
 	public constructor(private readonly query: GetTurnQuery) {}
 
 	/**
@@ -21,7 +23,9 @@ export class GetTurnHandler implements IQuery<GetTurnInput, GetTurnOutput> {
 	 * @param input - Turn ID to retrieve
 	 * @returns Result wrapping the turn DTO
 	 */
-	public async execute(input: GetTurnInput): Promise<IResult<GetTurnOutput>> {
+	public async execute(
+		input: GetTurnInput,
+	): Promise<IResult<GetTurnOutput, never>> {
 		const output = await this.query.execute(input);
 		return Result.success(output);
 	}
