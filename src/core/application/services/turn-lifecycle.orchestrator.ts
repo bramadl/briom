@@ -2,12 +2,13 @@ import {
 	type ModeratorId,
 	type ParticipantId,
 	type RoomId,
-	StreamError,
+	type StreamError,
 	Turn,
 	type TurnId,
 	type TurnIntent,
 	type TurnRepository,
 	type TurnSequence,
+	type TurnTimeoutPolicy,
 } from "@briom/core/domain";
 import {
 	DomainError,
@@ -23,7 +24,7 @@ export class TurnLifecycleOrchestrator {
 		private readonly eventBus: IEventBus,
 		private readonly repository: TurnRepository,
 		private readonly scheduler: IScheduler,
-		private readonly timeoutMs: number,
+		private readonly timeout: TurnTimeoutPolicy,
 	) {}
 
 	public async initiateParticipantTurn(props: {
@@ -211,7 +212,14 @@ export class TurnLifecycleOrchestrator {
 			return Result.success(undefined);
 		}
 
-		const result = turn.fail(StreamError.timeout());
+		const timeoutResult = this.timeout.check(turn);
+		if (!timeoutResult) {
+			return Result.success(undefined);
+		}
+
+		const error = timeoutResult.value();
+		const result = turn.fail(error);
+
 		if (result.isSuccess()) {
 			await this.repository.persist(turn);
 			await this.publishEvents(turn);
@@ -221,9 +229,10 @@ export class TurnLifecycleOrchestrator {
 	}
 
 	private scheduleTimeout(turn: Turn): void {
+		const threshold = this.timeout.THRESHOLD;
 		this.scheduler.schedule(
 			this.timeoutKey(turn.id),
-			this.timeoutMs,
+			threshold.ms,
 			() => void this.handleTimeout(turn.id),
 		);
 	}
