@@ -2,6 +2,7 @@ import {
 	ConcludeDeliberationHandler,
 	DeleteRoomHandler,
 	FormRoomHandler,
+	GetParticipantModelsHandler,
 	GetRoomHandler,
 	GetRoomsHandler,
 	InviteParticipantHandler,
@@ -16,12 +17,14 @@ import {
 	DrizzleGetRoomsQuery,
 	DrizzleRoomRepository,
 } from "@briom/libs/providers/drizzle";
+import { OpenRouterGetParticipantModelsQuery } from "@briom/libs/providers/open-router";
 
 import type { infrastructureSlice } from "./infrastructure.slice";
 
 export const roomSlice = (
 	container: ReturnType<typeof infrastructureSlice>,
 ) => {
+	const USE_FREE_MODELS = process.env.USE_FREE_MODELS === "true";
 	return container
 		.add("Repository:Room", (r) => {
 			return new DrizzleRoomRepository(r["Client:Database"]);
@@ -31,6 +34,9 @@ export const roomSlice = (
 		})
 		.add("Query:GetRooms", (r) => {
 			return new DrizzleGetRoomsQuery(r["Client:Database"]);
+		})
+		.add("Query:GetParticipantModels", (r) => {
+			return new OpenRouterGetParticipantModelsQuery(r["Client:OpenRouter"]);
 		})
 		.add("Handler:ConcludeDeliberation", (r) => {
 			return new ConcludeDeliberationHandler(
@@ -46,6 +52,12 @@ export const roomSlice = (
 		})
 		.add("Handler:GetRooms", (r) => {
 			return new GetRoomsHandler(r["Query:GetRooms"]);
+		})
+		.add("Handler:GetParticipantModels", (r) => {
+			return new GetParticipantModelsHandler(
+				r["Query:GetParticipantModels"],
+				USE_FREE_MODELS,
+			);
 		})
 		.add("Handler:FormRoom", (r) => {
 			return new FormRoomHandler(r["Repository:Room"], r["Adapter:EventBus"]);
@@ -86,6 +98,7 @@ export const roomSlice = (
 				inviteParticipant: r["Handler:InviteParticipant"],
 				list: r["Handler:GetRooms"],
 				pause: r["Handler:PauseDeliberation"],
+				participantModels: r["Handler:GetParticipantModels"],
 				rename: r["Handler:RenameRoom"],
 				resume: r["Handler:ResumeDeliberation"],
 				start: r["Handler:StartDeliberation"],

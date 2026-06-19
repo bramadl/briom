@@ -8,6 +8,8 @@ import {
 	FormRoomCommand,
 	type FormRoomHandler,
 	type FormRoomInput,
+	type GetParticipantModelsHandler,
+	type GetParticipantModelsInput,
 	type GetRoomHandler,
 	type GetRoomInput,
 	type GetRoomsHandler,
@@ -67,6 +69,11 @@ interface RoomContextDeps {
 	 * List all rooms.
 	 */
 	list: GetRoomsHandler;
+	/**
+	 * @description
+	 * List of all provider models.
+	 */
+	participantModels: GetParticipantModelsHandler;
 	/**
 	 * @description
 	 * Pause deliberation.
@@ -203,6 +210,19 @@ export class RoomContext {
 	 */
 	public async list(input: GetRoomsInput) {
 		return this.deps.list.execute(input);
+	}
+
+	/**
+	 * @description
+	 * Lists all FREE-only provider models, grouped by the provider.
+	 *
+	 * **MVP**: Returns all free-only providers unfiltered. Future versions may add
+	 * pagination, status filters, or other-scoped queries.
+	 *
+	 * @param input - Room ID to pause
+	 */
+	public async participantModels(input: GetParticipantModelsInput) {
+		return this.deps.participantModels.execute(input);
 	}
 
 	/**

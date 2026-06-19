@@ -1,3 +1,5 @@
+export * from "./get-participant-models/query";
+export * from "./get-participant-models/query.handler";
 export * from "./get-room/query";
 export * from "./get-room/query.handler";
 export * from "./get-rooms/query";

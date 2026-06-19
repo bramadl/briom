@@ -2,6 +2,7 @@ import type {
 	GetRoomsInput,
 	GetRoomsOutput,
 	GetRoomsQuery,
+	RoomDTO,
 } from "@briom/core/application";
 import type { RoomStatusOption } from "@briom/core/domain";
 import type { Database } from "@briom/drizzle/client";
@@ -42,11 +43,16 @@ export class DrizzleGetRoomsQuery implements GetRoomsQuery {
 			.from(roomsTable)
 			.orderBy(desc(roomsTable.createdAt));
 
-		const roomsWithRelations = await Promise.all(
+		const roomsWithRelations: RoomDTO[] = await Promise.all(
 			rooms.map(async (room) => {
 				const [participants, turns] = await Promise.all([
 					this.db
-						.select({ id: participantsTable.id })
+						.select({
+							id: participantsTable.id,
+							model: participantsTable.model,
+							provider: participantsTable.provider,
+							name: participantsTable.displayName,
+						})
 						.from(participantsTable)
 						.where(eq(participantsTable.roomId, room.id)),
 					this.db
@@ -61,10 +67,16 @@ export class DrizzleGetRoomsQuery implements GetRoomsQuery {
 					status: room.status as RoomStatusOption,
 					topic: room.topic,
 					moderatorId: room.moderatorId,
-					participantIds: participants.map((p) => p.id),
+					participants: participants.map((p) => ({
+						id: p.id,
+						model: p.model,
+						provider: p.provider,
+						name: p.name,
+						qualifiedModel: `${p.provider}/${p.name}`,
+					})),
 					turnIds: turns.map((t) => t.id),
 					createdAt: room.createdAt.toISOString(),
-				};
+				} satisfies RoomDTO;
 			}),
 		);
 

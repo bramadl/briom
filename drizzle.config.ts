@@ -8,5 +8,10 @@ export default {
 	out: "./src/libs/providers/drizzle/migrations",
 	dialect: "postgresql",
 	dbCredentials: { url: connectionUrl },
-	schemaFilter: ["enums", "participants", "rooms", "turns"],
+	migrations: {
+		prefix: "index",
+		table: "__drizzle_migrations__",
+		schema: "public",
+	},
+	strict: false,
 } satisfies Config;
