@@ -2,6 +2,7 @@ import { ThemeProvider } from "@briom/components/theme-provider";
 import { Toaster } from "@briom/components/ui/sonner";
 import { TooltipProvider } from "@briom/components/ui/tooltip";
 import { ProgressProvider } from "@briom/libs/next/bprogress/provider";
+import { QueryProvider } from "@briom/libs/next/tanstack/query/query-provider";
 import type { Metadata } from "next";
 import { Fraunces, Geist, Space_Mono } from "next/font/google";
 
@@ -51,9 +52,11 @@ export default function RootLayout({
 					enableSystem
 				>
 					<ProgressProvider>
-						<TooltipProvider>{children}</TooltipProvider>
+						<QueryProvider>
+							<TooltipProvider>{children}</TooltipProvider>
+						</QueryProvider>
+						<Toaster />
 					</ProgressProvider>
-					<Toaster />
 				</ThemeProvider>
 			</body>
 		</html>

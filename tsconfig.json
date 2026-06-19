@@ -24,10 +24,10 @@
 			"@briom/components/*": ["./src/components/*"],
 			"@briom/ui/*": ["./src/components/ui/*"],
 			"@briom/hooks/*": ["./src/hooks/*"],
+			"@briom/rooms/*": ["./src/app/(rooms)/*"],
 
 			// Client
 			"@briom": ["./src/container"],
-			"@briom/api/*": ["./src/app/api/*"],
 			"@briom/client": ["./src/libs/briom/client.ts"],
 
 			// Core
