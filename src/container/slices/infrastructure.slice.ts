@@ -1,6 +1,10 @@
 import type { ContainerBuilder } from "@briom/drimion";
 import { db } from "@briom/drizzle/client";
-import { BriomEventBus, BriomScheduler } from "@briom/libs/briom/wrappers";
+import {
+	BriomEventBus,
+	BriomScheduler,
+	BriomSseForwarder,
+} from "@briom/libs/briom/wrappers";
 import { OpenRouterLlmGateway } from "@briom/open-router";
 import { openRouter } from "@briom/open-router/client";
 
@@ -10,6 +14,7 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 		.add("Client:OpenRouter", () => openRouter)
 		.add("Adapter:EventBus", () => new BriomEventBus())
 		.add("Adapter:Scheduler", () => new BriomScheduler())
+		.add("Adapter:SseForwarder", () => new BriomSseForwarder())
 		.add(
 			"Adapter:LlmGateway",
 			(r) => new OpenRouterLlmGateway(r["Client:OpenRouter"]),

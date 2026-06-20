@@ -1,3 +1,5 @@
+import type { GetTurnProposalsInput } from "@briom/app/queries/get-turn-proposals/query";
+import type { GetTurnProposalsHandler } from "@briom/app/queries/get-turn-proposals/query.handler";
 import {
 	AbandonTurnCommand,
 	type AbandonTurnHandler,
@@ -60,6 +62,11 @@ interface TurnContextDeps {
 	 * Get single turn.
 	 */
 	get: GetTurnHandler;
+	/**
+	 * @description
+	 * Get suggestions for next turns.
+	 */
+	getProposals: GetTurnProposalsHandler;
 	/**
 	 * @description
 	 * Moderator sends message.
@@ -188,6 +195,17 @@ export class TurnContext {
 	 */
 	public async get(input: GetTurnInput) {
 		return this.deps.get.execute(input);
+	}
+
+	/**
+	 * @description
+	 * Retrieves a proposal for the next turns.
+	 *
+	 * @param input - Room ID to retrieve
+	 * @returns Result containing TurnProposalDTO
+	 */
+	public async getProposals(input: GetTurnProposalsInput) {
+		return this.deps.getProposals.execute(input);
 	}
 
 	/**

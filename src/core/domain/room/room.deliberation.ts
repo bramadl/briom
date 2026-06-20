@@ -7,6 +7,10 @@ import {
 	TurnIntent,
 } from "../turn";
 
+import {
+	selectMood,
+	selectProposalLabel,
+} from "./dictionary/suggestion.dictionary";
 import type { Participant, ParticipantId } from "./participant";
 import type { Room } from "./room";
 
@@ -90,7 +94,7 @@ export class RoomDeliberation {
 			if (settledCount < 2) {
 				return Result.error(
 					new InvalidIntentForContextError(
-						intent,
+						intent.get("value"),
 						"requires at least 2 settled turns to summarize",
 					),
 				);
@@ -105,7 +109,7 @@ export class RoomDeliberation {
 			if (hasNoPreviousParticipantTurn) {
 				return Result.error(
 					new InvalidIntentForContextError(
-						intent,
+						intent.get("value"),
 						"no previous participant perspective to critique",
 					),
 				);
@@ -118,7 +122,10 @@ export class RoomDeliberation {
 
 		if (participantNotInRoom) {
 			return Result.error(
-				new InvalidIntentForContextError(intent, "participant not in room"),
+				new InvalidIntentForContextError(
+					intent.get("value"),
+					"participant not in room",
+				),
 			);
 		}
 
@@ -205,7 +212,8 @@ export class RoomDeliberation {
 
 	/**
 	 * @description
-	 * Generates human-readable rationale for why a participant might take a given intent.
+	 * Generates a rich, dynamic, non-robotic label for why a participant
+	 * might take a given intent. Uses the ProposalDictionary for variety.
 	 */
 	private generateRationale(
 		context: DeliberationContext,
@@ -217,20 +225,15 @@ export class RoomDeliberation {
 		);
 
 		const name = participant?.get("displayName") || "AI";
-		switch (intent.get("value")) {
-			case INTENT_OPTION.RESPOND:
-				return `${name} could continue the deliberation naturally`;
-			case INTENT_OPTION.CRITIQUE:
-				return `${name} might offer critical perspective on recent reasoning`;
-			case INTENT_OPTION.EXPAND:
-				return `${name} could add depth or nuance to the discussion`;
-			case INTENT_OPTION.CHALLENGE:
-				return `${name} may question assumptions or conclusions`;
-			case INTENT_OPTION.SUMMARIZE:
-				return `${name} could synthesize where the deliberation stands`;
-			default:
-				return `${name} could contribute`;
-		}
+		const mood = selectMood({
+			turnCount: context.turns.length,
+			hasFailedTurn: context.turns.some((t) => t.isFailed),
+			lastIntent:
+				context.turns[context.turns.length - 1]?.get("intent") || undefined,
+			participantCount: context.participants.length,
+		});
+
+		return selectProposalLabel(intent.get("value"), name, mood);
 	}
 
 	/**

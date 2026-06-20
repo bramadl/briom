@@ -3,6 +3,7 @@ import {
 	AccumulateTokenHandler,
 	FailTurnHandler,
 	GetTurnHandler,
+	GetTurnProposalsHandler,
 	GetTurnsHandler,
 	InitiateModeratorTurnHandler,
 	InitiateParticipantTurnHandler,
@@ -19,6 +20,7 @@ import {
 } from "@briom/core/domain";
 import { TurnContext } from "@briom/libs/briom/contexts";
 import {
+	DrizzleGetTurnProposalsQuery,
 	DrizzleGetTurnQuery,
 	DrizzleGetTurnsQuery,
 	DrizzleTurnRepository,
@@ -34,6 +36,13 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 		})
 		.add("Query:GetTurn", (r) => {
 			return new DrizzleGetTurnQuery(r["Client:Database"]);
+		})
+		.add("Query:GetTurnProposals", (r) => {
+			return new DrizzleGetTurnProposalsQuery(
+				r["Client:Database"],
+				r["Repository:Room"],
+				r["Repository:Turn"],
+			);
 		})
 		.add("Query:GetTurns", (r) => {
 			return new DrizzleGetTurnsQuery(r["Client:Database"]);
@@ -71,6 +80,9 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 		})
 		.add("Handler:GetTurn", (r) => {
 			return new GetTurnHandler(r["Query:GetTurn"]);
+		})
+		.add("Handler:GetTurnProposals", (r) => {
+			return new GetTurnProposalsHandler(r["Query:GetTurnProposals"]);
 		})
 		.add("Handler:GetTurns", (r) => {
 			return new GetTurnsHandler(r["Query:GetTurns"]);
@@ -125,6 +137,7 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				accumulate: r["Handler:AccumulateToken"],
 				fail: r["Handler:FailTurn"],
 				get: r["Handler:GetTurn"],
+				getProposals: r["Handler:GetTurnProposals"],
 				initiateModeratorTurn: r["Handler:InitiateModeratorTurn"],
 				initiateParticipantTurn: r["Handler:InitiateParticipantTurn"],
 				initiateTopicTurn: r["Handler:InitiateTopicTurn"],

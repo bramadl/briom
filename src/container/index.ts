@@ -4,11 +4,13 @@ import { pipe } from "@briom/utils";
 
 import { infrastructureSlice } from "./slices/infrastructure.slice";
 import { roomSlice } from "./slices/room.slice";
+import { sseSlice } from "./slices/sse.slice";
 import { turnSlice } from "./slices/turn.slice";
 
 const container = pipe(
 	ContainerBuilder.create(),
 	infrastructureSlice,
+	sseSlice,
 	roomSlice,
 	turnSlice,
 )
@@ -22,3 +24,5 @@ const container = pipe(
 
 export const briom = container.briom;
 export type briomClient = typeof briom;
+
+export const sseForwarder = container["Adapter:SseForwarder"];

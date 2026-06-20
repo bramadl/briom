@@ -1,9 +1,10 @@
 import type {
-	TurnFailed,
-	TurnSettled,
-	TurnStreamStarted,
-	TurnTokenAccumulated,
+	TurnFailedPayload,
+	TurnSettledPayload,
+	TurnStreamStartedPayload,
+	TurnTokenAccumulatedPayload,
 } from "@briom/domain/turn";
+import type { DomainEvent } from "@briom/libs/drimion";
 
 import type { ISseForwarder } from "../ports";
 
@@ -15,25 +16,18 @@ import type { ISseForwarder } from "../ports";
  * Handles the real-time streaming experience: tokens arriving, stream starting,
  * turn completing, and turn failing.
  *
- * **Why Separate from RoomSseSubscriber?**
- * Turn events are high-frequency during streaming (one per token) and have
- * different payload shapes. Separating them keeps concerns clean and allows
- * independent scaling or filtering.
+ * **Event Contract**
+ * All handlers accept `DomainEvent<TPayload>` — the base event type from
+ * Drimion's event system.
  *
  * **Event Mapping**
- * - `TurnStreamStarted` → `turn:token` (minimal payload, signals transition)
- * - `TurnTokenAccumulated` → `turn:token` (carries actual token text)
- * - `TurnSettled` → `turn:settled` (carries complete content)
- * - `TurnFailed` → `turn:failed` (carries error details)
- *
- * **Real-Time Experience**
- * The `turn:token` event is the heartbeat of Briom's "intellectually alive"
- * feeling. Each token pushes to the client immediately, creating the sensation
- * of watching a thought form in real time.
+ * - `TurnStreamStarted` → `turn:token`
+ * - `TurnTokenAccumulated` → `turn:token`
+ * - `TurnSettled` → `turn:settled`
+ * - `TurnFailed` → `turn:failed`
  *
  * @see ISseForwarder — for SSE transport contract
- * @see Turn — for event emission logic
- * @see TurnLifecycleOrchestrator — for event generation timing
+ * @see DomainEvent — base event type from Drimion
  */
 export class TurnSseSubscriber {
 	public constructor(private readonly sse: ISseForwarder) {}
@@ -41,11 +35,11 @@ export class TurnSseSubscriber {
 	/**
 	 * @description
 	 * Forwarded as `turn:token` with minimal payload.
-	 *
-	 * Signals the transition from "thinking" to "streaming" in the UI.
-	 * Client can use this to show a typing indicator or stream container.
 	 */
-	public onTurnStreamStarted(event: TurnStreamStarted): void {
+	public onTurnStreamStarted(
+		event: DomainEvent<TurnStreamStartedPayload>,
+	): void {
+		if (!event.payload) return;
 		this.sse.broadcastToRoom(event.payload.roomId.value(), {
 			event: "turn:token",
 			data: {
@@ -57,11 +51,11 @@ export class TurnSseSubscriber {
 	/**
 	 * @description
 	 * Forwarded as `turn:token` with token content.
-	 *
-	 * The primary real-time event. Each token from the LLM stream is
-	 * immediately pushed to all connected room clients.
 	 */
-	public onTurnTokenAccumulated(event: TurnTokenAccumulated): void {
+	public onTurnTokenAccumulated(
+		event: DomainEvent<TurnTokenAccumulatedPayload>,
+	): void {
+		if (!event.payload) return;
 		this.sse.broadcastToRoom(event.payload.roomId.value(), {
 			event: "turn:token",
 			data: {
@@ -74,11 +68,9 @@ export class TurnSseSubscriber {
 	/**
 	 * @description
 	 * Forwarded as `turn:settled`.
-	 *
-	 * Signals that streaming is complete and the full perspective is available.
-	 * Client can replace the streaming view with the settled content.
 	 */
-	public onTurnSettled(event: TurnSettled): void {
+	public onTurnSettled(event: DomainEvent<TurnSettledPayload>): void {
+		if (!event.payload) return;
 		this.sse.broadcastToRoom(event.payload.roomId.value(), {
 			event: "turn:settled",
 			data: {
@@ -91,11 +83,9 @@ export class TurnSseSubscriber {
 	/**
 	 * @description
 	 * Forwarded as `turn:failed`.
-	 *
-	 * Signals that the turn encountered an error. Client can show retry/abandon
-	 * options to the moderator.
 	 */
-	public onTurnFailed(event: TurnFailed): void {
+	public onTurnFailed(event: DomainEvent<TurnFailedPayload>): void {
+		if (!event.payload) return;
 		this.sse.broadcastToRoom(event.payload.roomId.value(), {
 			event: "turn:failed",
 			data: {
