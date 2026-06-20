@@ -6,10 +6,13 @@ import type {
 	FormRoomOutput,
 	GetParticipantModelsInput,
 	GetParticipantModelsOutput,
+	GetRoomInput,
+	GetRoomOutput,
 	GetRoomsInput,
 	GetRoomsOutput,
 	InviteParticipantInput,
 	InviteParticipantOutput,
+	RenameRoomInput,
 } from "@briom/app";
 import { revalidatePath } from "next/cache";
 
@@ -69,4 +72,31 @@ export async function getRooms(
 	}
 
 	return parseResponse(result.value());
+}
+
+// ───── Get Room ────────────────────────────────────────────────
+export async function getRoom(
+	input: GetRoomInput,
+): Promise<ServerActionResult<GetRoomOutput>> {
+	const result = await briom.rooms.get(input);
+
+	if (result.isError()) {
+		return parseError(result.error());
+	}
+
+	return parseResponse(result.value());
+}
+
+// ───── Rename Room ────────────────────────────────────────────────
+export async function renameRoom(
+	input: RenameRoomInput,
+): Promise<ServerActionResult<void>> {
+	const result = await briom.rooms.rename(input);
+
+	if (result.isError()) {
+		return parseError(result.error());
+	}
+
+	revalidatePath(`/rooms/${input.roomId}`, "page");
+	return parseResponse(undefined);
 }

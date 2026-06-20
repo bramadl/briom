@@ -14,7 +14,7 @@ export default function ErrorPage({
 	reset: () => void;
 }) {
 	useEffect(() => {
-		console.error(error);
+		console.error({ ...error, message: error.message, name: error.name });
 	}, [error]);
 
 	return (
@@ -23,6 +23,7 @@ export default function ErrorPage({
 			<ErrorState
 				code="Error"
 				description="Something went wrong on our end. You can try again, or head back home."
+				message={error.message}
 				title="Something broke"
 			>
 				<Button onClick={reset} variant="outline">

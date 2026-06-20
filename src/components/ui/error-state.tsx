@@ -1,11 +1,14 @@
 import { Logo } from "@briom/components/logo";
 import { cn } from "@briom/libs/utils";
+import { AlertCircleIcon } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
 
 interface ErrorStateProps {
 	children?: React.ReactNode;
 	className?: string;
 	code?: string;
 	description?: string;
+	message?: string;
 	title: string;
 }
 
@@ -15,6 +18,7 @@ export function ErrorState({
 	description,
 	children,
 	className,
+	message,
 }: ErrorStateProps) {
 	return (
 		<div
@@ -38,6 +42,14 @@ export function ErrorState({
 					</p>
 				)}
 			</div>
+
+			{message && (
+				<Alert className="max-w-md mx-auto" variant="destructive">
+					<AlertCircleIcon />
+					<AlertTitle>Error Message</AlertTitle>
+					<AlertDescription>{message}</AlertDescription>
+				</Alert>
+			)}
 
 			{children && <div className="flex items-center gap-3">{children}</div>}
 		</div>

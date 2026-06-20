@@ -4,7 +4,7 @@ import { RoomFormDialogTrigger, SidebarButtonExpander } from "./room-composer";
 
 export default async function RoomsPage() {
 	return (
-		<div className="relative flex min-h-full flex-1 flex-col items-center justify-center gap-6 p-24 text-center">
+		<main className="relative flex min-h-full flex-1 flex-col items-center justify-center gap-6 p-24 text-center">
 			<SidebarButtonExpander />
 
 			<Logo animate className="text-muted-foreground/40" size={40} />
@@ -23,6 +23,6 @@ export default async function RoomsPage() {
 			</div>
 
 			<RoomFormDialogTrigger />
-		</div>
+		</main>
 	);
 }

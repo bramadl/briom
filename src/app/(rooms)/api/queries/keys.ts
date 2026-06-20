@@ -7,8 +7,14 @@ export const queryKeys = {
 		participantModels() {
 			return [...queryKeys.rooms.all, "participant-models"] as const;
 		},
-		detail(roomId: string) {
+		get(roomId: string) {
 			return [...queryKeys.rooms.all, "detail", roomId] as const;
+		},
+	},
+	turns: {
+		all: ["turns"] as const,
+		list() {
+			return [...queryKeys.turns.all, "list"] as const;
 		},
 	},
 } as const;

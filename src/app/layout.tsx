@@ -52,11 +52,11 @@ export default function RootLayout({
 					enableSystem
 				>
 					<ProgressProvider>
-						<QueryProvider>
-							<TooltipProvider>{children}</TooltipProvider>
-						</QueryProvider>
-						<Toaster />
+						<TooltipProvider>
+							<QueryProvider>{children}</QueryProvider>
+						</TooltipProvider>
 					</ProgressProvider>
+					<Toaster />
 				</ThemeProvider>
 			</body>
 		</html>

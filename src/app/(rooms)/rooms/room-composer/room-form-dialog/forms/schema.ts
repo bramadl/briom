@@ -1,7 +1,7 @@
 import type { FieldArrayStore, FormStore } from "@formisch/react";
 import * as v from "valibot";
 
-export const MAX_PARTICIPANTS = 4;
+import { MAXIMUM_PARTICIPANT } from "../../room-settings";
 
 export const RoomFormSchema = v.object({
 	title: v.pipe(
@@ -26,8 +26,8 @@ export const RoomFormSchema = v.object({
 		),
 		v.minLength(1, "A room needs at least one perspective to begin."),
 		v.maxLength(
-			MAX_PARTICIPANTS,
-			`Up to ${MAX_PARTICIPANTS} perspectives keeps the deliberation focused.`,
+			MAXIMUM_PARTICIPANT,
+			`Up to ${MAXIMUM_PARTICIPANT} perspectives keeps the deliberation focused.`,
 		),
 	),
 });

@@ -7,10 +7,12 @@ import {
 } from "@briom/components/ui/field";
 import { FieldArray, Form, type SubmitHandler } from "@formisch/react";
 
+import { MAXIMUM_PARTICIPANT } from "../../room-settings";
+
 import { ParticipantIdentityField } from "./participant-identity.field";
 import { ParticipantSelector } from "./participant-selector";
 import { RoomTitleField } from "./room-title.field";
-import { MAX_PARTICIPANTS, type RoomFormSchema } from "./schema";
+import type { RoomFormSchema } from "./schema";
 
 interface RoomFormProps extends RoomFormSchema {
 	dialogRef?: React.RefObject<HTMLDivElement | null>;
@@ -34,16 +36,16 @@ export function RoomForm({
 				<FieldArray of={form} path={["participants"]}>
 					{(fieldArray) => {
 						const items = fieldArray.items;
-						const maxParticipantReached = items.length === MAX_PARTICIPANTS;
+						const maxParticipantReached = items.length === MAXIMUM_PARTICIPANT;
 						return (
 							<FieldSet className="gap-4">
 								<FieldLegend variant="label">Invite Participants</FieldLegend>
 								<FieldDescription>
-									Select up to {MAX_PARTICIPANTS} AI perspectives for this
+									Select up to {MAXIMUM_PARTICIPANT} AI perspectives for this
 									deliberation.
 								</FieldDescription>
 								<FieldGroup className="gap-4">
-									{items.length !== MAX_PARTICIPANTS && (
+									{items.length !== MAXIMUM_PARTICIPANT && (
 										<ParticipantSelector
 											dialogRef={dialogRef}
 											disabled={disabled || maxParticipantReached}

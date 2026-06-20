@@ -20,6 +20,7 @@ export default function RoomsError({
 		<ErrorState
 			code="Error"
 			description="Something went wrong loading this room. You can try again, or go back to your rooms."
+			message={error.message}
 			title="Couldn't load this"
 		>
 			<Button onClick={reset} variant="outline">

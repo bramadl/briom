@@ -11,7 +11,7 @@ import {
 	RoomCard,
 	RoomCardParticipantList,
 	RoomCardStatusBadge,
-} from "./room-card";
+} from "../room-card";
 
 export interface RoomListItemProps {
 	isActive?: boolean;
@@ -33,9 +33,15 @@ export function RoomListItem({ isActive, room }: RoomListItemProps) {
 				</div>
 				<RoomCardParticipantList participants={room.participants} />
 				<Separator />
-				<p className="text-xs text-muted-foreground text-right">
-					Room formed at {formatDate(new Date(room.createdAt), "dd MMMM yyyy")}
-				</p>
+				<div className="flex items-center justify-between">
+					<p className="text-xs text-muted-foreground/50 font-mono">
+						#{room.id.slice(0, 8)}
+					</p>
+					<p className="text-xs text-muted-foreground">
+						Room formed at{" "}
+						{formatDate(new Date(room.createdAt), "dd MMMM yyyy")}
+					</p>
+				</div>
 			</HoverCardContent>
 		</HoverCard>
 	);
