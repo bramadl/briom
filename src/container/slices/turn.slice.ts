@@ -6,6 +6,7 @@ import {
 	GetTurnsHandler,
 	InitiateModeratorTurnHandler,
 	InitiateParticipantTurnHandler,
+	InitiateTopicTurnHandler,
 	RetryTurnHandler,
 	SettleTurnHandler,
 	StartStreamHandler,
@@ -94,6 +95,15 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				r["Adapter:EventBus"],
 			);
 		})
+		.add("Handler:InitiateTopicTurn", (r) => {
+			return new InitiateTopicTurnHandler(
+				r["Repository:Room"],
+				r["Adapter:TurnSequencer"],
+				r["Orchestrator:TurnLifecycle"],
+				r["Adapter:EventBus"],
+				r["Adapter:LlmGateway"],
+			);
+		})
 		.add("Handler:RetryTurn", (r) => {
 			return new RetryTurnHandler(
 				r["Repository:Room"],
@@ -117,6 +127,7 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				get: r["Handler:GetTurn"],
 				initiateModeratorTurn: r["Handler:InitiateModeratorTurn"],
 				initiateParticipantTurn: r["Handler:InitiateParticipantTurn"],
+				initiateTopicTurn: r["Handler:InitiateTopicTurn"],
 				list: r["Handler:GetTurns"],
 				retry: r["Handler:RetryTurn"],
 				settle: r["Handler:SettleTurn"],

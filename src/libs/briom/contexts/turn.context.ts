@@ -18,6 +18,9 @@ import {
 	InitiateParticipantTurnCommand,
 	type InitiateParticipantTurnHandler,
 	type InitiateParticipantTurnInput,
+	InitiateTopicTurnCommand,
+	type InitiateTopicTurnHandler,
+	type InitiateTopicTurnInput,
 	RetryTurnCommand,
 	type RetryTurnHandler,
 	type RetryTurnInput,
@@ -67,6 +70,11 @@ interface TurnContextDeps {
 	 * Start AI response.
 	 */
 	initiateParticipantTurn: InitiateParticipantTurnHandler;
+	/**
+	 * @description
+	 * Automatically generates topic by LLM.
+	 */
+	initiateTopicTurn: InitiateTopicTurnHandler;
 	/**
 	 * @description
 	 * Get list of all turns within a room.
@@ -211,6 +219,18 @@ export class TurnContext {
 	public async initiateParticipantTurn(input: InitiateParticipantTurnInput) {
 		return this.deps.initiateParticipantTurn.execute(
 			new InitiateParticipantTurnCommand(input),
+		);
+	}
+
+	/**
+	 * @description
+	 * Generates a topic by LLM from a given content.
+	 *
+	 * @param input - Topic by moderator
+	 */
+	public async initiateTopicTurn(input: InitiateTopicTurnInput) {
+		return this.deps.initiateTopicTurn.execute(
+			new InitiateTopicTurnCommand(input),
 		);
 	}
 
