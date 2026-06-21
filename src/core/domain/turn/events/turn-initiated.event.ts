@@ -1,6 +1,7 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import type { RoomId } from "../../room";
+import type { ModeratorId, ParticipantId, RoomId } from "../../room";
+import type { IntentOption } from "../options";
 import { Turn } from "../turn";
 import type { TurnSequence } from "../turn.sequence";
 
@@ -16,6 +17,10 @@ import type { BaseTurnEventPayload } from "./base.event";
  */
 export interface TurnInitiatedPayload extends BaseTurnEventPayload {
 	readonly authorType: "moderator" | "participant";
+	readonly clientTurnId: string | null;
+	readonly intent: IntentOption | null;
+	readonly moderatorId: ModeratorId | null;
+	readonly participantId: ParticipantId | null;
 	readonly roomId: RoomId;
 	readonly sequence: TurnSequence;
 }

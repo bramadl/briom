@@ -1,73 +1,48 @@
 "use client";
 
-import { isServerError } from "@briom/rooms/api/lib/server-action";
-import { renameRoom } from "@briom/rooms/api/room.actions";
-import { useParams } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { toast } from "sonner";
+import { useRenameRoomMutation } from "@briom/rooms/hooks/mutations";
+import { useRoom } from "@briom/rooms/hooks/store";
+import { useEffect, useRef, useState } from "react";
 
-interface RoomTitleProps {
-	initialRoomTitle: string;
-}
+export function RoomTitle() {
+	const { roomId, room } = useRoom();
+	const renameMutation = useRenameRoomMutation(roomId);
 
-export function RoomTitle({ initialRoomTitle }: RoomTitleProps) {
-	const [_, startTransaction] = useTransition();
+	const titleRef = useRef<HTMLHeadingElement>(null);
+	const [isEditing, setIsEditing] = useState(false);
 
-	const { roomId } = useParams<{ roomId: string }>();
-	const [roomTitle, setRoomTitle] = useState(initialRoomTitle);
-	const [pendingTitle, setPendingTitle] = useState<string | null>(null);
-
-	useEffect(() => {
-		setRoomTitle(initialRoomTitle);
-		setPendingTitle(null);
-	}, [initialRoomTitle]);
-
-	const handleRename = async (
-		newTitle: string,
-		element: HTMLHeadingElement,
-	) => {
-		if (!newTitle.length || newTitle === roomTitle) {
-			if (!newTitle.length) element.innerText = roomTitle;
-			return;
+	const handleBlur = () => {
+		setIsEditing(false);
+		const newTitle = titleRef.current?.textContent?.trim() ?? "";
+		if (newTitle && newTitle !== room.title) {
+			renameMutation.mutate({ roomId, newTitle });
 		}
-
-		setPendingTitle(newTitle);
-		startTransaction(async () => {
-			const result = await renameRoom({ roomId, newTitle });
-			if (isServerError(result)) {
-				setPendingTitle(null);
-				element.innerText = roomTitle;
-				toast.error("Rename failed", { description: result.error.message });
-			}
-		});
 	};
 
 	const handleKeyDown: React.KeyboardEventHandler<HTMLHeadingElement> = (e) => {
 		if (e.key === "Enter") {
 			e.preventDefault();
-			const element = e.currentTarget;
-			element.blur();
+			e.currentTarget.blur();
 		}
 	};
 
-	const handleBlur: React.FocusEventHandler<HTMLHeadingElement> = (e) => {
-		const newTitle = e.currentTarget.innerText.trim();
-		handleRename(newTitle, e.currentTarget);
-	};
-
-	const displayTitle = pendingTitle ?? roomTitle;
+	useEffect(() => {
+		if (titleRef.current && !isEditing) {
+			titleRef.current.textContent = room.title;
+		}
+	}, [room.title, isEditing]);
 
 	return (
-		<div className="flex items-center gap-4">
-			<h1
-				className="font-serif text-lg truncate -mx-2 px-2 hover:bg-muted focus-visible:bg-muted rounded-sm"
-				contentEditable
-				onBlur={handleBlur}
-				onKeyDown={handleKeyDown}
-				suppressContentEditableWarning
-			>
-				{displayTitle}
-			</h1>
-		</div>
+		<h1
+			className="font-serif text-lg truncate -mx-2 px-2 hover:bg-muted focus-visible:bg-muted rounded-sm"
+			contentEditable
+			onBlur={handleBlur}
+			onFocus={() => setIsEditing(true)}
+			onKeyDown={handleKeyDown}
+			ref={titleRef}
+			suppressContentEditableWarning
+		>
+			{room.title}
+		</h1>
 	);
 }

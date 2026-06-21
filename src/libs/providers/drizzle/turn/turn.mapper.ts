@@ -71,7 +71,7 @@ export const TurnMapper = {
 			intent: record.intent as IntentOption | null,
 			perspective: TurnPerspective.empty(),
 			status: record.status as TurnStatusOption,
-			tokens: [],
+			tokens: [record.content],
 			error: null,
 			previousTurnId: record.previousTurnId
 				? TurnId(record.previousTurnId)

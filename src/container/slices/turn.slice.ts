@@ -12,6 +12,7 @@ import {
 	SettleTurnHandler,
 	StartStreamHandler,
 	TurnLifecycleOrchestrator,
+	TurnStreamingService,
 } from "@briom/core/application";
 import {
 	RoomDeliberation,
@@ -28,6 +29,11 @@ import {
 } from "@briom/libs/providers/drizzle";
 
 import type { roomSlice } from "./room.slice";
+
+const TURN_TIMEOUT_MS = Number.parseInt(
+	(process.env.GLOBAL_TURN_TIMEOUT ?? "60000").replace(/_/g, ""),
+	10,
+);
 
 export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 	return container
@@ -51,9 +57,7 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 			return new DrizzleTurnSequencer(r["Client:Database"]);
 		})
 		.add("Policy:TurnTimeout", () => {
-			return new TurnTimeoutPolicy({
-				ms: parseInt(process.env.GLOBAL_TURN_TIMEOUT ?? "60_000", 10),
-			});
+			return new TurnTimeoutPolicy({ ms: TURN_TIMEOUT_MS });
 		})
 		.add("Policy:RoomDeliberation", () => {
 			return new RoomDeliberation();
@@ -67,6 +71,13 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				r["Repository:Turn"],
 				r["Adapter:Scheduler"],
 				r["Policy:TurnTimeout"],
+			);
+		})
+		.add("Service:TurnStreaming", (r) => {
+			return new TurnStreamingService(
+				r["Orchestrator:TurnLifecycle"],
+				r["Adapter:LlmGateway"],
+				r["Adapter:SseForwarder"],
 			);
 		})
 		.add("Handler:AbandonTurn", (r) => {
@@ -103,8 +114,8 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				r["Orchestrator:TurnLifecycle"],
 				r["Policy:RoomDeliberation"],
 				r["Policy:TranscriptorRenderer"],
-				r["Adapter:LlmGateway"],
 				r["Adapter:EventBus"],
+				r["Service:TurnStreaming"],
 			);
 		})
 		.add("Handler:InitiateTopicTurn", (r) => {
@@ -122,7 +133,7 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				r["Repository:Turn"],
 				r["Orchestrator:TurnLifecycle"],
 				r["Policy:TranscriptorRenderer"],
-				r["Adapter:LlmGateway"],
+				r["Service:TurnStreaming"],
 			);
 		})
 		.add("Handler:SettleTurn", (r) => {

@@ -73,7 +73,7 @@ export class InitiateModeratorTurnHandler
 	public async execute(
 		command: InitiateModeratorTurnCommand,
 	): Promise<IResult<InitiateModeratorTurnOutput, DomainError>> {
-		const { roomId, moderatorId, content } = command.input;
+		const { roomId, moderatorId, content, clientTurnId } = command.input;
 
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) {
@@ -97,6 +97,7 @@ export class InitiateModeratorTurnHandler
 			sequence: nextSequence,
 			moderatorId: ModeratorId(moderatorId),
 			content,
+			clientTurnId,
 		});
 
 		if (result.isError()) return Result.error(result.error());

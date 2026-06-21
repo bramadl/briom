@@ -13,8 +13,12 @@ import {
 } from "@briom/components/ui/hover-card";
 import { cn } from "@briom/libs/utils";
 import { ExpandIcon } from "lucide-react";
+import { useMemo } from "react";
 
-import { PARTICIPANT_COLORS } from "../../mappings/participant-colors.map";
+import {
+	getParticipantTheme,
+	type PARTICIPANT_COLORS,
+} from "../../../mappings/participant-colors.map";
 
 import { RoomInformationHeader } from "./room-information-header";
 
@@ -25,11 +29,67 @@ interface RoomInformationMiniTimelineProps {
 
 export function RoomInformationMiniTimeline({
 	participants,
+	turns,
 }: RoomInformationMiniTimelineProps) {
-	const participantMap = new Map<string, (typeof PARTICIPANT_COLORS)[number]>();
-	participants.forEach((p, i) => {
-		participantMap.set(p.id, PARTICIPANT_COLORS[i % PARTICIPANT_COLORS.length]);
-	});
+	const participantMap = useMemo(() => {
+		const map = new Map<string, (typeof PARTICIPANT_COLORS)[number]>();
+		participants.forEach((p) => {
+			map.set(p.id, getParticipantTheme(p.id));
+		});
+		return map;
+	}, [participants]);
+
+	const calculateLogarithmicWidth = (content: string): string => {
+		const length = content?.length || 0;
+		if (length <= 0) return "20%";
+
+		const minWidth = 20;
+		const maxWidth = 100;
+
+		const logValue = Math.log(length + 1);
+		const estimatedMaxLog = Math.log(1500);
+		const ratio = Math.min(logValue / estimatedMaxLog, 1);
+		const finalWidth = minWidth + ratio * (maxWidth - minWidth);
+
+		return `${finalWidth.toFixed(1)}%`;
+	};
+
+	const handleScrollToTurn = (turnId: string) => {
+		const element = document.getElementById(turnId);
+		if (!element) return;
+
+		element.scrollIntoView({ behavior: "smooth", block: "center" });
+
+		let isScrolling: NodeJS.Timeout;
+		const flashClass = "animate-turn-flash";
+
+		const triggerWobble = () => {
+			window.removeEventListener("scroll", scrollHandler);
+
+			element.classList.remove(flashClass);
+			void element.offsetWidth;
+			element.classList.add(flashClass);
+
+			setTimeout(() => {
+				element.classList.remove(flashClass);
+			}, 1200);
+		};
+
+		const scrollHandler = () => {
+			clearTimeout(isScrolling);
+			isScrolling = setTimeout(triggerWobble, 300);
+		};
+
+		window.addEventListener("scroll", scrollHandler);
+
+		setTimeout(() => {
+			window.removeEventListener("scroll", scrollHandler);
+			if (!element.classList.contains(flashClass)) {
+				element.classList.add(flashClass);
+				setTimeout(() => element.classList.remove(flashClass), 1200);
+			}
+		}, 500);
+	};
 
 	return (
 		<AccordionItem value="timeline">
@@ -44,255 +104,59 @@ export function RoomInformationMiniTimeline({
 					<ExpandIcon className="text-muted-foreground" />
 				</Button>
 			</RoomInformationHeader>
-			<AccordionContent className="border-t p-4">
-				{/* {turns.length === 0 ? (
-					<p className="text-xs text-muted-foreground/50 italic">
-						Start deliberating blablabla
+			<AccordionContent className="border-t p-4 max-h-[320px] overflow-y-auto pr-2 no-scrollbar">
+				{turns.length === 0 ? (
+					<p className="text-xs text-muted-foreground/50 italic text-center py-2">
+						Start deliberating to see the timeline...
 					</p>
 				) : (
 					turns.map((turn) => {
 						const isModeratorTurn = turn.author.type === "moderator";
+						const participantColor =
+							!isModeratorTurn && turn.author.participantId
+								? participantMap.get(turn.author.participantId)
+								: null;
+
+						const barColorClass = participantColor?.dot || "bg-primary";
+						const dynamicWidth = calculateLogarithmicWidth(
+							turn.perspective.content,
+						);
+
 						return (
-							<li
-								className={cn("flex", isModeratorTurn && "justify-end")} <-- moderator = mojok kanan
-								key={turn.id}
-							>
-								<button
-									className={cn("bg-primary rounded-lg inline-block w-40 h-1.5 opacity-50 hover:opacity-100 transition-opacity")}
-									type="button"
-								/>
-							
+							<HoverCard closeDelay={0} key={turn.id} openDelay={0}>
+								<HoverCardTrigger
+									className={cn(
+										"flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer",
+										isModeratorTurn && "justify-end",
+									)}
+									onClick={() => handleScrollToTurn(turn.id)}
+								>
+									<span
+										className={cn(
+											"rounded-lg inline-block h-1.5",
+											barColorClass,
+										)}
+										style={{ width: dynamicWidth }}
+									/>
+								</HoverCardTrigger>
+								<HoverCardContent
+									align="center"
+									side={isModeratorTurn ? "left" : "right"}
+								>
+									<div className="text-xs space-y-1">
+										<p className="font-semibold capitalize text-muted-foreground">
+											{turn.author.type} {turn.intent ? `• ${turn.intent}` : ""}
+										</p>
+										<p className="line-clamp-3 text-foreground whitespace-pre-line">
+											{turn.perspective.content?.replace(/^\[.*?\]\s*/, "") ||
+												"Empty perspective."}
+										</p>
+									</div>
+								</HoverCardContent>
+							</HoverCard>
 						);
 					})
-				)} */}
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex justify-end w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn("bg-primary rounded-lg inline-block w-40 h-1.5")}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[0].dot,
-								"rounded-lg inline-block w-40 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex justify-end w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn("bg-primary rounded-lg inline-block w-24 h-1.5")}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[0].dot,
-								"rounded-lg inline-block w-60 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[1].dot,
-								"rounded-lg inline-block w-24 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[2].dot,
-								"rounded-lg inline-block w-40 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex justify-end w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn("bg-primary rounded-lg inline-block w-40 h-1.5")}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[0].dot,
-								"rounded-lg inline-block w-40 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex justify-end w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn("bg-primary rounded-lg inline-block w-24 h-1.5")}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[0].dot,
-								"rounded-lg inline-block w-60 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[1].dot,
-								"rounded-lg inline-block w-24 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
-
-				<HoverCard closeDelay={0} openDelay={0}>
-					<HoverCardTrigger
-						className="flex w-full py-1.5 opacity-50 hover:opacity-100 transition-opacity cursor-pointer"
-						onClick={() => {
-							// scroll to this turn, lol.
-						}}
-					>
-						<span
-							className={cn(
-								PARTICIPANT_COLORS[2].dot,
-								"rounded-lg inline-block w-40 h-1.5",
-							)}
-						/>
-					</HoverCardTrigger>
-					<HoverCardContent align="center" side="left">
-						Lorem ipsum dolor sit, amet consectetur adipisicing elit. Illo
-						deleniti non quos quod cum dolor saepe.
-					</HoverCardContent>
-				</HoverCard>
+				)}
 			</AccordionContent>
 		</AccordionItem>
 	);

@@ -175,6 +175,7 @@ export class Turn extends Aggregate<TurnProps> {
 		sequence: TurnSequence;
 		moderatorId: ModeratorId;
 		content: string;
+		clientTurnId?: string;
 	}): IResult<Turn, DomainError> {
 		const perspectiveResult = TurnPerspective.finalize(props.content);
 		if (perspectiveResult.isError()) {
@@ -205,6 +206,10 @@ export class Turn extends Aggregate<TurnProps> {
 					roomId: turn.get("roomId"),
 					sequence: turn.get("sequence"),
 					turnId: turn.id,
+					moderatorId: props.moderatorId,
+					participantId: null,
+					intent: null,
+					clientTurnId: props.clientTurnId ?? null,
 				}),
 			);
 			turn.emit(
@@ -262,6 +267,10 @@ export class Turn extends Aggregate<TurnProps> {
 					roomId: turn.get("roomId"),
 					sequence: turn.get("sequence"),
 					turnId: turn.id,
+					moderatorId: null,
+					participantId: props.participantId,
+					intent: props.intent.get("value"),
+					clientTurnId: null,
 				}),
 			);
 		}
@@ -567,7 +576,7 @@ export class Turn extends Aggregate<TurnProps> {
 			);
 		}
 
-		if (!this.isFromModerator) {
+		if (!this.isFromParticipant) {
 			return Result.error(
 				new InvalidAuthorError("Only participant turns can be retried"),
 			);
@@ -591,6 +600,10 @@ export class Turn extends Aggregate<TurnProps> {
 				roomId: this.get("roomId"),
 				sequence: this.get("sequence"),
 				turnId: this.id,
+				moderatorId: null,
+				participantId: this.get("author").participantId,
+				intent: this.get("intent"),
+				clientTurnId: null,
 			}),
 		);
 

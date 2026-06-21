@@ -77,6 +77,10 @@ export class DrizzleGetTurnProposalsQuery implements GetTurnProposalsQuery {
 		return {
 			proposals: proposals.map((p) => ({
 				participantId: p.participantId.value(),
+				name:
+					participants.find((participant) =>
+						participant.id.isEqual(p.participantId),
+					)?.displayName ?? "Participant",
 				label: p.rationale,
 				intent: p.intent.get("value"),
 				confidence: p.confidence,

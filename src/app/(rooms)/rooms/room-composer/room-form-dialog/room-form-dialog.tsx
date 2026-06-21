@@ -9,13 +9,12 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@briom/components/ui/dialog";
-import { roomQueries } from "@briom/rooms/api/queries/room.queries";
-import { useQuery } from "@tanstack/react-query";
-import { useRef } from "react";
+import { Loader2Icon } from "lucide-react";
+import { Fragment, useRef } from "react";
 
 import { RoomForm } from "./forms/room-form";
 import { useRoomForm } from "./forms/use-room-form";
-import { useRoomFormHandler } from "./forms/use-room-form-handler";
+import { useRoomFormSubmission } from "./forms/use-room-form-submission";
 import { useRoomFormDialog } from "./use-room-form-dialog";
 
 interface RoomFormProps {
@@ -24,20 +23,11 @@ interface RoomFormProps {
 
 export function RoomFormDialog({ state }: RoomFormProps) {
 	const dialogRef = useRef<HTMLDivElement>(null);
+
+	const { id, form, reset } = useRoomForm({ resetIf: state === "closed" });
 	const { hideForm } = useRoomFormDialog();
-
-	const { form, reset } = useRoomForm({ resetIf: state === "closed" });
-	const { handleSubmit, isForming, isInviting } = useRoomFormHandler({
-		onRoomFormed: hideForm,
-	});
-
-	const isSubmitting = isForming || isInviting;
-
-	const { data: modelsData } = useQuery(roomQueries.getParticipantModels({}));
-	const models = modelsData?.success ? modelsData.data.models : {};
-	const useFreeModels = modelsData?.success
-		? modelsData.data.useFreeModels
-		: false;
+	const { handleSubmit, isForming, isInviting, isSubmitting } =
+		useRoomFormSubmission({ onRoomFormed: hideForm });
 
 	return (
 		<DialogContent
@@ -56,9 +46,8 @@ export function RoomFormDialog({ state }: RoomFormProps) {
 				dialogRef={dialogRef}
 				disabled={isSubmitting}
 				form={form}
-				models={models}
+				id={id}
 				onSubmit={handleSubmit}
-				useFreeModels={useFreeModels}
 			/>
 			<DialogFooter>
 				<DialogClose asChild>
@@ -66,12 +55,20 @@ export function RoomFormDialog({ state }: RoomFormProps) {
 						Discard
 					</Button>
 				</DialogClose>
-				<Button disabled={isSubmitting} form="room-form" type="submit">
-					{isForming
-						? "Forming room..."
-						: isInviting
-							? "Inviting participants..."
-							: "Form Room"}
+				<Button disabled={isSubmitting} form={id} type="submit">
+					{isForming ? (
+						<Fragment>
+							<Loader2Icon className="animate-spin" />
+							Forming room
+						</Fragment>
+					) : isInviting ? (
+						<Fragment>
+							<Loader2Icon className="animate-spin" />
+							Inviting participants
+						</Fragment>
+					) : (
+						<Fragment>Form Room</Fragment>
+					)}
 				</Button>
 			</DialogFooter>
 		</DialogContent>

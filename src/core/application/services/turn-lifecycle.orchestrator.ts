@@ -107,6 +107,7 @@ export class TurnLifecycleOrchestrator {
 		sequence: TurnSequence;
 		moderatorId: ModeratorId;
 		content: string;
+		clientTurnId?: string;
 	}): Promise<IResult<Turn, DomainError>> {
 		const result = Turn.initiateModeratorTurn(props);
 
@@ -138,11 +139,13 @@ export class TurnLifecycleOrchestrator {
 			);
 		}
 
+		this.cancelTimeout(turnId);
+
 		const result = turn.startStream();
 		if (result.isError()) return result;
 
-		this.cancelTimeout(turnId);
 		await this.repository.persist(turn);
+		this.scheduleTimeout(turn);
 		await this.publishEvents(turn);
 
 		return Result.success(undefined);

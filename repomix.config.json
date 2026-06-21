@@ -27,16 +27,14 @@
       "includeLogsCount": 50
     }
   },
-  "include": [],
+  "include": [
+    "docs/**"
+  ],
   "ignore": {
     "useGitignore": true,
     "useDotIgnore": true,
     "useDefaultPatterns": true,
-    "customPatterns": [
-      "public/**",
-      "src/libs/providers/drizzle/migrations/**",
-      "src/libs/drimion/**"
-    ]
+    "customPatterns": []
   },
   "security": {
     "enableSecurityCheck": true

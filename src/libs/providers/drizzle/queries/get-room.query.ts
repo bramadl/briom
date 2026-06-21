@@ -43,7 +43,7 @@ export class DrizzleGetRoomQuery implements GetRoomQuery {
 			where: eq(roomsTable.id, input.roomId),
 		});
 
-		if (!room) throw new Error("Room not found");
+		if (!room) return { room: null };
 
 		const [participants, turns] = await Promise.all([
 			this.db

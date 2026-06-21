@@ -35,6 +35,12 @@ export interface TurnProposalDTO {
 
 	/**
 	 * @description
+	 * Name of the participant to give perspective.
+	 */
+	name: string;
+
+	/**
+	 * @description
 	 * Identifier of the proposed participant (AI model) to take the next turn.
 	 */
 	participantId: string;

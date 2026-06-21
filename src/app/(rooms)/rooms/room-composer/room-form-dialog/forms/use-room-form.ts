@@ -8,6 +8,8 @@ interface UseRoomFormOptions {
 }
 
 export function useRoomForm({ resetIf: shouldReset }: UseRoomFormOptions) {
+	const id = "room-form";
+
 	const form = useForm({
 		schema: RoomFormSchema,
 		initialInput: {
@@ -21,6 +23,7 @@ export function useRoomForm({ resetIf: shouldReset }: UseRoomFormOptions) {
 	}, [form, shouldReset]);
 
 	return {
+		id,
 		form,
 		reset: () => reset(form),
 	};

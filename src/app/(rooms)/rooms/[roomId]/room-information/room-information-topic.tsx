@@ -1,7 +1,10 @@
+"use client";
+
 import {
 	AccordionContent,
 	AccordionItem,
 } from "@briom/components/ui/accordion";
+import { useTopicTypewriter } from "@briom/rooms/hooks/animations";
 
 import { RoomInformationHeader } from "./room-information-header";
 
@@ -10,22 +13,30 @@ interface RoomInformationTopicProps {
 }
 
 export function RoomInformationTopic({ topic }: RoomInformationTopicProps) {
+	const {
+		refs: { container, text },
+		topic: displayTopic,
+	} = useTopicTypewriter(topic);
+
 	return (
 		<AccordionItem value="topic">
 			<RoomInformationHeader title="Topic" />
 			<AccordionContent className="border-t p-4">
-				{topic ? (
-					<p className="text-xs text-muted-foreground leading-relaxed">
-						{topic}
-					</p>
-				) : (
-					<p className="text-xs text-muted-foreground/50 italic leading-relaxed">
-						Lorem ipsum dolor sit amet consectetur, adipisicing elit. Quae nisi
-						neque omnis? Vitae pariatur earum quam minima eius dolor,
-						perspiciatis inventore? Quas sapiente labore voluptatum voluptatem
-						nulla, autem officia perspiciatis laboriosam nesciunt?
-					</p>
-				)}
+				<div ref={container}>
+					{displayTopic ? (
+						<p
+							className="text-xs text-muted-foreground leading-relaxed font-mono"
+							ref={text}
+						>
+							{displayTopic}
+						</p>
+					) : (
+						<p className="text-xs text-muted-foreground/50 italic leading-relaxed">
+							No topic set yet. Start deliberation to define what this room will
+							explore together.
+						</p>
+					)}
+				</div>
 			</AccordionContent>
 		</AccordionItem>
 	);

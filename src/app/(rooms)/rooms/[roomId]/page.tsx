@@ -4,13 +4,12 @@ import { isServerError } from "@briom/rooms/api/lib/server-action";
 import { roomQueries } from "@briom/rooms/api/queries/room.queries";
 import { turnQueries } from "@briom/rooms/api/queries/turn.queries";
 import { getRoom } from "@briom/rooms/api/room.actions";
-import { getTurns } from "@briom/rooms/api/turn.actions";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
-import { Fragment } from "react/jsx-runtime";
 
-import { RoomActions } from "./room-actions";
-import { RoomDiscussion } from "./room-discussion";
+import { RoomDeliberation } from "./room-deliberation";
 import { RoomInformation } from "./room-information";
+import { RoomPanel } from "./room-panel";
 import { RoomSettings } from "./room-settings";
 import { RoomTitle } from "./room-title";
 
@@ -18,50 +17,33 @@ export default async function RoomPage({
 	params,
 }: PageProps<"/rooms/[roomId]">) {
 	const { roomId } = await params;
+	const result = await getRoom({ roomId });
+	if (isServerError(result)) throw result.error;
 
-	const [roomResult, turnsResult] = await Promise.all([
-		getRoom({ roomId }),
-		getTurns({ roomId }),
-	]);
-
-	if (isServerError(roomResult)) {
-		throw new Error(roomResult.error.message);
-	} else if (isServerError(turnsResult)) {
-		throw new Error(turnsResult.error.message);
-	}
-
-	const { room } = roomResult.data;
+	const { room } = result.data;
 	if (!room) return notFound();
 
-	const { turns } = turnsResult.data;
-
 	const queryClient = getQueryClient();
-	void queryClient.setQueryData(
-		roomQueries.getRoom({ roomId }).queryKey,
-		roomResult,
-	);
-
-	void queryClient.setQueryData(
-		turnQueries.getTurns({ roomId }).queryKey,
-		turnsResult,
-	);
+	void queryClient.prefetchQuery(roomQueries.getRoom({ roomId }));
+	void queryClient.prefetchQuery(turnQueries.getTurns({ roomId }));
 
 	return (
-		<div className="flex-1 flex flex-col overflow-hidden">
-			<header className="sticky top-0 z-50 h-14 shrink-0 flex items-center justify-between gap-3 px-4 lg:px-6 border-b bg-background/80 backdrop-blur-sm">
-				<div className="flex items-center gap-1">
-					<RoomTitle initialRoomTitle={room.title} />
-					<SidebarTrigger className="md:hidden" />
-				</div>
-				<div className="flex items-center gap-1">
-					<RoomActions room={room} />
-					<RoomSettings room={room} />
-				</div>
-			</header>
-			<div className="flex flex-1 items-start overflow-hidden">
-				<RoomDiscussion room={room} turns={turns} />
-				<RoomInformation room={room} turns={turns} />
+		<HydrationBoundary state={dehydrate(queryClient)}>
+			<div className="min-w-0 flex-1 flex flex-col overflow-hidden">
+				<header className="sticky top-0 z-50 h-14 shrink-0 flex items-center justify-between gap-3 px-4 lg:px-6 border-b bg-background/80 backdrop-blur-sm">
+					<div className="flex items-center gap-1">
+						<SidebarTrigger className="md:hidden" />
+						<RoomTitle />
+					</div>
+					<div className="flex items-center gap-1">
+						<RoomSettings />
+					</div>
+				</header>
+				<RoomPanel>
+					<RoomDeliberation />
+					<RoomInformation />
+				</RoomPanel>
 			</div>
-		</div>
+		</HydrationBoundary>
 	);
 }

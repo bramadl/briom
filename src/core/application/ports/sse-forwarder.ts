@@ -48,10 +48,18 @@ export interface ISseForwarder {
 	 * @description
 	 * Broadcasts an event to all clients connected to a room.
 	 *
+	 * Returns a Promise that resolves once the event has actually been
+	 * sent over the wire — callers (subscribers) must `await` this.
+	 * Without that guarantee, two broadcasts fired in quick succession
+	 * (e.g. `turn:initiated` immediately followed by `turn:token`) are
+	 * NOT guaranteed to arrive at clients in the order they were
+	 * published — each is an independent network call with its own,
+	 * unordered delivery latency.
+	 *
 	 * @param roomId - The target room
 	 * @param event - The event to forward
 	 */
-	broadcastToRoom(roomId: string, event: SseEvent): void;
+	broadcastToRoom(roomId: string, event: SseEvent): Promise<void>;
 
 	/**
 	 * @description

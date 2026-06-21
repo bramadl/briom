@@ -1,11 +1,9 @@
 import type { LlmGateway } from "@briom/core/domain/ports/llm.gateway";
 import {
 	ModeratorId,
-	ParticipantId,
 	RoomId,
 	type RoomRepository,
 	TurnId,
-	TurnIntent,
 	type TurnSequencer,
 } from "@briom/domain";
 import {
@@ -60,7 +58,7 @@ export class InitiateTopicTurnHandler
 	public async execute(
 		command: InitiateTopicTurnCommand,
 	): Promise<IResult<InitiateTopicTurnOutput, DomainError>> {
-		const { roomId, moderatorId, content } = command.input;
+		const { roomId, moderatorId, content, clientTurnId } = command.input;
 
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) {
@@ -95,6 +93,7 @@ export class InitiateTopicTurnHandler
 				sequence: moderatorSequence,
 				moderatorId: ModeratorId(moderatorId),
 				content,
+				clientTurnId,
 			});
 
 		if (moderatorTurnResult.isError()) {
@@ -109,22 +108,6 @@ export class InitiateTopicTurnHandler
 		const roomEvents = room.pullEvents();
 		const turnEvents = moderatorTurn.pullEvents();
 		await this.eventBus.publishAll([...roomEvents, ...turnEvents]);
-
-		// 7. Auto-trigger first participant with DIRECT intent
-		const participants = room.get("participants");
-		if (participants.length > 0) {
-			const firstParticipant = participants[0];
-			const participantSequence =
-				await this.turnSequencer.nextPositionInside(room);
-
-			await this.turnOrchestrator.initiateParticipantTurn({
-				id: TurnId(),
-				roomId: RoomId(roomId),
-				sequence: participantSequence,
-				participantId: ParticipantId(firstParticipant.id.value()),
-				intent: TurnIntent.from("direct"),
-			});
-		}
 
 		return Result.success({
 			roomId: room.id.value(),
@@ -141,9 +124,9 @@ export class InitiateTopicTurnHandler
 		content: string,
 	): Promise<IResult<string, DomainError>> {
 		const streamResult = await this.llmGateway.stream({
-			messages: [],
+			messages: [{ role: "user", content }],
 			qualifiedModel: "openai/gpt-4o-mini",
-			systemPrompt: `Summarize the user's message as a concise topic (3-6 words, no punctuation, no explanation). Output ONLY the topic text, nothing else.`,
+			systemPrompt: `Summarize the user's message as a concise topic (12-16 words, no punctuation, no explanation). Output ONLY the topic text, nothing else.`,
 		});
 
 		if (streamResult.isError()) {
@@ -169,7 +152,6 @@ export class InitiateTopicTurnHandler
 		}
 
 		topic = topic.replace(/["']/g, "").trim();
-		if (topic.length > 60) topic = topic.substring(0, 60);
 		if (topic.length === 0) topic = content.split(" ").slice(0, 5).join(" ");
 
 		return Result.success(topic);

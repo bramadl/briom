@@ -1,3 +1,5 @@
+import type { IntentOption } from "@briom/domain";
+
 /**
  * @description
  * Input for `InitiateParticipantTurnCommand`.
@@ -7,7 +9,7 @@ export interface InitiateParticipantTurnInput {
 	 * @description
 	 * Purpose of this contribution (respond, critique, expand, etc.).
 	 */
-	intent: string;
+	intent: IntentOption;
 	/**
 	 * @description
 	 * Participant ID (must be invited to the room).

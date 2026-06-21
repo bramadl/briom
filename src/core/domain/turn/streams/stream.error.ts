@@ -1,8 +1,8 @@
-import { ValueObject } from "@briom/libs/drimion";
+import { DomainError, ValueObject } from "@briom/libs/drimion";
 
 import { STREAM_ERROR } from "./stream.error-map";
 
-interface StreamErrorProps {
+export interface StreamErrorProps {
 	kind: (typeof STREAM_ERROR)[keyof typeof STREAM_ERROR];
 	message: string;
 	occurredAt: Date;
@@ -106,5 +106,15 @@ export class StreamError extends ValueObject<StreamErrorProps> {
 	 */
 	public static rehydrate(props: StreamErrorProps): StreamError {
 		return new StreamError(props);
+	}
+
+	/**
+	 * @description
+	 * Transform stream error into `DomainError` instance.
+	 */
+	public toDomainError(): DomainError {
+		return new DomainError(this.get("message"), {
+			context: this.get("kind"),
+		});
 	}
 }

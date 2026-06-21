@@ -1,28 +1,39 @@
 "use client";
 
-import Lenis from "lenis";
-import { useEffect } from "react";
+import gsap from "gsap";
+import type { LenisRef } from "lenis/react";
+import { ReactLenis } from "lenis/react";
+import { useEffect, useRef } from "react";
 
-export function LenisProvider({ children }: { children: React.ReactNode }) {
+export function LenisProvider({
+	children,
+	root = true,
+}: {
+	children: React.ReactNode;
+	root?: boolean;
+}) {
+	const lenisRef = useRef<LenisRef>(null);
 	useEffect(() => {
-		const lenis = new Lenis({
-			duration: 1.2,
-			easing: (t) => Math.min(1, 1.001 - 2 ** (-10 * t)),
-			smoothWheel: true,
-		});
-
-		let rafId: number;
-		function raf(time: number) {
-			lenis.raf(time);
-			rafId = requestAnimationFrame(raf);
+		function update(time: number) {
+			lenisRef.current?.lenis?.raf(time * 1000);
 		}
-		rafId = requestAnimationFrame(raf);
 
-		return () => {
-			cancelAnimationFrame(rafId);
-			lenis.destroy();
-		};
+		gsap.ticker.add(update);
+		return () => gsap.ticker.remove(update);
 	}, []);
 
-	return children;
+	return (
+		<ReactLenis
+			options={{
+				autoRaf: false,
+				duration: 1.2,
+				easing: (t) => Math.min(1, 1.001 - 2 ** (-10 * t)),
+				smoothWheel: true,
+			}}
+			ref={lenisRef}
+			root={root}
+		>
+			{children}
+		</ReactLenis>
+	);
 }

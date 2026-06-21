@@ -26,6 +26,20 @@ import { isOpenRouterSDKError } from "../errors";
  * transforms that into a standard `ReadableStream<string>` that the domain
  * can consume token-by-token without knowing the provider format.
  *
+ * **Why only `delta.content`, not `delta.reasoning`**
+ * OpenRouter normalizes reasoning-capable models to also expose a
+ * `delta.reasoning` (plaintext) / `delta.reasoning_details` (structured)
+ * field, separate from `delta.content` — see
+ * https://openrouter.ai/docs/guides/best-practices/reasoning-tokens. This
+ * gateway intentionally forwards only `delta.content`: reasoning trace and
+ * final perspective are different things domain-wise, and surfacing a
+ * model's internal monologue as if it were its actual contribution would
+ * misrepresent the `Turn`. If a model streams reasoning but never emits
+ * any `delta.content`, the stream still completes "successfully" from
+ * this adapter's point of view — the resulting empty content is caught
+ * one layer up, in `TurnStreamingService`, which has the domain context
+ * to fail the turn with a meaningful error instead of a generic one.
+ *
  * **Error Normalization**
  * All OpenRouter errors are mapped to domain `StreamError` instances:
  * - 404 → model_not_found
@@ -34,6 +48,8 @@ import { isOpenRouterSDKError } from "../errors";
  *
  * @see LlmGateway — domain contract
  * @see StreamError — domain error taxonomy
+ * @see TurnStreamingService — where an empty-but-successful stream is
+ * turned into a `StreamError.emptyResponse()` failure
  */
 export class OpenRouterLlmGateway implements LlmGateway {
 	public constructor(private readonly client: OpenRouter) {}
@@ -66,15 +82,45 @@ export class OpenRouterLlmGateway implements LlmGateway {
 
 			const readable = new ReadableStream<string>({
 				async start(controller) {
+					/**
+					 * True once we've seen at least one chunk carrying
+					 * `delta.reasoning` (or `delta.reasoning_details`)
+					 * without any `delta.content` alongside it. Purely
+					 * diagnostic — logged once at stream end if no content
+					 * ever arrived, to make "model only ever reasoned"
+					 * distinguishable in logs from "provider sent nothing
+					 * at all" without changing what's enqueued to callers.
+					 */
+					let sawReasoningOnly = false;
+					let sawAnyContent = false;
+
 					try {
 						for await (const chunk of response as unknown as AsyncIterable<{
-							choices: Array<{ delta: { content?: string } }>;
+							choices?: Array<{
+								delta?: {
+									content?: string;
+									reasoning?: string;
+									reasoning_details?: unknown[];
+								};
+							}>;
 						}>) {
-							const delta = chunk.choices[0]?.delta?.content;
-							if (delta) {
-								controller.enqueue(delta);
+							const delta = chunk.choices?.[0]?.delta;
+							if (!delta) continue;
+
+							if (delta.content) {
+								sawAnyContent = true;
+								controller.enqueue(delta.content);
+							} else if (delta.reasoning || delta.reasoning_details?.length) {
+								sawReasoningOnly = true;
 							}
 						}
+
+						if (sawReasoningOnly && !sawAnyContent) {
+							console.warn(
+								`[OpenRouterLlmGateway] Model "${qualifiedModel}" streamed reasoning but no content — turn will fail as empty.`,
+							);
+						}
+
 						controller.close();
 					} catch (error) {
 						const message = (error as Error).message;

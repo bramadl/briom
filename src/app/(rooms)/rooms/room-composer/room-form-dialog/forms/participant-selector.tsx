@@ -1,9 +1,6 @@
 "use client";
 
-import type {
-	GroupedParticipantModelsDTO,
-	ParticipantModelDTO,
-} from "@briom/app";
+import type { ParticipantModelDTO } from "@briom/app";
 import { Badge } from "@briom/components/ui/badge";
 import { Button } from "@briom/components/ui/button";
 import {
@@ -20,6 +17,7 @@ import {
 } from "@briom/components/ui/combobox";
 import { FieldError } from "@briom/components/ui/field";
 import { cn } from "@briom/libs/utils";
+import { useGetParticipantModels } from "@briom/rooms/hooks/store";
 import { getInput, insert } from "@formisch/react";
 import {
 	Fragment,
@@ -33,8 +31,6 @@ import type { RoomFormArraySchema } from "./schema";
 
 interface ParticipantSelectorProps extends RoomFormArraySchema {
 	dialogRef?: React.RefObject<HTMLDivElement | null>;
-	models: GroupedParticipantModelsDTO;
-	useFreeModels: boolean;
 }
 
 interface GroupedItems {
@@ -47,9 +43,9 @@ export function ParticipantSelector({
 	disabled,
 	form,
 	fieldArray,
-	models,
-	useFreeModels,
 }: ParticipantSelectorProps) {
+	const { flatModels, useFreeModels } = useGetParticipantModels();
+
 	const [inputValue, setInputValue] = useState<string>("");
 	const deferredInputValue = useDeferredValue(inputValue);
 	const isStale = inputValue !== deferredInputValue;
@@ -59,8 +55,6 @@ export function ParticipantSelector({
 		() => new Set(chosenParticipants.map((p) => `${p.provider}/${p.model}`)),
 		[chosenParticipants],
 	);
-
-	const flatModels = useMemo(() => Object.values(models).flat(), [models]);
 
 	const parseQuery = useCallback((raw: string) => {
 		const trimmed = raw.trim();
@@ -102,20 +96,23 @@ export function ParticipantSelector({
 		}));
 	}, [deferredInputValue, filterModels]);
 
-	const handleValueChange = (selectedModel: ParticipantModelDTO | null) => {
-		if (!selectedModel) return;
+	const handleValueChange = useCallback(
+		(selectedModel: ParticipantModelDTO | null) => {
+			if (!selectedModel) return;
 
-		insert(form, {
-			path: ["participants"],
-			initialInput: {
-				displayName: selectedModel.name,
-				model: selectedModel.model,
-				provider: selectedModel.provider,
-			},
-		});
+			insert(form, {
+				path: ["participants"],
+				initialInput: {
+					displayName: selectedModel.name,
+					model: selectedModel.model,
+					provider: selectedModel.provider,
+				},
+			});
 
-		setInputValue("");
-	};
+			setInputValue("");
+		},
+		[form],
+	);
 
 	return (
 		<div className="flex flex-col gap-2">

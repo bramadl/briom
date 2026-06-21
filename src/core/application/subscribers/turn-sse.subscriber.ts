@@ -1,12 +1,21 @@
 import type {
-	TurnFailedPayload,
-	TurnSettledPayload,
-	TurnStreamStartedPayload,
-	TurnTokenAccumulatedPayload,
+	TurnFailedPayload as DomainTurnFailedPayload,
+	TurnInitiatedPayload as DomainTurnInitiatedPayload,
+	TurnSettledPayload as DomainTurnSettledPayload,
+	TurnStreamStartedPayload as DomainTurnStreamStartedPayload,
+	TurnTokenAccumulatedPayload as DomainTurnTokenAccumulatedPayload,
 } from "@briom/domain/turn";
 import type { DomainEvent } from "@briom/libs/drimion";
 
 import type { ISseForwarder } from "../ports";
+
+import type {
+	TurnFailedPayload,
+	TurnInitiatedPayload,
+	TurnSettledPayload,
+	TurnStreamStartedPayload,
+	TurnTokenPayload,
+} from "./contracts/turn.payload";
 
 /**
  * @description
@@ -34,64 +43,89 @@ export class TurnSseSubscriber {
 
 	/**
 	 * @description
-	 * Forwarded as `turn:token` with minimal payload.
+	 * Forwarded as `turn:failed`.
 	 */
-	public onTurnStreamStarted(
-		event: DomainEvent<TurnStreamStartedPayload>,
-	): void {
+	public async onTurnFailed(
+		event: DomainEvent<DomainTurnFailedPayload>,
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "turn:token",
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "turn:failed",
 			data: {
 				turnId: event.payload.turnId.value(),
+				error: event.payload.error.toObject(),
 			},
-		});
+		} satisfies { event: string; data: TurnFailedPayload });
 	}
 
 	/**
 	 * @description
-	 * Forwarded as `turn:token` with token content.
+	 * Forwarded as `turn:initiated` with minimal payload.
 	 */
-	public onTurnTokenAccumulated(
-		event: DomainEvent<TurnTokenAccumulatedPayload>,
-	): void {
+	public async onTurnInitiated(
+		event: DomainEvent<DomainTurnInitiatedPayload>,
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "turn:token",
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "turn:initiated",
 			data: {
 				turnId: event.payload.turnId.value(),
-				token: event.payload.token,
+				authorType: event.payload.authorType,
+				roomId: event.payload.roomId.value(),
+				sequence: event.payload.sequence.get("value"),
+				moderatorId: event.payload.moderatorId?.value() ?? null,
+				participantId: event.payload.participantId?.value() ?? null,
+				intent: event.payload.intent,
+				clientTurnId: event.payload.clientTurnId,
 			},
-		});
+		} satisfies { event: string; data: TurnInitiatedPayload });
 	}
 
 	/**
 	 * @description
 	 * Forwarded as `turn:settled`.
 	 */
-	public onTurnSettled(event: DomainEvent<TurnSettledPayload>): void {
+	public async onTurnSettled(
+		event: DomainEvent<DomainTurnSettledPayload>,
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
 			event: "turn:settled",
 			data: {
 				turnId: event.payload.turnId.value(),
 				content: event.payload.content,
 			},
-		});
+		} satisfies { event: string; data: TurnSettledPayload });
 	}
 
 	/**
 	 * @description
-	 * Forwarded as `turn:failed`.
+	 * Forwarded as `turn:token` with minimal payload.
 	 */
-	public onTurnFailed(event: DomainEvent<TurnFailedPayload>): void {
+	public async onTurnStreamStarted(
+		event: DomainEvent<DomainTurnStreamStartedPayload>,
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "turn:failed",
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "turn:started",
+			data: { turnId: event.payload.turnId.value() },
+		} satisfies { event: string; data: TurnStreamStartedPayload });
+	}
+
+	/**
+	 * @description
+	 * Forwarded as `turn:token` with token content.
+	 */
+	public async onTurnTokenAccumulated(
+		event: DomainEvent<DomainTurnTokenAccumulatedPayload>,
+	): Promise<void> {
+		if (!event.payload) return;
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "turn:token",
 			data: {
 				turnId: event.payload.turnId.value(),
-				error: event.payload.error,
+				token: event.payload.token,
 			},
-		});
+		} satisfies { event: string; data: TurnTokenPayload });
 	}
 }

@@ -6,15 +6,21 @@ import type {
 import { queryOptions } from "@tanstack/react-query";
 
 import { getParticipantModels, getRoom, getRooms } from "../room.actions";
-import { queryKeys } from "./keys";
+import { type QueryKeys, queryKeys } from "./keys";
+
+export interface RoomQueryFnData {
+	GetRoom: Awaited<ReturnType<typeof getRoom>>;
+	GetRooms: Awaited<ReturnType<typeof getRooms>>;
+	ParticipantModels: Awaited<ReturnType<typeof getParticipantModels>>;
+}
 
 export const roomQueries = {
 	getParticipantModels(input: GetParticipantModelsInput) {
 		return queryOptions<
-			Awaited<ReturnType<typeof getParticipantModels>>,
+			RoomQueryFnData["ParticipantModels"],
 			Error,
-			Awaited<ReturnType<typeof getParticipantModels>>,
-			ReturnType<typeof queryKeys.rooms.participantModels>
+			RoomQueryFnData["ParticipantModels"],
+			QueryKeys["Rooms"]["ParticipantModels"]
 		>({
 			queryFn: async () => getParticipantModels(input),
 			queryKey: queryKeys.rooms.participantModels(),
@@ -22,10 +28,10 @@ export const roomQueries = {
 	},
 	getRoom(input: GetRoomInput) {
 		return queryOptions<
-			Awaited<ReturnType<typeof getRoom>>,
+			RoomQueryFnData["GetRoom"],
 			Error,
-			Awaited<ReturnType<typeof getRoom>>,
-			ReturnType<typeof queryKeys.rooms.get>
+			RoomQueryFnData["GetRoom"],
+			QueryKeys["Rooms"]["Get"]
 		>({
 			queryFn: async () => getRoom(input),
 			queryKey: queryKeys.rooms.get(input.roomId),
@@ -33,10 +39,10 @@ export const roomQueries = {
 	},
 	getRooms(input: GetRoomsInput) {
 		return queryOptions<
-			Awaited<ReturnType<typeof getRooms>>,
+			RoomQueryFnData["GetRooms"],
 			Error,
-			Awaited<ReturnType<typeof getRooms>>,
-			ReturnType<typeof queryKeys.rooms.list>
+			RoomQueryFnData["GetRooms"],
+			QueryKeys["Rooms"]["List"]
 		>({
 			queryFn: async () => getRooms(input),
 			queryKey: queryKeys.rooms.list(),

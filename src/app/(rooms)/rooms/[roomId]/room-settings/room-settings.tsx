@@ -1,4 +1,5 @@
-import type { RoomDTO } from "@briom/app";
+"use client";
+
 import { Button } from "@briom/components/ui/button";
 import {
 	DropdownMenu,
@@ -9,15 +10,24 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@briom/components/ui/dropdown-menu";
+import { useRoom } from "@briom/rooms/hooks/store";
 import {
 	ArchiveIcon,
 	ConciergeBellIcon,
 	EllipsisVertical,
 	MessageCircleOffIcon,
 	Share2Icon,
+	UserPlus2Icon,
 } from "lucide-react";
+import { Fragment } from "react/jsx-runtime";
 
-export function RoomSettings({ room }: { room: RoomDTO }) {
+export function RoomSettings() {
+	const { room } = useRoom();
+
+	const isConcluded = room.status === "concluded";
+	const isDeliberating = room.status === "deliberating";
+	const isForming = room.status === "forming";
+
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -28,34 +38,40 @@ export function RoomSettings({ room }: { room: RoomDTO }) {
 			<DropdownMenuContent align="end" className="w-52">
 				<DropdownMenuGroup>
 					<DropdownMenuLabel>Room Settings</DropdownMenuLabel>
-
 					<DropdownMenuSeparator />
 
-					{room.status === "concluded" ? (
+					{isForming && (
 						<DropdownMenuItem>
-							<Share2Icon className="size-4 mr-2" />
-							Share Discussion
+							<UserPlus2Icon className="size-4 mr-2" />
+							Invite Participant
 						</DropdownMenuItem>
-					) : (
+					)}
+
+					{isDeliberating && (
 						<DropdownMenuItem>
 							<ConciergeBellIcon className="size-4 mr-2" />
 							Conclude Discussion
 						</DropdownMenuItem>
 					)}
 
-					<DropdownMenuSeparator />
-
-					{room.status === "concluded" ? (
-						<DropdownMenuItem>
-							<ArchiveIcon className="size-4 mr-2" />
-							Archive Room
-						</DropdownMenuItem>
-					) : (
-						<DropdownMenuItem variant="destructive">
-							<MessageCircleOffIcon className="size-4 mr-2" />
-							Close Room
-						</DropdownMenuItem>
+					{isConcluded && (
+						<Fragment>
+							<Button size="sm" variant="secondary">
+								<Share2Icon className="size-4 mr-1.5" />
+								Share Room
+							</Button>
+							<DropdownMenuItem>
+								<ArchiveIcon className="size-4 mr-2" />
+								Archive Room
+							</DropdownMenuItem>
+						</Fragment>
 					)}
+
+					<DropdownMenuSeparator />
+					<DropdownMenuItem variant="destructive">
+						<MessageCircleOffIcon className="size-4 mr-2" />
+						Close Room
+					</DropdownMenuItem>
 				</DropdownMenuGroup>
 			</DropdownMenuContent>
 		</DropdownMenu>

@@ -11,7 +11,7 @@ import {
 	RoomCard,
 	RoomCardParticipantList,
 	RoomCardStatusBadge,
-} from "../room-card";
+} from "./room-card";
 
 export interface RoomListItemProps {
 	isActive?: boolean;

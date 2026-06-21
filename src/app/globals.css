@@ -72,7 +72,6 @@
   --shadow-opacity: var(--shadow-opacity);
   --color-shadow-color: var(--shadow-color);
   --color-destructive-foreground: var(--destructive-foreground);
-  /* custom theme */
   --color-terracotta: var(--terracotta);
   --color-dusty-blue: var(--dusty-blue);
   --color-sage: var(--sage);
@@ -134,7 +133,6 @@
   --shadow-xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.05), 0px 8px 10px -1px hsl(0 0% 0% / 0.05);
   --shadow-2xl: 0px 4px 10px 0px hsl(0 0% 0% / 0.13);
   --tracking-normal: 0.02em;
-  /* custom theme */
   --terracotta: #c4714a;
   --dusty-blue: #5b8ab0;
   --sage: #5a9e78;
@@ -220,7 +218,6 @@
 }
 
 @layer components {  
-  /* Briom Highlight Theme — Muted, Elegant, Warm */
   .hljs {
     display: block;
     overflow-x: auto;
@@ -232,7 +229,6 @@
     line-height: 1.6;
   }
 
-  /* Comments — faded, unobtrusive */
   .hljs-comment,
   .hljs-quote {
     color: hsl(var(--muted-foreground));
@@ -240,7 +236,6 @@
     opacity: 0.7;
   }
 
-  /* Keywords — warm accent */
   .hljs-keyword,
   .hljs-selector-tag,
   .hljs-subst {
@@ -248,7 +243,6 @@
     font-weight: 500;
   }
 
-  /* Strings — sage green */
   .hljs-string,
   .hljs-title,
   .hljs-section,
@@ -259,7 +253,6 @@
     color: var(--sage);
   }
 
-  /* Numbers, literals — dusty blue */
   .hljs-number,
   .hljs-literal,
   .hljs-variable,
@@ -268,7 +261,6 @@
     color: var(--dusty-blue);
   }
 
-  /* Functions, classes — muted lavender */
   .hljs-function,
   .hljs-class .hljs-title,
   .hljs-tag,
@@ -276,7 +268,6 @@
     color: var(--muted-lavender);
   }
 
-  /* Operators, punctuation — subtle */
   .hljs-operator,
   .hljs-regexp,
   .hljs-link,
@@ -285,13 +276,11 @@
     color: hsl(var(--muted-foreground));
   }
 
-  /* Built-ins, params — warm sienna */
   .hljs-built_in,
   .hljs-params {
     color: var(--warm-sienna);
   }
 
-  /* Emphasis, strong */
   .hljs-emphasis {
     font-style: italic;
   }
@@ -300,7 +289,6 @@
     font-weight: 600;
   }
 
-  /* Deletion */
   .hljs-deletion {
     color: hsl(var(--destructive));
     opacity: 0.8;
@@ -330,7 +318,6 @@
 }
 
 @layer components {
-  /* Reset prose interference on code blocks */
   .prose-sm pre,
   .prose-sm :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
     margin: 0 !important;
@@ -345,9 +332,37 @@
     color: inherit;
   }
 
-  /* Remove prose's backtick pseudo-element on inline code */
   .prose-sm :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::before,
   .prose-sm :where(code):not(:where([class~="not-prose"], [class~="not-prose"] *))::after {
     content: none !important;
+  }
+}
+
+@layer components {
+  @keyframes turn-wobble-pop {
+    0% {
+      transform: scale(1);
+    }
+    15% {
+      transform: scale(1.03);
+    }
+    30% {
+      transform: scale(0.985);
+    }
+    45% {
+      transform: scale(1.01);
+    }
+    60% {
+      transform: scale(0.995);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .animate-turn-flash {
+    animation: turn-wobble-pop 1.2s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    transform-origin: center center;
+    will-change: transform;
   }
 }

@@ -26,7 +26,7 @@ const thinkingVariants = cva(
 );
 
 interface AnimatedThinkingProps extends VariantProps<typeof thinkingVariants> {
-	text?: string;
+	text?: React.ReactNode;
 }
 
 export function AnimatedThinking({

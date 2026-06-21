@@ -3,13 +3,23 @@ import type {
 	DeliberationPausedPayload,
 	DeliberationResumedPayload,
 	DeliberationStartedPayload,
+	RoomFormedPayload as DomainRoomFormedPayload,
 	ParticipantInvitedPayload,
-	RoomFormedPayload,
 	TurnRegisteredPayload,
 } from "@briom/domain";
 import type { DomainEvent } from "@briom/libs/drimion";
 
 import type { ISseForwarder } from "../ports";
+
+import type {
+	RoomDeliberationConcludedPayload,
+	RoomDeliberationPausedPayload,
+	RoomDeliberationResumedPayload,
+	RoomDeliberationStartedPayload,
+	RoomFormedPayload,
+	RoomParticipantJoinedPayload,
+	RoomTurnRegisteredPayload,
+} from "./contracts/room.payload";
 
 /**
  * @description
@@ -41,112 +51,116 @@ export class RoomSseSubscriber {
 
 	/**
 	 * @description
-	 * Forwarded as `room:participant-joined`.
+	 * Forwarded as `room:deliberation-concluded`.
 	 */
-	public onRoomFormed(event: DomainEvent<RoomFormedPayload>): void {
+	public async onDeliberationConcluded(
+		event: DomainEvent<DeliberationConcludedPayload>,
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "room:participant-joined",
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "room:deliberation-concluded",
 			data: {
 				roomId: event.payload.roomId.value(),
 			},
-		});
-	}
-
-	/**
-	 * @description
-	 * Forwarded as `room:participant-joined`.
-	 */
-	public onParticipantInvited(
-		event: DomainEvent<ParticipantInvitedPayload>,
-	): void {
-		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "room:participant-joined",
-			data: {
-				roomId: event.payload.roomId.value(),
-				participantId: event.payload.participantId.value(),
-			},
-		});
-	}
-
-	/**
-	 * @description
-	 * Forwarded as `room:deliberation-started`.
-	 */
-	public onDeliberationStarted(
-		event: DomainEvent<DeliberationStartedPayload>,
-	): void {
-		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "room:deliberation-started",
-			data: {
-				roomId: event.payload.roomId.value(),
-				topic: event.payload.topic,
-			},
-		});
-	}
-
-	/**
-	 * @description
-	 * Forwarded as `room:turn-registered`.
-	 */
-	public onTurnRegistered(event: DomainEvent<TurnRegisteredPayload>): void {
-		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "room:turn-registered",
-			data: {
-				roomId: event.payload.roomId.value(),
-				turnId: event.payload.turnId.value(),
-			},
-		});
+		} satisfies { event: string; data: RoomDeliberationConcludedPayload });
 	}
 
 	/**
 	 * @description
 	 * Forwarded as `room:deliberation-paused`.
 	 */
-	public onDeliberationPaused(
+	public async onDeliberationPaused(
 		event: DomainEvent<DeliberationPausedPayload>,
-	): void {
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
 			event: "room:deliberation-paused",
 			data: {
 				roomId: event.payload.roomId.value(),
 			},
-		});
+		} satisfies { event: string; data: RoomDeliberationPausedPayload });
 	}
 
 	/**
 	 * @description
 	 * Forwarded as `room:deliberation-resumed`.
 	 */
-	public onDeliberationResumed(
+	public async onDeliberationResumed(
 		event: DomainEvent<DeliberationResumedPayload>,
-	): void {
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
 			event: "room:deliberation-resumed",
 			data: {
 				roomId: event.payload.roomId.value(),
 			},
-		});
+		} satisfies { event: string; data: RoomDeliberationResumedPayload });
 	}
 
 	/**
 	 * @description
-	 * Forwarded as `room:deliberation-concluded`.
+	 * Forwarded as `room:deliberation-started`.
 	 */
-	public onDeliberationConcluded(
-		event: DomainEvent<DeliberationConcludedPayload>,
-	): void {
+	public async onDeliberationStarted(
+		event: DomainEvent<DeliberationStartedPayload>,
+	): Promise<void> {
 		if (!event.payload) return;
-		this.sse.broadcastToRoom(event.payload.roomId.value(), {
-			event: "room:deliberation-concluded",
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "room:deliberation-started",
+			data: {
+				roomId: event.payload.roomId.value(),
+				topic: event.payload.topic,
+			},
+		} satisfies { event: string; data: RoomDeliberationStartedPayload });
+	}
+
+	/**
+	 * @description
+	 * Forwarded as `room:participant-joined`.
+	 */
+	public async onRoomFormed(
+		event: DomainEvent<DomainRoomFormedPayload>,
+	): Promise<void> {
+		if (!event.payload) return;
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "room:formed",
 			data: {
 				roomId: event.payload.roomId.value(),
 			},
-		});
+		} satisfies { event: string; data: RoomFormedPayload });
+	}
+
+	/**
+	 * @description
+	 * Forwarded as `room:participant-joined`.
+	 */
+	public async onParticipantJoined(
+		event: DomainEvent<ParticipantInvitedPayload>,
+	): Promise<void> {
+		if (!event.payload) return;
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "room:participant-joined",
+			data: {
+				roomId: event.payload.roomId.value(),
+				participantId: event.payload.participantId.value(),
+			},
+		} satisfies { event: string; data: RoomParticipantJoinedPayload });
+	}
+
+	/**
+	 * @description
+	 * Forwarded as `room:turn-registered`.
+	 */
+	public async onTurnRegistered(
+		event: DomainEvent<TurnRegisteredPayload>,
+	): Promise<void> {
+		if (!event.payload) return;
+		await this.sse.broadcastToRoom(event.payload.roomId.value(), {
+			event: "room:turn-registered",
+			data: {
+				roomId: event.payload.roomId.value(),
+				turnId: event.payload.turnId.value(),
+			},
+		} satisfies { event: string; data: RoomTurnRegisteredPayload });
 	}
 }

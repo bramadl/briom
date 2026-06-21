@@ -13,6 +13,7 @@ interface ParticipantIdentityFieldProps extends RoomFormSchema {
 
 export function ParticipantIdentityField({
 	canRemove,
+	disabled,
 	form,
 	index,
 }: ParticipantIdentityFieldProps) {
@@ -37,6 +38,7 @@ export function ParticipantIdentityField({
 									{...field.props}
 									aria-invalid={field.errors !== null}
 									autoComplete="off"
+									disabled={disabled}
 									id={`room-form-array-participant-${index}`}
 									placeholder="Name this participant (e.g., 'Claude', 'GPT-4')"
 									value={field.input ?? ""}

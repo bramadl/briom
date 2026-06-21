@@ -45,6 +45,8 @@
 			"@briom/drimion/*": ["./src/libs/drimion/*"],
 
 			// Providers
+			"@briom/supabase": ["./src/libs/providers/supabase"],
+			"@briom/supabase/*": ["./src/libs/providers/supabase/*"],
 			"@briom/drizzle": ["./src/libs/providers/drizzle"],
 			"@briom/drizzle/*": ["./src/libs/providers/drizzle/*"],
 			"@briom/open-router": ["./src/libs/providers/open-router"],

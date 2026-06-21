@@ -6,8 +6,25 @@
  * 2. The first moderator turn content (full text)
  */
 export interface InitiateTopicTurnInput {
+	/**
+	 * @description
+	 * Correlation id for FE optimistic reconciliation.
+	 */
+	clientTurnId?: string;
+	/**
+	 * @description
+	 * Moderator's message content (the human contribution).
+	 */
 	content: string;
+	/**
+	 * @description
+	 * Moderator ID (must match room's moderator).
+	 */
 	moderatorId: string;
+	/**
+	 * @description
+	 * Room to contribute to.
+	 */
 	roomId: string;
 }
 
@@ -15,8 +32,20 @@ export interface InitiateTopicTurnInput {
  * Output from `InitiateTopicTurnCommand`.
  */
 export interface InitiateTopicTurnOutput {
+	/**
+	 * @description
+	 * Room to contribute to.
+	 */
 	roomId: string;
+	/**
+	 * @description
+	 * Generated topic derived from the content.
+	 */
 	topic: string;
+	/**
+	 * @description
+	 * ID of the created turn.
+	 */
 	turnId: string;
 }
 

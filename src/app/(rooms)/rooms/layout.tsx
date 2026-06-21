@@ -1,8 +1,10 @@
+import { SidebarInset } from "@briom/components/ui/sidebar";
 import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
-import { isServerError } from "@briom/rooms/api/lib/server-action";
 import { roomQueries } from "@briom/rooms/api/queries/room.queries";
-import { getParticipantModels, getRooms } from "@briom/rooms/api/room.actions";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
+
+import { getUser } from "../api/lib/faker";
+import { roomShortcuts } from "../settings/room-shortcuts";
 
 import {
 	RoomCollapsibleSidebar,
@@ -10,44 +12,26 @@ import {
 	RoomList,
 	RoomListHeader,
 	RoomListRenderer,
-	RoomPanel,
 	RoomSidebar,
 	RoomSidebarMenu,
 	RoomStaticSidebar,
 	SidebarHoverableLogoExpander,
 	SidebarUserSettings,
 } from "./room-composer";
-import { roomShortcuts } from "./room-composer/room-shortcuts";
-
-const user = {
-	name: "Bram Adl",
-	email: "bram.adl@briom.com",
-};
 
 export default async function RoomsLayout({
 	children,
 }: React.PropsWithChildren) {
-	const [roomsResult, modelsResult] = await Promise.all([
-		getRooms({}),
-		getParticipantModels({}),
-	]);
-
 	const queryClient = getQueryClient();
-	void queryClient.setQueryData(roomQueries.getRooms({}).queryKey, roomsResult);
-	void queryClient.setQueryData(
-		roomQueries.getParticipantModels({}).queryKey,
-		modelsResult,
-	);
-
-	const rooms = isServerError(roomsResult) ? [] : roomsResult.data.rooms;
-	const roomCount = rooms.length;
+	void queryClient.prefetchQuery(roomQueries.getRooms({}));
+	void queryClient.prefetchQuery(roomQueries.getParticipantModels({}));
 
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
 			<RoomComposer>
 				<RoomSidebar>
 					<RoomStaticSidebar
-						footer={<SidebarUserSettings user={user} />}
+						footer={<SidebarUserSettings user={getUser()} />}
 						header={
 							<SidebarHoverableLogoExpander shortcuts={roomShortcuts.sidebar} />
 						}
@@ -55,13 +39,13 @@ export default async function RoomsLayout({
 						<RoomSidebarMenu />
 					</RoomStaticSidebar>
 					<RoomCollapsibleSidebar>
-						<RoomListHeader roomCount={roomCount} />
+						<RoomListHeader />
 						<RoomListRenderer>
-							<RoomList rooms={rooms} />
+							<RoomList />
 						</RoomListRenderer>
 					</RoomCollapsibleSidebar>
 				</RoomSidebar>
-				<RoomPanel>{children}</RoomPanel>
+				<SidebarInset className="overflow-hidden">{children}</SidebarInset>
 			</RoomComposer>
 		</HydrationBoundary>
 	);

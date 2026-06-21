@@ -1,4 +1,18 @@
 import { RoomSseSubscriber, TurnSseSubscriber } from "@briom/app";
+import {
+	DeliberationConcluded,
+	DeliberationPaused,
+	DeliberationResumed,
+	DeliberationStarted,
+	ParticipantInvited,
+	RoomFormed,
+	TurnFailed,
+	TurnInitiated,
+	TurnRegistered,
+	TurnSettled,
+	TurnStreamStarted,
+	TurnTokenAccumulated,
+} from "@briom/domain";
 import type { infrastructureSlice } from "./infrastructure.slice";
 
 export const sseSlice = (container: ReturnType<typeof infrastructureSlice>) => {
@@ -10,57 +24,62 @@ export const sseSlice = (container: ReturnType<typeof infrastructureSlice>) => {
 		const turnSubscriber = new TurnSseSubscriber(sseForwarder);
 
 		eventBus.subscribe(
-			"room:formed",
+			RoomFormed.type,
 			roomSubscriber.onRoomFormed.bind(roomSubscriber),
 		);
 
 		eventBus.subscribe(
-			"room:participant-invited",
-			roomSubscriber.onParticipantInvited.bind(roomSubscriber),
+			ParticipantInvited.type,
+			roomSubscriber.onParticipantJoined.bind(roomSubscriber),
 		);
 
 		eventBus.subscribe(
-			"room:deliberation-started",
+			DeliberationStarted.type,
 			roomSubscriber.onDeliberationStarted.bind(roomSubscriber),
 		);
 
 		eventBus.subscribe(
-			"room:turn-registered",
+			TurnRegistered.type,
 			roomSubscriber.onTurnRegistered.bind(roomSubscriber),
 		);
 
 		eventBus.subscribe(
-			"room:deliberation-paused",
+			DeliberationPaused.type,
 			roomSubscriber.onDeliberationPaused.bind(roomSubscriber),
 		);
 
 		eventBus.subscribe(
-			"room:deliberation-resumed",
+			DeliberationResumed.type,
 			roomSubscriber.onDeliberationResumed.bind(roomSubscriber),
 		);
 
 		eventBus.subscribe(
-			"room:deliberation-concluded",
+			DeliberationConcluded.type,
 			roomSubscriber.onDeliberationConcluded.bind(roomSubscriber),
 		);
 
 		eventBus.subscribe(
-			"turn:stream-started",
+			TurnInitiated.type,
+			turnSubscriber.onTurnInitiated.bind(turnSubscriber),
+		);
+
+		eventBus.subscribe(
+			TurnStreamStarted.type,
 			turnSubscriber.onTurnStreamStarted.bind(turnSubscriber),
 		);
 
 		eventBus.subscribe(
-			"turn:token-accumulated",
+			TurnTokenAccumulated.type,
 			turnSubscriber.onTurnTokenAccumulated.bind(turnSubscriber),
 		);
 
 		eventBus.subscribe(
-			"turn:settled",
+			TurnSettled.type,
 			turnSubscriber.onTurnSettled.bind(turnSubscriber),
 		);
 
 		eventBus.subscribe(
-			"turn:failed",
+			TurnFailed.type,
 			turnSubscriber.onTurnFailed.bind(turnSubscriber),
 		);
 	});

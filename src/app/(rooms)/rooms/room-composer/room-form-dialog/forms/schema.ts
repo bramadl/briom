@@ -1,7 +1,6 @@
+import { MAXIMUM_PARTICIPANT } from "@briom/rooms/settings/room-settings";
 import type { FieldArrayStore, FormStore } from "@formisch/react";
 import * as v from "valibot";
-
-import { MAXIMUM_PARTICIPANT } from "../../room-settings";
 
 export const RoomFormSchema = v.object({
 	title: v.pipe(

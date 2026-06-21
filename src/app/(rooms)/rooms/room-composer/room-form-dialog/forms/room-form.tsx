@@ -1,70 +1,47 @@
-import type { GroupedParticipantModelsDTO } from "@briom/app";
+import { FieldGroup } from "@briom/components/ui/field";
+import { MAXIMUM_PARTICIPANT } from "@briom/rooms/settings/room-settings";
 import {
-	FieldDescription,
-	FieldGroup,
-	FieldLegend,
-	FieldSet,
-} from "@briom/components/ui/field";
-import { FieldArray, Form, type SubmitHandler } from "@formisch/react";
+	FieldArray,
+	Form,
+	getInput,
+	type SubmitHandler,
+} from "@formisch/react";
 
-import { MAXIMUM_PARTICIPANT } from "../../room-settings";
-
-import { ParticipantIdentityField } from "./participant-identity.field";
-import { ParticipantSelector } from "./participant-selector";
+import { ParticipantField } from "./participant-field";
 import { RoomTitleField } from "./room-title.field";
 import type { RoomFormSchema } from "./schema";
 
 interface RoomFormProps extends RoomFormSchema {
 	dialogRef?: React.RefObject<HTMLDivElement | null>;
-	models: GroupedParticipantModelsDTO;
+	id: string;
 	onSubmit: SubmitHandler<typeof RoomFormSchema>;
-	useFreeModels: boolean;
 }
 
 export function RoomForm({
+	id,
 	dialogRef,
 	disabled,
 	form,
-	models,
 	onSubmit,
-	useFreeModels,
 }: RoomFormProps) {
+	const { participants } = getInput(form);
+	const maxParticipantReached = participants.length === MAXIMUM_PARTICIPANT;
+
 	return (
-		<Form className="my-4" id="room-form" of={form} onSubmit={onSubmit}>
+		<Form className="my-4" id={id} of={form} onSubmit={onSubmit}>
 			<FieldGroup>
 				<RoomTitleField disabled={disabled} form={form} />
 				<FieldArray of={form} path={["participants"]}>
 					{(fieldArray) => {
-						const items = fieldArray.items;
-						const maxParticipantReached = items.length === MAXIMUM_PARTICIPANT;
 						return (
-							<FieldSet className="gap-4">
-								<FieldLegend variant="label">Invite Participants</FieldLegend>
-								<FieldDescription>
-									Select up to {MAXIMUM_PARTICIPANT} AI perspectives for this
-									deliberation.
-								</FieldDescription>
-								<FieldGroup className="gap-4">
-									{items.length !== MAXIMUM_PARTICIPANT && (
-										<ParticipantSelector
-											dialogRef={dialogRef}
-											disabled={disabled || maxParticipantReached}
-											fieldArray={fieldArray}
-											form={form}
-											models={models}
-											useFreeModels={useFreeModels}
-										/>
-									)}
-									{items.map((item, index) => (
-										<ParticipantIdentityField
-											canRemove={!disabled || items.length > 1}
-											form={form}
-											index={index}
-											key={item}
-										/>
-									))}
-								</FieldGroup>
-							</FieldSet>
+							<ParticipantField
+								dialogRef={dialogRef}
+								disabled={disabled}
+								fieldArray={fieldArray}
+								form={form}
+								maxParticipantCount={MAXIMUM_PARTICIPANT}
+								maxParticipantReached={maxParticipantReached}
+							/>
 						);
 					}}
 				</FieldArray>

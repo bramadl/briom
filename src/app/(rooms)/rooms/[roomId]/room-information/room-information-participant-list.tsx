@@ -8,10 +8,9 @@ import {
 import { Badge } from "@briom/components/ui/badge";
 import { Button } from "@briom/components/ui/button";
 import { cn } from "@briom/libs/utils";
+import { getParticipantTheme } from "@briom/rooms/mappings/participant-colors.map";
+import { MAXIMUM_PARTICIPANT } from "@briom/rooms/settings/room-settings";
 import { PlusIcon } from "lucide-react";
-
-import { PARTICIPANT_COLORS } from "../../mappings/participant-colors.map";
-import { MAXIMUM_PARTICIPANT } from "../../room-composer/room-settings";
 
 import { RoomInformationHeader } from "./room-information-header";
 
@@ -43,8 +42,8 @@ export function RoomInformationParticipantList({
 			</RoomInformationHeader>
 			<AccordionContent className="border-t p-4">
 				<div className="flex flex-col gap-3">
-					{participants.map((p, i) => {
-						const theme = PARTICIPANT_COLORS[i % PARTICIPANT_COLORS.length];
+					{participants.map((p) => {
+						const theme = getParticipantTheme(p.id);
 						return (
 							<li className="flex items-start gap-2.5" key={p.id}>
 								<span

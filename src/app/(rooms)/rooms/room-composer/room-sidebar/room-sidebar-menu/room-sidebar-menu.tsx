@@ -5,9 +5,9 @@ import {
 	SidebarMenuButton,
 	SidebarMenuItem,
 } from "@briom/components/ui/sidebar";
+import { roomShortcuts } from "@briom/rooms/settings/room-shortcuts";
 
 import { useRoomFormDialog } from "../../room-form-dialog";
-import { roomShortcuts } from "../../room-shortcuts";
 
 import { newRoomOption } from "./new-room-option";
 

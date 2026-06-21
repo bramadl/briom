@@ -5,6 +5,11 @@
 export interface InitiateModeratorTurnInput {
 	/**
 	 * @description
+	 * Correlation id for FE optimistic reconciliation.
+	 */
+	clientTurnId?: string;
+	/**
+	 * @description
 	 * Moderator's message content (the human contribution).
 	 */
 	content: string;
@@ -26,7 +31,9 @@ export interface InitiateModeratorTurnInput {
  */
 export interface InitiateModeratorTurnOutput {
 	/**
-	 * @description ID of the created turn. */
+	 * @description
+	 * ID of the created turn.
+	 */
 	turnId: string;
 }
 
