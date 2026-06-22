@@ -32,26 +32,36 @@ export function RoomInformationMiniTimeline({
 	turns,
 }: RoomInformationMiniTimelineProps) {
 	const participantMap = useMemo(() => {
-		const map = new Map<string, (typeof PARTICIPANT_COLORS)[number]>();
+		const map = new Map<
+			string,
+			RoomDTO["participants"][number] & {
+				theme: (typeof PARTICIPANT_COLORS)[number];
+			}
+		>();
 		participants.forEach((p) => {
-			map.set(p.id, getParticipantTheme(p.id));
+			map.set(p.id, {
+				...p,
+				theme: getParticipantTheme(p.id),
+			});
 		});
 		return map;
 	}, [participants]);
 
+	const maxContentLength = useMemo(() => {
+		if (turns.length === 0) return 1;
+		return Math.max(...turns.map((t) => t.perspective.content?.length || 0), 1);
+	}, [turns]);
+
 	const calculateLogarithmicWidth = (content: string): string => {
 		const length = content?.length || 0;
-		if (length <= 0) return "20%";
+		if (length <= 0) return "1%";
 
-		const minWidth = 20;
+		const ratio = length / maxContentLength;
+		const smoothed = ratio ** 0.6;
+		const minWidth = 8;
 		const maxWidth = 100;
 
-		const logValue = Math.log(length + 1);
-		const estimatedMaxLog = Math.log(1500);
-		const ratio = Math.min(logValue / estimatedMaxLog, 1);
-		const finalWidth = minWidth + ratio * (maxWidth - minWidth);
-
-		return `${finalWidth.toFixed(1)}%`;
+		return `${(minWidth + smoothed * (maxWidth - minWidth)).toFixed(1)}%`;
 	};
 
 	const handleScrollToTurn = (turnId: string) => {
@@ -81,7 +91,6 @@ export function RoomInformationMiniTimeline({
 		};
 
 		window.addEventListener("scroll", scrollHandler);
-
 		setTimeout(() => {
 			window.removeEventListener("scroll", scrollHandler);
 			if (!element.classList.contains(flashClass)) {
@@ -111,15 +120,33 @@ export function RoomInformationMiniTimeline({
 					</p>
 				) : (
 					turns.map((turn) => {
-						const isModeratorTurn = turn.author.type === "moderator";
-						const participantColor =
-							!isModeratorTurn && turn.author.participantId
-								? participantMap.get(turn.author.participantId)
-								: null;
+						const isPending = turn.status === "pending";
+						const isStreaming = turn.status === "streaming";
+						const isFailed = turn.status === "failed";
 
-						const barColorClass = participantColor?.dot || "bg-primary";
-						const dynamicWidth = calculateLogarithmicWidth(
-							turn.perspective.content,
+						const isModeratorTurn = turn.author.type === "moderator";
+						const participant = turn.author.participantId
+							? participantMap.get(turn.author.participantId)
+							: null;
+
+						const participantColor =
+							!isModeratorTurn && participant ? participant.theme : null;
+
+						const barColorClass = isFailed
+							? "bg-destructive"
+							: participantColor?.dot || "bg-primary";
+
+						const barWidth = (() => {
+							if (isPending) return "30%";
+							if (isFailed) return "100%";
+							return calculateLogarithmicWidth(turn.perspective.content);
+						})();
+
+						const barClass = cn(
+							"rounded-lg inline-block h-1.5 transition-[width] duration-300",
+							isFailed && "bg-destructive",
+							(isPending || isStreaming) && "shimmer-bar",
+							!isFailed && !isPending && !isStreaming && barColorClass,
 						);
 
 						return (
@@ -133,10 +160,10 @@ export function RoomInformationMiniTimeline({
 								>
 									<span
 										className={cn(
-											"rounded-lg inline-block h-1.5",
-											barColorClass,
+											"rounded-lg inline-block h-1.5 transition-[width]",
+											barClass,
 										)}
-										style={{ width: dynamicWidth }}
+										style={{ width: barWidth }}
 									/>
 								</HoverCardTrigger>
 								<HoverCardContent
@@ -144,13 +171,31 @@ export function RoomInformationMiniTimeline({
 									side={isModeratorTurn ? "left" : "right"}
 								>
 									<div className="text-xs space-y-1">
-										<p className="font-semibold capitalize text-muted-foreground">
-											{turn.author.type} {turn.intent ? `• ${turn.intent}` : ""}
+										<p
+											className={cn(
+												"font-semibold capitalize",
+												isFailed ? "text-destructive" : "text-muted-foreground",
+											)}
+										>
+											{isModeratorTurn
+												? "You"
+												: (participant?.name ?? "Participant")}
 										</p>
-										<p className="line-clamp-3 text-foreground whitespace-pre-line">
-											{turn.perspective.content?.replace(/^\[.*?\]\s*/, "") ||
-												"Empty perspective."}
-										</p>
+										{
+											<p
+												className={cn(
+													"line-clamp-3 whitespace-pre-line",
+													isFailed ? "text-destructive" : "text-foreground",
+												)}
+											>
+												{isFailed
+													? `Error: ${turn.error?.message}`
+													: turn.perspective.content?.replace(
+															/^\[.*?\]\s*/,
+															"",
+														) || "Empty perspective."}
+											</p>
+										}
 									</div>
 								</HoverCardContent>
 							</HoverCard>

@@ -16,7 +16,7 @@ import type { TurnLifecycleOrchestrator } from "./turn-lifecycle.orchestrator";
  * carries the missed text too, since we send the full buffer-since-last-
  * broadcast, not a diff).
  */
-const BROADCAST_INTERVAL_MS = 60;
+const BROADCAST_INTERVAL_MS = 30;
 
 /**
  * @description
@@ -235,7 +235,11 @@ export class TurnStreamingService {
 			);
 		}
 
-		const settleResult = await this.orchestrator.settle(turnId, fullContent);
+		const settleResult = await this.orchestrator.settle(
+			turnId,
+			fullContent.replace(/^\s*\[[^\]]+\]\s*:?\s*/m, "").trimStart(),
+		);
+
 		if (settleResult.isError()) {
 			await this.orchestrator.fail(
 				turnId,

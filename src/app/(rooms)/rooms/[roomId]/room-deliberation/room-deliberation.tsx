@@ -36,10 +36,10 @@ export function RoomDeliberation() {
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: watches streamed content
 	useEffect(() => {
-		if (!isNearBottomRef.current) return;
-		scrollToBottom("instant");
+		if (isNearBottomRef.current && isStreaming) scrollToBottom("instant");
 	}, [
 		isNearBottomRef.current,
+		isStreaming,
 		scrollToBottom,
 		turns.length,
 		lastTurnContentLength,

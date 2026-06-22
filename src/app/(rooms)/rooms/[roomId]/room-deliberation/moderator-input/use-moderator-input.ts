@@ -1,18 +1,14 @@
 "use client";
 
-import { cn } from "@briom/libs/utils";
 import { useHotkey } from "@tanstack/react-hotkeys";
-import { useEditor, useEditorState } from "@tiptap/react";
+import { $createParagraphNode, $getRoot, type LexicalEditor } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
-	buildDefaultExtensions,
-	buildMentionExtensions,
-	editorToMarkdown,
+	editorStateToMarkdown,
 	extractMentionees,
 	type Mentionee,
 	type MentionItem,
-	SendShortcutExtension,
 } from "./editor";
 
 interface UseModeratorInputOptions {
@@ -23,65 +19,40 @@ interface UseModeratorInputOptions {
 }
 
 export function useModeratorInput({
+	canEdit,
+	mentionList,
 	onSend,
 	placeholder,
-	mentionList,
 }: UseModeratorInputOptions) {
+	const editorRef = useRef<LexicalEditor | null>(null);
+	const [isEmpty, setIsEmpty] = useState(true);
 	const [isSending, setIsSending] = useState(false);
 
-	const editor = useEditor(
-		{
-			extensions: [
-				...buildDefaultExtensions(placeholder),
-				...(mentionList ? [buildMentionExtensions(mentionList)] : []),
-				SendShortcutExtension,
-			],
-			editorProps: {
-				attributes: {
-					class: cn(
-						"min-h-24 lg:min-h-16 max-h-[36rem] w-full bg-transparent px-4 pt-3 text-sm",
-						"overflow-y-auto focus:outline-none font-sans leading-relaxed",
-						"prose prose-sm dark:prose-invert max-w-none",
-						"prose-p:my-0 prose-p:leading-relaxed",
-						"[&>p.is-editor-empty:only-child]:before:content-[attr(data-placeholder)]",
-						"[&>p.is-editor-empty:only-child]:before:float-left",
-						"[&>p.is-editor-empty:only-child]:before:text-muted-foreground/30",
-						"[&>p.is-editor-empty:only-child]:before:pointer-events-none",
-						"[&>p.is-editor-empty:only-child]:before:h-0",
-					),
-				},
-			},
-			immediatelyRender: false,
-			shouldRerenderOnTransaction: false,
-		},
-		[placeholder, mentionList],
-	);
-
-	const isEmpty = useEditorState({
-		editor,
-		selector: ({ editor }) => !editor || editor.isEmpty,
-	});
-
 	const clear = useCallback(() => {
-		if (!editor || editor.isDestroyed) return;
-		editor.commands.clearContent();
-		editor.commands.setContent("<p></p>");
-	}, [editor]);
+		const editor = editorRef.current;
+		if (!editor) return;
+
+		editor.update(() => {
+			const root = $getRoot();
+			root.clear();
+			root.append($createParagraphNode());
+		});
+	}, []);
 
 	const focus = useCallback(() => {
-		if (!editor || editor.isDestroyed) return;
-		editor.commands.focus();
-	}, [editor]);
+		editorRef.current?.focus();
+	}, []);
 
 	const sendHandler = useCallback(async () => {
-		if (!editor || editor.isDestroyed || editor.isEmpty || isSending) return;
+		const editor = editorRef.current;
+		if (!editor || isEmpty || isSending) return;
 
-		const content = editorToMarkdown(editor);
+		const content = editorStateToMarkdown(editor);
 		if (!content.trim()) return;
 
 		const mentionees = extractMentionees(editor);
-
 		setIsSending(true);
+
 		try {
 			await onSend?.(content, mentionees);
 			clear();
@@ -90,26 +61,32 @@ export function useModeratorInput({
 		} finally {
 			setIsSending(false);
 		}
-	}, [editor, isSending, onSend, clear]);
-
-	const sendRef = useRef(sendHandler);
-	sendRef.current = sendHandler;
+	}, [clear, isEmpty, isSending, onSend]);
 
 	useEffect(() => {
-		if (!editor || editor.isDestroyed) return;
-		editor.storage.sendShortcut.send = () => void sendRef.current();
-	}, [editor]);
+		editorRef.current?.setEditable(canEdit ?? true);
+	}, [canEdit]);
 
-	useHotkey("Mod+K", () => (!editor?.isFocused ? focus() : undefined), {
-		conflictBehavior: "replace",
-	});
+	useHotkey(
+		"Mod+K",
+		() => {
+			const editor = editorRef.current;
+			if (!editor) return;
+			const isFocused = editor.getRootElement() === document.activeElement;
+			if (!isFocused) focus();
+		},
+		{ conflictBehavior: "replace" },
+	);
 
 	return {
 		clear,
-		editor,
+		editorRef,
 		focus,
 		isEmpty,
 		isSending,
+		mentionList,
+		placeholder,
 		sendHandler,
+		setIsEmpty,
 	};
 }

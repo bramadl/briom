@@ -365,4 +365,20 @@
     transform-origin: center center;
     will-change: transform;
   }
+
+  @keyframes shimmer {
+    0% { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+
+  .shimmer-bar {
+    background: linear-gradient(
+        90deg,
+        oklch(from var(--muted-foreground) l c h / 0.12) 25%,
+        oklch(from var(--muted-foreground) l c h / 0.25) 50%,
+        oklch(from var(--muted-foreground) l c h / 0.12) 75%
+    );
+    background-size: 400px 100%;
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
 }

@@ -1,9 +1,25 @@
+"use client";
+
+// import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import rehypeHighlight from "rehype-highlight";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
-
 import { MarkdownComponents } from "./markdown-components";
+
+// const ReactMarkdown = dynamic(() => import("react-markdown"), {
+// 	ssr: false,
+// 	loading() {
+// 		return (
+// 			<div className="space-y-2">
+// 				<div className="h-3 rounded shimmer-bar w-[85%]" />
+// 				<div className="h-3 rounded shimmer-bar w-48" />
+// 				<div className="h-3 rounded shimmer-bar w-32" />
+// 				<div className="h-3 rounded shimmer-bar w-[40%]" />
+// 			</div>
+// 		);
+// 	},
+// });
 
 const sanitizeSchema = {
 	...defaultSchema,

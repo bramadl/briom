@@ -42,7 +42,7 @@ export function ModeratorTurnMenu({ time, content }: ModeratorTurnMenuProps) {
 	];
 
 	return (
-		<div className="absolute top-full inset-x-0 flex flex-row-reverse items-center gap-2 flex-1 text-[11px] text-muted-foreground/50 font-mono tabular-nums md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+		<div className="absolute top-full inset-x-0 flex items-center gap-2 flex-1 text-[11px] text-muted-foreground/50 font-mono tabular-nums md:opacity-0 group-hover:opacity-100 transition-opacity duration-300">
 			{time}
 			<span className="flex-1">
 				<span className="block bg-border h-px md:w-0 group-hover:w-full transition-[width] duration-500" />

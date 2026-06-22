@@ -2,9 +2,13 @@
 
 import type { RoomDTO } from "@briom/app";
 import { cn } from "@briom/libs/utils";
-import { EditorContent } from "@tiptap/react";
 
-import { EditorSendButton, EditorTips, type Mentionee } from "./editor";
+import {
+	EditorSendButton,
+	EditorTips,
+	type Mentionee,
+	ModeratorEditor,
+} from "./editor";
 import { useModeratorInput } from "./use-moderator-input";
 
 interface ModeratorInputProps {
@@ -24,7 +28,14 @@ export function ModeratorInput({
 	participants,
 	placeholder,
 }: ModeratorInputProps) {
-	const { editor, isEmpty, isSending, sendHandler } = useModeratorInput({
+	const {
+		editorRef,
+		isEmpty,
+		isSending,
+		mentionList,
+		sendHandler,
+		setIsEmpty,
+	} = useModeratorInput({
 		canEdit,
 		mentionList: canMention
 			? participants?.map((participant) => ({
@@ -33,8 +44,8 @@ export function ModeratorInput({
 					subtitle: participant.qualifiedModel,
 				}))
 			: undefined,
-		placeholder,
 		onSend,
+		placeholder,
 	});
 
 	return (
@@ -44,7 +55,13 @@ export function ModeratorInput({
 				"focus-within:border-border focus-within:shadow-lg focus-within:shadow-primary/5",
 			)}
 		>
-			<EditorContent editor={editor} />
+			<ModeratorEditor
+				editorRef={editorRef}
+				mentionList={mentionList}
+				onEmptyChange={setIsEmpty}
+				onSend={sendHandler}
+				placeholder={placeholder}
+			/>
 			<div className="flex items-end justify-between p-4 pt-0">
 				<EditorTips withMention={canMention} />
 				<EditorSendButton

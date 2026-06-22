@@ -1,6 +1,7 @@
-import type { useEditor } from "@tiptap/react";
+import { $dfs } from "@lexical/utils";
+import type { LexicalEditor } from "lexical";
 
-import type { JSONNode } from "./json-node";
+import { $isMentionNode } from "../plugins/mention-plugin";
 
 export interface Mentionee {
 	id: string;
@@ -8,30 +9,23 @@ export interface Mentionee {
 	name: string;
 }
 
-export function extractMentionees(
-	editor: ReturnType<typeof useEditor>,
-): Mentionee[] {
+export function extractMentionees(editor: LexicalEditor | null): Mentionee[] {
 	if (!editor) return [];
-	const json = editor.getJSON();
-	const mentionees: Mentionee[] = [];
-	let isFirst = true;
 
-	function traverse(nodes: JSONNode[]) {
-		for (const node of nodes) {
-			if (node.type === "mention") {
-				const id = (node.attrs?.id as string) ?? "";
-				const name = (node.attrs?.label as string) ?? "";
-				mentionees.push({
-					id,
-					isPrimary: isFirst,
-					name,
-				});
-				isFirst = false;
-			}
-			if (node.content) traverse(node.content);
+	return editor.getEditorState().read(() => {
+		const mentionees: Mentionee[] = [];
+		let isFirst = true;
+
+		for (const { node } of $dfs()) {
+			if (!$isMentionNode(node)) continue;
+			mentionees.push({
+				id: node.getMentionId(),
+				isPrimary: isFirst,
+				name: node.getMentionLabel(),
+			});
+			isFirst = false;
 		}
-	}
 
-	traverse((json.content ?? []) as JSONNode[]);
-	return mentionees;
+		return mentionees;
+	});
 }

@@ -11,7 +11,6 @@ import {
 	TurnRegistered,
 	TurnSettled,
 	TurnStreamStarted,
-	TurnTokenAccumulated,
 } from "@briom/domain";
 import type { infrastructureSlice } from "./infrastructure.slice";
 
@@ -66,11 +65,6 @@ export const sseSlice = (container: ReturnType<typeof infrastructureSlice>) => {
 		eventBus.subscribe(
 			TurnStreamStarted.type,
 			turnSubscriber.onTurnStreamStarted.bind(turnSubscriber),
-		);
-
-		eventBus.subscribe(
-			TurnTokenAccumulated.type,
-			turnSubscriber.onTurnTokenAccumulated.bind(turnSubscriber),
 		);
 
 		eventBus.subscribe(

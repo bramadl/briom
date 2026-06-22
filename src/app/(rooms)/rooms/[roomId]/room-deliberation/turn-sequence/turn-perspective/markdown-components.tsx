@@ -105,6 +105,7 @@ export const MarkdownComponents: Components = {
 			<code
 				className={cn("hljs block bg-transparent", className)}
 				data-language={lang}
+				suppressHydrationWarning
 			>
 				{children}
 			</code>

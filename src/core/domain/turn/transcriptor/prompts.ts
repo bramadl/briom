@@ -53,6 +53,8 @@ Your task: ${INTENT_INSTRUCTION[intent]}
 The discussion is human-moderated. You are reading a live transcript of the ongoing conversation.
 Respond naturally as ${displayName} would continue the discussion. Engage with previous reasoning directly.
 Never speak for other participants or the user. Never narrate the scene. Only provide your own response.
+
+Note: Do not prefix your response with your name, model name, or any identifier like "[ModelName]:" or similar. Begin your response directly with the content.
     `.trim();
 	},
 };
