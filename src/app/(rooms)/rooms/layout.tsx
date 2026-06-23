@@ -1,52 +1,42 @@
-import { SidebarInset } from "@briom/components/ui/sidebar";
+import { getUser } from "@briom/libs/faker";
 import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
-import { roomQueries } from "@briom/rooms/api/queries/room.queries";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-import { getUser } from "../api/lib/faker";
-import { roomShortcuts } from "../settings/room-shortcuts";
+import { prefetchModels } from "../_/participant/queries/services/prefetch-models";
+import { prefetchRooms } from "../_/room/queries/services/prefetch-rooms";
 
-import {
-	RoomCollapsibleSidebar,
-	RoomComposer,
-	RoomList,
-	RoomListHeader,
-	RoomListRenderer,
-	RoomSidebar,
-	RoomSidebarMenu,
-	RoomStaticSidebar,
-	SidebarHoverableLogoExpander,
-	SidebarUserSettings,
-} from "./room-composer";
+import { ModeratorMenu } from "./_/moderator-menu";
+import { RoomCollapsibleSidebar } from "./_/room-collapsible-sidebar";
+import { RoomFormProvider } from "./_/room-form-provider";
+import { RoomList } from "./_/room-list";
+import { RoomSidebar } from "./_/room-sidebar";
+import { RoomWorkspace } from "./_/room-workspace";
+
+const user = getUser();
 
 export default async function RoomsLayout({
 	children,
 }: React.PropsWithChildren) {
 	const queryClient = getQueryClient();
-	void queryClient.prefetchQuery(roomQueries.getRooms({}));
-	void queryClient.prefetchQuery(roomQueries.getParticipantModels({}));
+	const [{ rooms }] = await Promise.all([
+		prefetchRooms(queryClient),
+		prefetchModels(queryClient),
+	]);
 
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
-			<RoomComposer>
-				<RoomSidebar>
-					<RoomStaticSidebar
-						footer={<SidebarUserSettings user={getUser()} />}
-						header={
-							<SidebarHoverableLogoExpander shortcuts={roomShortcuts.sidebar} />
-						}
-					>
-						<RoomSidebarMenu />
-					</RoomStaticSidebar>
-					<RoomCollapsibleSidebar>
-						<RoomListHeader />
-						<RoomListRenderer>
-							<RoomList />
-						</RoomListRenderer>
-					</RoomCollapsibleSidebar>
-				</RoomSidebar>
-				<SidebarInset className="overflow-hidden">{children}</SidebarInset>
-			</RoomComposer>
+			<RoomWorkspace
+				sidebar={
+					<RoomSidebar menu={<ModeratorMenu user={user} />}>
+						<RoomCollapsibleSidebar roomsCount={rooms.length}>
+							<RoomList rooms={rooms} />
+						</RoomCollapsibleSidebar>
+					</RoomSidebar>
+				}
+			>
+				{children}
+			</RoomWorkspace>
+			<RoomFormProvider />
 		</HydrationBoundary>
 	);
 }

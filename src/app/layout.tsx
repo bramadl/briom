@@ -1,8 +1,4 @@
-import { ThemeProvider } from "@briom/components/theme-provider";
-import { Toaster } from "@briom/components/ui/sonner";
-import { TooltipProvider } from "@briom/components/ui/tooltip";
-import { ProgressProvider } from "@briom/libs/next/bprogress/provider";
-import { QueryProvider } from "@briom/libs/next/tanstack/query/query-provider";
+import { AppProviders } from "@briom/components/app-providers";
 import type { Metadata } from "next";
 import { Fraunces, Geist, Space_Mono } from "next/font/google";
 
@@ -45,19 +41,7 @@ export default function RootLayout({
 				<meta content="Briom" name="apple-mobile-web-app-title" />
 			</head>
 			<body>
-				<ThemeProvider
-					attribute="class"
-					defaultTheme="system"
-					disableTransitionOnChange
-					enableSystem
-				>
-					<ProgressProvider>
-						<TooltipProvider>
-							<QueryProvider>{children}</QueryProvider>
-						</TooltipProvider>
-					</ProgressProvider>
-					<Toaster />
-				</ThemeProvider>
+				<AppProviders>{children}</AppProviders>
 			</body>
 		</html>
 	);

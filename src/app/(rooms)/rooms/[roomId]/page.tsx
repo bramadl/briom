@@ -1,17 +1,17 @@
 import { SidebarTrigger } from "@briom/components/ui/sidebar";
 import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
-import { isServerError } from "@briom/rooms/api/lib/server-action";
-import { roomQueries } from "@briom/rooms/api/queries/room.queries";
-import { turnQueries } from "@briom/rooms/api/queries/turn.queries";
-import { getRoom } from "@briom/rooms/api/room.actions";
+import { isServerError } from "@briom/libs/server-action";
+import { getRoom } from "@briom/rooms/_/room/actions";
+import { roomQueries } from "@briom/rooms/_/room/queries";
+import { turnQueries } from "@briom/rooms/_/turn/queries/registry";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 
-import { RoomDeliberation } from "./room-deliberation";
-import { RoomInformation } from "./room-information";
-import { RoomPanel } from "./room-panel";
-import { RoomSettings } from "./room-settings";
-import { RoomTitle } from "./room-title";
+import { RoomDeliberation } from "../../_bak/rooms/[roomId]/room-deliberation";
+import { RoomInformation } from "../../_bak/rooms/[roomId]/room-information";
+import { RoomPanel } from "../../_bak/rooms/[roomId]/room-panel";
+import { RoomSettings } from "../../_bak/rooms/[roomId]/room-settings";
+import { RoomTitle } from "../../_bak/rooms/[roomId]/room-title";
 
 export default async function RoomPage({
 	params,

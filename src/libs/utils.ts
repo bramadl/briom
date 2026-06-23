@@ -5,6 +5,14 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+export function hashToIndex(str: string, length: number): number {
+	let hash = 0;
+	for (let i = 0; i < str.length; i++) {
+		hash = (hash * 31 + str.charCodeAt(i)) | 0;
+	}
+	return Math.abs(hash) % length;
+}
+
 export function pipe<A, B>(a: A, ab: (a: A) => B): B;
 export function pipe<A, B, C>(a: A, ab: (a: A) => B, bc: (b: B) => C): C;
 export function pipe<A, B, C, D>(
