@@ -1,19 +1,16 @@
 "use client";
 
-import type { RoomDTO } from "@briom/app";
+import { useRooms } from "@briom/rooms/_/room/queries/data/use-rooms";
 import { useParams } from "next/navigation";
 
 import { RoomEmpty } from "./_/room-empty";
 import { RoomHoverCard } from "./_/room-hover-card";
 
-interface RoomListProps {
-	rooms: RoomDTO[];
-}
-
-export function RoomList({ rooms }: RoomListProps) {
+export function RoomList() {
 	const { roomId } = useParams<{ roomId: string }>();
+	const { rooms, isEmpty } = useRooms();
 
-	if (rooms.length === 0) return <RoomEmpty />;
+	if (isEmpty) return <RoomEmpty />;
 	return rooms.map((room) => (
 		<RoomHoverCard isActive={room.id === roomId} key={room.id} room={room} />
 	));

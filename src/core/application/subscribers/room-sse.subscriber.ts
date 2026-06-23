@@ -143,6 +143,10 @@ export class RoomSseSubscriber {
 			data: {
 				roomId: event.payload.roomId.value(),
 				participantId: event.payload.participantId.value(),
+				model: event.payload.model,
+				name: event.payload.name,
+				provider: event.payload.provider,
+				qualifiedModel: event.payload.qualifiedModel,
 			},
 		} satisfies { event: string; data: RoomParticipantJoinedPayload });
 	}

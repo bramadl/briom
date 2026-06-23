@@ -18,18 +18,15 @@ export default async function RoomsLayout({
 	children,
 }: React.PropsWithChildren) {
 	const queryClient = getQueryClient();
-	const [{ rooms }] = await Promise.all([
-		prefetchRooms(queryClient),
-		prefetchModels(queryClient),
-	]);
+	await Promise.all([prefetchRooms(queryClient), prefetchModels(queryClient)]);
 
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
 			<RoomWorkspace
 				sidebar={
 					<RoomSidebar menu={<ModeratorMenu user={user} />}>
-						<RoomCollapsibleSidebar roomsCount={rooms.length}>
-							<RoomList rooms={rooms} />
+						<RoomCollapsibleSidebar>
+							<RoomList />
 						</RoomCollapsibleSidebar>
 					</RoomSidebar>
 				}

@@ -226,13 +226,13 @@ export class Room extends Aggregate<RoomProps> {
 		}
 
 		const currentParticipants = this.get("participants");
-		const isParticipantAlreadyInvited = currentParticipants.some(
+		const invitedParticipant = currentParticipants.find(
 			(p) =>
 				participantToInvite.id.isEqual(p.id) ||
 				participantToInvite.qualifiedModel.includes(p.qualifiedModel),
 		);
 
-		if (isParticipantAlreadyInvited) {
+		if (invitedParticipant) {
 			return Result.error(new ParticipantAlreadyInvitedError());
 		}
 
@@ -241,6 +241,10 @@ export class Room extends Aggregate<RoomProps> {
 		this.emit(
 			new ParticipantInvited(this.id.value(), {
 				participantId: participantToInvite.id,
+				model: participantToInvite.get("model").model,
+				provider: participantToInvite.get("model").provider,
+				name: participantToInvite.get("displayName"),
+				qualifiedModel: participantToInvite.qualifiedModel,
 				occurredAt: new Date(),
 				roomId: this.id,
 			}),

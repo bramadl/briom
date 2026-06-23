@@ -1,11 +1,11 @@
 import { getModeratorId } from "@briom/libs/faker";
 import { isServerError } from "@briom/libs/server-action";
 import type { SubmitHandler } from "@formisch/react";
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { inviteParticipant } from "../../participant/actions";
-import { formRoom } from "../actions";
+import { useInviteParticipantMutation } from "../../participant/mutations/use-invite-participant-mutation";
+import { useFormRoomMutation } from "../mutations/use-form-room-mutation";
+import { useRoomsInvalidation } from "../queries/invalidations/use-rooms-invalidation";
 
 import { inviteSequentially } from "./helpers/form-submission.helper";
 import type { RoomFormSchema } from "./schema";
@@ -17,8 +17,10 @@ interface UseRoomFormSubmissionOptions {
 export function useRoomFormSubmission({
 	onRoomFormed,
 }: UseRoomFormSubmissionOptions) {
-	const formRoomMutation = useMutation({ mutationFn: formRoom });
-	const inviteMutation = useMutation({ mutationFn: inviteParticipant });
+	const { invalidate: invalidateRooms } = useRoomsInvalidation();
+
+	const formRoomMutation = useFormRoomMutation();
+	const inviteMutation = useInviteParticipantMutation();
 
 	const isForming = formRoomMutation.isPending;
 	const isInviting = inviteMutation.isPending;
@@ -46,7 +48,7 @@ export function useRoomFormSubmission({
 		});
 
 		if (summary.hasPartialFailure) {
-			toast.warning("Room ready with partial roster", {
+			toast.warning("Room ready with partial perspectives", {
 				description: `${summary.success} of ${summary.total} participants connected.`,
 			});
 		} else {
@@ -63,6 +65,7 @@ export function useRoomFormSubmission({
 			});
 		}
 
+		invalidateRooms();
 		onRoomFormed?.(roomId);
 	};
 

@@ -4,6 +4,7 @@ import { Separator } from "@briom/components/ui/separator";
 import { cn } from "@briom/libs/utils";
 
 import { RoomParticipants } from "./_/room-participants";
+import { RoomTitle } from "./_/room-title";
 import { RoomTopic } from "./_/room-topic";
 
 export interface RoomInformationProps {
@@ -29,9 +30,7 @@ export function RoomInformation({
 				label={`Open ${room.title} room`}
 			/>
 
-			<h2 className="font-bold font-serif text-base line-clamp-1">
-				{room.title}
-			</h2>
+			<RoomTitle roomTitle={room.title} />
 			<Separator />
 			<RoomTopic topic={room.topic} />
 			<Separator />

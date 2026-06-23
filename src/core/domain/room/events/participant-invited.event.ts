@@ -13,7 +13,11 @@ import type { BaseRoomDomainEventPayload } from "./base.event";
  * at least one participant is present and a topic is set.
  */
 export interface ParticipantInvitedPayload extends BaseRoomDomainEventPayload {
+	readonly model: string;
+	readonly name: string;
 	readonly participantId: ParticipantId;
+	readonly provider: string;
+	readonly qualifiedModel: string;
 }
 
 export class ParticipantInvited extends BaseDomainEvent<ParticipantInvitedPayload> {

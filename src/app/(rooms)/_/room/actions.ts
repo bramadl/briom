@@ -61,6 +61,7 @@ export async function renameRoom(
 	try {
 		const result = await briom.rooms.rename(input);
 		if (result.isError()) return parseError(result.error());
+		revalidatePath("/rooms", "layout");
 		revalidatePath(`/rooms/${input.roomId}`, "page");
 		return parseResponse(undefined);
 	} catch (error) {

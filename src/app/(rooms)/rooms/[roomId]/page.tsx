@@ -1,31 +1,20 @@
 import { SidebarTrigger } from "@briom/components/ui/sidebar";
 import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
-import { isServerError } from "@briom/libs/server-action";
-import { getRoom } from "@briom/rooms/_/room/actions";
-import { roomQueries } from "@briom/rooms/_/room/queries";
-import { turnQueries } from "@briom/rooms/_/turn/queries/registry";
+import { prefetchRoom } from "@briom/rooms/_/room/queries/services/prefetch-room";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-import { notFound } from "next/navigation";
 
-import { RoomDeliberation } from "../../_bak/rooms/[roomId]/room-deliberation";
-import { RoomInformation } from "../../_bak/rooms/[roomId]/room-information";
-import { RoomPanel } from "../../_bak/rooms/[roomId]/room-panel";
-import { RoomSettings } from "../../_bak/rooms/[roomId]/room-settings";
-import { RoomTitle } from "../../_bak/rooms/[roomId]/room-title";
+import { RoomInformation } from "./_/room-information";
+import { RoomOrchestration } from "./_/room-orchestration";
+import { RoomSettings } from "./_/room-settings";
+import { RoomTitle } from "./_/room-title";
 
 export default async function RoomPage({
 	params,
 }: PageProps<"/rooms/[roomId]">) {
 	const { roomId } = await params;
-	const result = await getRoom({ roomId });
-	if (isServerError(result)) throw result.error;
-
-	const { room } = result.data;
-	if (!room) return notFound();
 
 	const queryClient = getQueryClient();
-	void queryClient.prefetchQuery(roomQueries.getRoom({ roomId }));
-	void queryClient.prefetchQuery(turnQueries.getTurns({ roomId }));
+	await prefetchRoom(queryClient, roomId);
 
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
@@ -39,10 +28,10 @@ export default async function RoomPage({
 						<RoomSettings />
 					</div>
 				</header>
-				<RoomPanel>
-					<RoomDeliberation />
+				<section className="flex flex-1 items-start min-w-0 overflow-hidden">
+					<RoomOrchestration />
 					<RoomInformation />
-				</RoomPanel>
+				</section>
 			</div>
 		</HydrationBoundary>
 	);

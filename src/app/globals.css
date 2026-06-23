@@ -296,6 +296,37 @@
 }
 
 @layer components {
+  .token-keyword { color: var(--terracotta); font-weight: 500; }
+  .token-string { color: var(--sage); }
+  .token-number { color: var(--dusty-blue); }
+  .token-function { color: var(--muted-lavender); }
+  .token-comment { color: hsl(var(--muted-foreground)); font-style: italic; }
+  .token-operator { color: hsl(var(--muted-foreground)); }
+  .token-punctuation { color: hsl(var(--muted-foreground)); }
+  .token-tag { color: #f43f5e; }
+  .token-attr-name { color: #38bdf8; }
+  .token-attr-value { color: #34d399; }
+  .token-boolean { color: #fbbf24; }
+  .token-class-name { color: #38bdf8; }
+  .token-regex { color: #34d399; }
+  .token-variable { color: #fbbf24; }
+  .token-plain { color: var(--foreground); }
+  .token-property { color: #38bdf8; }
+  .token-namespace { color: #38bdf8; }
+  .token-builtin { color: #38bdf8; }
+  .token-constant { color: #fbbf24; }
+  .token-deleted { color: #f43f5e; }
+  .token-inserted { color: #34d399; }
+  .token-important { color: #f43f5e; }
+  .token-cdata { color: hsl(var(--muted-foreground)); }
+  .token-doctype { color: hsl(var(--muted-foreground)); }
+  .token-prolog { color: hsl(var(--muted-foreground)); }
+  .token-entity { color: #fbbf24; }
+  .token-url { color: #34d399; }
+  .token-symbol { color: #fbbf24; }
+}
+
+@layer components {
   .ProseMirror.is-editor-empty::before {
     content: attr(data-placeholder);
     float: left;
@@ -380,5 +411,24 @@
     );
     background-size: 400px 100%;
     animation: shimmer 1.6s ease-in-out infinite;
+  }
+
+  .shimmer-text {
+    background: linear-gradient(
+      90deg,
+      oklch(from var(--muted-foreground) l c h / 0.6) 25%,
+      oklch(from var(--foreground) l c h / 1) 50%,
+      oklch(from var(--muted-foreground) l c h / 0.6) 75%
+    );
+    
+    background-size: 200% 100%;
+    animation: shimmer 2.5s infinite linear;
+    
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-fill-color: transparent;
+    
+    display: inline-block;
   }
 }

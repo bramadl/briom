@@ -20,7 +20,9 @@ export function RoomTopic({ topic }: RoomTopicProps) {
 					)}
 					ref={textRef}
 				>
-					{text ? text : "Bring your first topic into the room"}
+					{text
+						? text
+						: "Bring your first topic into the room and start the deliberation"}
 				</span>
 			</p>
 		</div>

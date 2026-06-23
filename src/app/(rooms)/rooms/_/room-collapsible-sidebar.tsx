@@ -1,3 +1,5 @@
+"use client";
+
 import { Badge } from "@briom/components/ui/badge";
 import {
 	Sidebar,
@@ -6,16 +8,17 @@ import {
 	SidebarGroupContent,
 	SidebarHeader,
 } from "@briom/components/ui/sidebar";
+import { useRooms } from "@briom/rooms/_/room/queries/data/use-rooms";
 
 interface RoomCollapsibleSidebarProps {
 	children: React.ReactNode;
-	roomsCount: number;
 }
 
 export function RoomCollapsibleSidebar({
 	children,
-	roomsCount,
 }: RoomCollapsibleSidebarProps) {
+	const { rooms } = useRooms();
+
 	return (
 		<Sidebar className="hidden flex-1 md:flex" collapsible="none">
 			<SidebarHeader className="h-14 border-b border-sidebar-border justify-center px-4">
@@ -23,7 +26,7 @@ export function RoomCollapsibleSidebar({
 					<h2 className="text-muted-foreground text-sm whitespace-nowrap">
 						Rooms
 					</h2>
-					<Badge>{roomsCount}</Badge>
+					<Badge>{rooms.length}</Badge>
 				</div>
 			</SidebarHeader>
 			<SidebarContent>

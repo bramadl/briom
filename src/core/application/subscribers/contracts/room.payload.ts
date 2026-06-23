@@ -15,7 +15,11 @@ export interface RoomDeliberationStartedPayload extends RoomBasePayload {
 export interface RoomFormedPayload extends RoomBasePayload {}
 
 export interface RoomParticipantJoinedPayload extends RoomBasePayload {
+	model: string;
+	name: string;
 	participantId: string;
+	provider: string;
+	qualifiedModel: string;
 }
 
 export interface RoomTurnRegisteredPayload extends RoomBasePayload {
