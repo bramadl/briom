@@ -173,6 +173,14 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
+	 * Whether the `Room` is concluded by moderator.
+	 */
+	public get isConcluded(): boolean {
+		return this.get("status") === ROOM_STATUS_OPTION.CONCLUDED;
+	}
+
+	/**
+	 * @description
 	 * Whether the `Room` has reached maximum participants
 	 */
 	public get isMaximumParticipantsReached(): boolean {
@@ -371,12 +379,23 @@ export class Room extends Aggregate<RoomProps> {
 	 * @description
 	 * Concludes deliberation, ending the thinking session.
 	 *
+	 * **Invariant**: `Room` cannot be `CONCLUDED`.
 	 * **Invariant**: `Room` must be `DELIBERATING` or `PAUSED`.
 	 * @emits `DeliberationConcluded` domain event.
 	 */
 	public conclude(): IResult<void, CannotConcludeRoomError> {
+		if (this.isConcluded) {
+			return Result.error(
+				new CannotConcludeRoomError("Room is already concluded"),
+			);
+		}
+
 		if (!this.isDeliberating && !this.isPaused) {
-			return Result.error(new CannotConcludeRoomError());
+			return Result.error(
+				new CannotConcludeRoomError(
+					"Can only conclude active or paused deliberation",
+				),
+			);
 		}
 
 		this.change("status", ROOM_STATUS_OPTION.CONCLUDED);

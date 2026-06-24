@@ -6,8 +6,8 @@ import { DomainError } from "@briom/libs/drimion";
  * Room must be in `DELIBERATING` or `PAUSED` status to conclude.
  */
 export class CannotConcludeRoomError extends DomainError {
-	public constructor() {
-		super("Can only conclude active or paused deliberation", {
+	public constructor(reason?: string) {
+		super(reason || "Can only conclude active or paused deliberation", {
 			context: "Room",
 		});
 	}

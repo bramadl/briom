@@ -13,7 +13,7 @@ export function ParticipantInfo({ participant }: ParticipantInfoProps) {
 			<span
 				className={cn(
 					"w-2 h-2 rounded-full shrink-0 translate-y-[7px]",
-					theme.all,
+					theme.dot,
 				)}
 			/>
 			<div className="min-w-0 flex flex-col gap-0">

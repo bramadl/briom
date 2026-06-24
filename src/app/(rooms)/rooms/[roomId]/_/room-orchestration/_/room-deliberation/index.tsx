@@ -27,6 +27,7 @@ export function RoomDeliberation({
 		abortStreaming,
 		acceptProposal,
 		fresh: isFreshRoom,
+		isConcluded,
 		isParticipantActive,
 		isSendingModerator,
 		isSequencing,
@@ -64,7 +65,7 @@ export function RoomDeliberation({
 	return (
 		<section className="relative min-w-0 min-h-0 h-full flex-1 flex flex-col overflow-hidden">
 			<div
-				className="flex-1 flex flex-col gap-8 p-8 lg:py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar"
+				className="flex-1 flex flex-col gap-8 p-8 lg:py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar overflow-x-hidden"
 				ref={onScrollerLoaded}
 			>
 				{isFreshRoom ? (
@@ -78,20 +79,22 @@ export function RoomDeliberation({
 				)}
 			</div>
 			{children}
-			<div className="sticky bottom-0 z-10 shrink-0 p-8 pt-0">
-				<ModeratorInput
-					canEdit={!isSequencing}
-					canMention={isMultiDeliberationRoom}
-					isPending={isSendingModerator}
-					isStreaming={isParticipantActive}
-					onAbort={abortStreaming}
-					onSend={(content, mentionees) => {
-						sequenceTurns(content, mentionees);
-						onTurnRegistered?.();
-					}}
-					participants={participants}
-				/>
-			</div>
+			{!isConcluded && (
+				<div className="sticky bottom-0 z-10 shrink-0 p-8 pt-0">
+					<ModeratorInput
+						canEdit={!isSequencing}
+						canMention={isMultiDeliberationRoom}
+						isPending={isSendingModerator}
+						isStreaming={isParticipantActive}
+						onAbort={abortStreaming}
+						onSend={(content, mentionees) => {
+							sequenceTurns(content, mentionees);
+							onTurnRegistered?.();
+						}}
+						participants={participants}
+					/>
+				</div>
+			)}
 		</section>
 	);
 }

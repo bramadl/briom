@@ -29,6 +29,7 @@ export function useDeliberation() {
 		[turns],
 	);
 
+	const isConcluded = room.status === "concluded";
 	const isSequencing = isSendingModerator || isParticipantActive;
 	const streamingTurnId = useMemo(
 		() =>
@@ -185,6 +186,7 @@ export function useDeliberation() {
 		acceptProposal,
 		canAbort: isParticipantActive,
 		fresh,
+		isConcluded,
 		isParticipantActive,
 		isSendingModerator,
 		isSequencing,

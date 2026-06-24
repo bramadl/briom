@@ -63,7 +63,7 @@ export const MarkdownComponents: Components = {
 		if (isPlainText(lang)) {
 			return (
 				<div className="max-w-full my-3">
-					<pre className="border-l-2 border-border/50 pl-4 py-2 text-foreground/80 leading-relaxed whitespace-pre-wrap pointer-events-none">
+					<pre className="border-l-2 border-border/50 pl-4 py-2 text-foreground/80 leading-relaxed whitespace-pre-wrap">
 						{children}
 					</pre>
 				</div>
@@ -111,8 +111,11 @@ export const MarkdownComponents: Components = {
 		);
 	},
 
+	// <div className="w-full overflow-x-auto min-w-0 my-4 border border-border/50 rounded-lg overscroll-behavior-y-none">
+	//   <table className="w-full border-collapse text-sm">{children}</table>
+	// </div>
 	table: ({ children }) => (
-		<div className="max-w-full overflow-x-auto pointer-events-none">
+		<div className="max-w-full overflow-x-auto">
 			<table className="w-full border-collapse">{children}</table>
 		</div>
 	),

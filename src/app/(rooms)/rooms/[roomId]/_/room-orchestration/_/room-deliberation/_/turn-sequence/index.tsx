@@ -27,10 +27,8 @@ function TurnSequenceComponent({
 		return [...turns].reverse().find((t) => t.author.type === "participant");
 	}, [turns]);
 
-	const shouldRenderProposals = showProposals;
-
 	return (
-		<div className="w-full max-w-3xl mx-auto px-8 flex flex-col gap-10">
+		<div className="w-full max-w-3xl mx-auto px-8 flex flex-col gap-12 lg:gap-16 min-w-0">
 			{turns.map((turn) =>
 				turn.author.type === "moderator" ? (
 					<ModeratorTurn key={turn.id} turn={turn} />
@@ -48,7 +46,7 @@ function TurnSequenceComponent({
 					/>
 				),
 			)}
-			{shouldRenderProposals && (
+			{showProposals && (
 				<TurnProposals onSelect={onProposalAccepted} proposals={proposals} />
 			)}
 		</div>

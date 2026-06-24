@@ -21,7 +21,7 @@ export function ParticipantBadge({
 	const theme = getParticipantTheme(participantId);
 
 	return (
-		<Avatar className="size-6 ring-2 ring-muted">
+		<Avatar className="size-6 ring-2 ring-background/5">
 			<AvatarFallback
 				className={cn(
 					"text-[9px] font-medium text-foreground",

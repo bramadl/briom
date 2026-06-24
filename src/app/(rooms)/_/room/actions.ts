@@ -2,6 +2,7 @@
 
 import { briom } from "@briom";
 import type {
+	ConcludeDeliberationInput,
 	DeleteRoomInput,
 	FormRoomInput,
 	FormRoomOutput,
@@ -61,6 +62,20 @@ export async function renameRoom(
 ): Promise<ServerActionResult<void>> {
 	try {
 		const result = await briom.rooms.rename(input);
+		if (result.isError()) return parseError(result.error());
+		revalidatePath("/rooms", "layout");
+		revalidatePath(`/rooms/${input.roomId}`, "page");
+		return parseResponse(undefined);
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function concludeRoom(
+	input: ConcludeDeliberationInput,
+): Promise<ServerActionResult<void>> {
+	try {
+		const result = await briom.rooms.conclude(input);
 		if (result.isError()) return parseError(result.error());
 		revalidatePath("/rooms", "layout");
 		revalidatePath(`/rooms/${input.roomId}`, "page");

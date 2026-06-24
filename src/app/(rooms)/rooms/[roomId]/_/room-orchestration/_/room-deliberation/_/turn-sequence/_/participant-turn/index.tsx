@@ -38,7 +38,10 @@ function ParticipantTurnComponent({
 			: "--:--";
 
 	return (
-		<div className="relative group space-y-2 rounded-lg" id={turn.id}>
+		<div
+			className="relative group space-y-2 w-full min-w-0 rounded-lg"
+			id={turn.id}
+		>
 			<div className={cn("relative pl-4 border-l-2", theme.border)}>
 				{isPending ? (
 					<TurnPending

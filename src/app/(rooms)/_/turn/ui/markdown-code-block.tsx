@@ -54,7 +54,7 @@ export function MarkdownCodeBlock({
 	return (
 		<div
 			className={cn(
-				"max-w-full overflow-x-auto rounded-lg border border-border/50 my-3 pointer-events-none",
+				"max-w-full rounded-lg border border-border/50 my-3 flex flex-col",
 				isTerminal ? "bg-background/80" : "bg-muted/40",
 			)}
 		>
@@ -94,8 +94,11 @@ export function MarkdownCodeBlock({
 					{isCopied ? <CheckIcon className="text-green-500" /> : <CopyIcon />}
 				</Button>
 			</div>
-
-			<pre className="bg-transparent p-3 overflow-x-clip">{children}</pre>
+			<div className="w-full overflow-x-auto min-w-0 overscroll-behavior-y-none">
+				<pre className="bg-transparent p-3 font-mono text-sm whitespace-pre block w-max min-w-full">
+					{children}
+				</pre>
+			</div>
 		</div>
 	);
 }

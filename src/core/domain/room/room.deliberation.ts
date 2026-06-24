@@ -161,17 +161,16 @@ export class RoomDeliberation {
 				participant.id,
 			);
 
-			for (const intent of intents) {
-				proposals.push({
-					participantId: participant.id,
-					intent,
-					rationale: this.generateRationale(context, participant.id, intent),
-					confidence: this.calculateConfidence(context, participant.id, intent),
-				});
-			}
+			const intent = intents[0];
+			proposals.push({
+				participantId: participant.id,
+				intent,
+				rationale: this.generateRationale(context, participant.id, intent),
+				confidence: this.calculateConfidence(context, participant.id, intent),
+			});
 		}
 
-		return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 8);
+		return proposals.sort((a, b) => b.confidence - a.confidence);
 	}
 
 	/**

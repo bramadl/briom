@@ -20,6 +20,7 @@ import { CloseRoom } from "./_/close-room";
 import { ConcludeRoom } from "./_/conclude-room";
 import { InviteParticipant } from "./_/invite-participant";
 import { ShareRoom } from "./_/share-room";
+import { SummarizeDiscussion } from "./_/summarize-discussion";
 
 export function RoomSettings() {
 	const { roomId } = useParams<{ roomId: string }>();
@@ -28,6 +29,8 @@ export function RoomSettings() {
 	const isConcluded = room.status === "concluded";
 	const isDeliberating = room.status === "deliberating";
 	const isForming = room.status === "forming";
+	const isPaused = room.status === "paused";
+
 	const maxParticipantReached =
 		room.participants.length >= ROOM_SETTING.MAXIMUM_PARTICIPANT;
 
@@ -39,6 +42,7 @@ export function RoomSettings() {
 					roomId={roomId}
 				/>
 			)}
+			{isConcluded && <SummarizeDiscussion participants={room.participants} />}
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button size="icon" variant="secondary">
@@ -48,7 +52,7 @@ export function RoomSettings() {
 				<DropdownMenuContent align="end" className="w-52">
 					<DropdownMenuGroup>
 						<DropdownMenuLabel>Room Settings</DropdownMenuLabel>
-						{isDeliberating && (
+						{(isDeliberating || isPaused) && (
 							<Fragment>
 								<DropdownMenuSeparator />
 								<ConcludeRoom />

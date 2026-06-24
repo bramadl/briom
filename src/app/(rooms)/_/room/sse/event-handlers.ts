@@ -1,4 +1,5 @@
 import type {
+	RoomDeliberationConcludedPayload,
 	RoomDeliberationStartedPayload,
 	RoomParticipantJoinedPayload,
 	RoomTurnRegisteredPayload,
@@ -30,7 +31,7 @@ export const ROOM_EVENT_HANDLERS: Record<
 	// biome-ignore lint/suspicious/noExplicitAny: structural — no variance issues
 	SseEventHandler<any>
 > = {
-	"room:deliberation-concluded": noopHandler,
+	"room:deliberation-concluded": deliberationConcludedHandler,
 	"room:deliberation-paused": noopHandler,
 	"room:deliberation-resumed": noopHandler,
 	"room:deliberation-started": deliberationStartedHandler,
@@ -45,6 +46,16 @@ export const ROOM_EVENT_HANDLERS: Record<
 };
 
 function noopHandler(_: SseEventContext): void {}
+
+function deliberationConcludedHandler({
+	queryClient,
+	roomId,
+}: SseEventContext<RoomDeliberationConcludedPayload>): void {
+	patchRoom(queryClient, roomId, (room) => ({
+		...room,
+		status: "concluded",
+	}));
+}
 
 function deliberationStartedHandler({
 	data,

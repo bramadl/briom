@@ -77,6 +77,11 @@
   --color-sage: var(--sage);
   --color-muted-lavender: var(--muted-lavender);
   --color-warm-sienna: var(--warm-sienna);
+  --color-terracotta-background: var(--terracotta-background);
+  --color-dusty-blue-background: var(--dusty-blue-background);
+  --color-sage-background: var(--sage-background);
+  --color-muted-lavender-background: var(--muted-lavender-background);
+  --color-warm-sienna-background: var(--warm-sienna-background);
 }
 
 :root {
@@ -138,6 +143,11 @@
   --sage: #5a9e78;
   --muted-lavender: #8b6db0;
   --warm-sienna: #b07a5a;
+  --terracotta-background: #1f100a;
+  --dusty-blue-background: #0b141b;
+  --sage-background: #0a1710;
+  --muted-lavender-background: #120e1a;
+  --warm-sienna-background: #1c110b;
 }
 
 .dark {
@@ -197,10 +207,10 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50 overscroll-y-none;
+    @apply border-border outline-ring/50;
   }
   html, body {
-    @apply h-full bg-background text-foreground;
+    @apply h-full bg-background text-foreground overscroll-y-none;
   }
   body {
     @apply flex justify-center;

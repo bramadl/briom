@@ -47,7 +47,7 @@ export function useMiniTimeline({ participants, turns }: UseMiniTimelineProps) {
 		const element = document.getElementById(turnId);
 		if (!element) return;
 
-		element.scrollIntoView({ behavior: "smooth", block: "center" });
+		element.scrollIntoView({ behavior: "auto", block: "center" });
 
 		let isScrolling: NodeJS.Timeout;
 		const flashClass = "animate-turn-flash";
@@ -76,7 +76,7 @@ export function useMiniTimeline({ participants, turns }: UseMiniTimelineProps) {
 				element.classList.add(flashClass);
 				setTimeout(() => element.classList.remove(flashClass), 1200);
 			}
-		}, 500);
+		}, 50);
 	};
 
 	return {

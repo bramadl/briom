@@ -6,7 +6,7 @@ export function ThemeProvider({
 	...props
 }: React.ComponentProps<typeof NextThemesProvider>) {
 	return (
-		<NextThemesProvider storage="cookie" {...props}>
+		<NextThemesProvider forcedTheme="dark" storage="cookie" {...props}>
 			{children}
 		</NextThemesProvider>
 	);
