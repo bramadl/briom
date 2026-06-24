@@ -26,6 +26,7 @@ import {
 } from "@briom/components/ui/dialog";
 import { Input } from "@briom/components/ui/input";
 import { Label } from "@briom/components/ui/label";
+import { useIsMobile } from "@briom/hooks/use-mobile";
 import { isServerError } from "@briom/libs/server-action";
 import { cn } from "@briom/libs/utils";
 import { useParticipantSelector } from "@briom/rooms/_/participant/hooks/use-participant-selector";
@@ -108,12 +109,14 @@ export function InviteParticipant({
 	const canSubmit =
 		selectedModel && displayName.trim().length > 0 && !inviteMutation.isPending;
 
+	const isMobile = useIsMobile();
+
 	return (
 		<Dialog onOpenChange={handleOpenChange} open={open}>
 			<DialogTrigger asChild>
-				<Button variant="secondary">
+				<Button size={isMobile ? "icon" : "default"} variant="secondary">
 					<UserPlus2Icon className="size-4" />
-					Invite Participant
+					<span className="hidden sm:inline">Invite Participant</span>
 				</Button>
 			</DialogTrigger>
 
@@ -144,7 +147,7 @@ export function InviteParticipant({
 							<ComboboxTrigger
 								render={
 									<Button
-										className="w-full justify-between font-normal"
+										className="w-full justify-between font-normal text-muted-foreground focus-visible:border-primary! text-base md:text-sm"
 										variant="outline"
 									>
 										{selectedModel ? (

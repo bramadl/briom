@@ -40,7 +40,7 @@ export function RoomForm({ className, dialogRef }: RoomFormProps) {
 			of={form.form}
 			onSubmit={form.submit}
 		>
-			<FieldGroup>
+			<FieldGroup className="max-h-96 overflow-y-auto">
 				<RoomTitleField disabled={form.disabled} form={form.form} />
 				<RoomFormParticipants
 					dialogRef={dialogRef}

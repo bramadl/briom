@@ -62,7 +62,7 @@ export function ParticipantSelector({
 				<ComboboxTrigger
 					render={
 						<Button
-							className="w-full justify-between font-normal text-muted-foreground focus-visible:border-primary!"
+							className="w-full justify-between font-normal text-muted-foreground focus-visible:border-primary! text-base md:text-sm"
 							variant="outline"
 						>
 							Invite a perspective
