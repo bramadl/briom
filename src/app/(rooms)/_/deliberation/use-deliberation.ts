@@ -6,15 +6,21 @@ import type {
 import { getModeratorId } from "@briom/libs/faker";
 import { isServerError } from "@briom/libs/server-action";
 import { useParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useRoom } from "../room/queries/data/use-room";
 import { useTurnProposals } from "../turn/queries/data/use-turn-proposals";
+import { useAbortTurnMutation } from "../turn/queries/mutations/use-abort-turn";
 import { useInitiateModeratorTurnMutation } from "../turn/queries/mutations/use-initiate-moderator-turn-mutation";
 import { useInitiateParticipantTurnMutation } from "../turn/queries/mutations/use-initiate-participant-turn-mutation";
 import { useInitiateTopicTurnMutation } from "../turn/queries/mutations/use-initiate-topic-turn-mutation";
-
 import type { Mentionee } from "./editor/helpers/mention-extractor";
+
+type DeliberationStep =
+	| "idle"
+	| "moderator:sending"
+	| "moderator:sent"
+	| "participant:streaming";
 
 export function useDeliberation() {
 	const { roomId } = useParams<{ roomId: string }>();
@@ -22,22 +28,32 @@ export function useDeliberation() {
 	const { proposals, invalidate: invalidateTurnProposals } =
 		useTurnProposals(roomId);
 
-	const [isSequencing, setIsSequencing] = useState<boolean>(false);
+	const [sequenceStep, setSequenceStep] = useState<DeliberationStep>("idle");
+	const streamingTurnId = useMemo(() => {
+		return (
+			turns.findLast((t) => t.status === "streaming" || t.status === "pending")
+				?.id ?? null
+		);
+	}, [turns]);
 
 	const { mutateAsync: initiateTopic } = useInitiateTopicTurnMutation();
 	const { mutateAsync: initiateModerator } = useInitiateModeratorTurnMutation();
 	const { mutate: initiateParticipant } = useInitiateParticipantTurnMutation();
+	const { mutate: abortTurn } = useAbortTurnMutation();
 
-	const releaseSequence = useCallback(() => {
-		invalidateTurnProposals(roomId);
-		setIsSequencing(false);
-	}, [invalidateTurnProposals, roomId]);
+	const releaseSequence = useCallback(
+		(state: DeliberationStep = "idle") => {
+			invalidateTurnProposals(roomId);
+			setSequenceStep(state);
+		},
+		[invalidateTurnProposals, roomId],
+	);
 
 	const acceptProposal = useCallback(
 		(proposal: TurnProposalDTO) => {
-			if (!multiDeliberation || isSequencing) return;
+			if (!multiDeliberation || sequenceStep !== "idle") return;
 
-			setIsSequencing(true);
+			setSequenceStep("participant:streaming");
 			initiateParticipant(
 				{
 					roomId,
@@ -51,9 +67,9 @@ export function useDeliberation() {
 			);
 		},
 		[
-			isSequencing,
 			multiDeliberation,
 			roomId,
+			sequenceStep,
 			initiateParticipant,
 			releaseSequence,
 		],
@@ -61,7 +77,7 @@ export function useDeliberation() {
 
 	const sequenceTurns = useCallback(
 		async (content: string, mentionedParticipants: Mentionee[]) => {
-			setIsSequencing(true);
+			setSequenceStep("moderator:sending");
 
 			const firstParticipant = room.participants[0];
 			const moderatorId = getModeratorId();
@@ -80,10 +96,12 @@ export function useDeliberation() {
 					return releaseSequence();
 				}
 
+				setSequenceStep("moderator:sent");
 				const nextToRespond = multiDeliberation
 					? (mentionedParticipants.find((m) => m.isPrimary) ?? firstParticipant)
 					: firstParticipant;
 
+				setSequenceStep("participant:streaming");
 				initiateParticipant(
 					{
 						roomId,
@@ -102,6 +120,9 @@ export function useDeliberation() {
 					return releaseSequence();
 				}
 
+				setSequenceStep("moderator:sent");
+				setSequenceStep("participant:streaming");
+
 				initiateParticipant(
 					{
 						roomId,
@@ -116,6 +137,9 @@ export function useDeliberation() {
 
 			const result = await initiateModerator(turnPayload);
 			if (isServerError(result)) return releaseSequence();
+
+			setSequenceStep("moderator:sent");
+			setSequenceStep("participant:streaming");
 
 			const primaryMention = mentionedParticipants.find((m) => m.isPrimary);
 			if (primaryMention) {
@@ -166,15 +190,24 @@ export function useDeliberation() {
 		],
 	);
 
+	const abortStreaming = useCallback(() => {
+		console.log("Aborting: ", streamingTurnId);
+
+		if (!streamingTurnId) return;
+		abortTurn({ turnId: streamingTurnId });
+	}, [abortTurn, streamingTurnId]);
+
 	return {
+		abortStreaming,
+		acceptProposal,
+		canAbort: streamingTurnId !== null,
 		fresh,
 		multiDeliberation,
-		streaming: isSequencing,
-		room,
 		participants: room.participants,
 		proposals,
-		turns,
+		room,
+		sequenceStep,
 		sequenceTurns,
-		acceptProposal,
+		turns,
 	};
 }

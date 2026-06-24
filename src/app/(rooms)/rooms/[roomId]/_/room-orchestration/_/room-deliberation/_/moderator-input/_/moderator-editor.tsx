@@ -2,6 +2,7 @@
 
 import { cn } from "@briom/libs/utils";
 import { ChatEditorExtension } from "@briom/rooms/_/deliberation/editor/extensions/chat-editor.extension";
+import { createDraftingExtension } from "@briom/rooms/_/deliberation/editor/extensions/drafting.extension";
 import { SUBMIT_COMMAND } from "@briom/rooms/_/deliberation/editor/extensions/send.extension";
 import { MentionPopup } from "@briom/rooms/_/deliberation/editor/ui/mention-popup";
 import { useEditorEmpty } from "@briom/rooms/_/deliberation/editor/use-editor-empty";
@@ -10,8 +11,8 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
-import type { LexicalEditor } from "lexical";
-import { useEffect } from "react";
+import { defineExtension, type LexicalEditor } from "lexical";
+import { useEffect, useMemo } from "react";
 
 function EmptyStateBridge({
 	onEmptyChange,
@@ -44,6 +45,8 @@ function SubmitBridge({ onSend }: { onSend?: () => void }) {
 }
 
 interface ModeratorEditorProps {
+	clearDraftRef?: React.RefObject<(() => void) | null>;
+	draftKey?: string;
 	editorRef?: React.RefObject<LexicalEditor | null>;
 	mentionList?: MentionItem[];
 	onEmptyChange?: (isEmpty: boolean) => void;
@@ -52,16 +55,31 @@ interface ModeratorEditorProps {
 }
 
 export function ModeratorEditor({
+	clearDraftRef,
+	draftKey,
 	editorRef,
 	mentionList,
 	onEmptyChange,
 	onSend,
 	placeholder = "Enter something",
 }: ModeratorEditorProps) {
+	const extension = useMemo(() => {
+		if (!draftKey) return ChatEditorExtension;
+
+		return defineExtension({
+			name: "@briom/lexical/ModeratorEditor",
+			dependencies: [
+				ChatEditorExtension,
+				createDraftingExtension({ draftKey, onClearRef: clearDraftRef }),
+			],
+		});
+	}, [draftKey, clearDraftRef]);
+
 	return (
 		<LexicalExtensionComposer
 			contentEditable={null}
-			extension={ChatEditorExtension}
+			extension={extension}
+			key={draftKey}
 		>
 			<ContentEditable
 				aria-placeholder={placeholder}

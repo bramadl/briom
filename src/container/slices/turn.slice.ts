@@ -1,5 +1,6 @@
 import {
 	AbandonTurnHandler,
+	AbortTurnHandler,
 	AccumulateTokenHandler,
 	FailTurnHandler,
 	GetTurnHandler,
@@ -83,6 +84,9 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 		.add("Handler:AbandonTurn", (r) => {
 			return new AbandonTurnHandler(r["Orchestrator:TurnLifecycle"]);
 		})
+		.add("Handler:AbortTurn", (r) => {
+			return new AbortTurnHandler(r["Service:TurnStreaming"]);
+		})
 		.add("Handler:AccumulateToken", (r) => {
 			return new AccumulateTokenHandler(r["Orchestrator:TurnLifecycle"]);
 		})
@@ -145,6 +149,7 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 		.add("Context:Turn", (r) => {
 			return new TurnContext({
 				abandon: r["Handler:AbandonTurn"],
+				abort: r["Handler:AbortTurn"],
 				accumulate: r["Handler:AccumulateToken"],
 				fail: r["Handler:FailTurn"],
 				get: r["Handler:GetTurn"],

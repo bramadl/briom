@@ -4,6 +4,9 @@ import {
 	AbandonTurnCommand,
 	type AbandonTurnHandler,
 	type AbandonTurnInput,
+	AbortTurnCommand,
+	type AbortTurnHandler,
+	type AbortTurnInput,
 	AccumulateTokenCommand,
 	type AccumulateTokenHandler,
 	type AccumulateTokenInput,
@@ -47,6 +50,11 @@ interface TurnContextDeps {
 	 * Give up on failed turn.
 	 */
 	abandon: AbandonTurnHandler;
+	/**
+	 * @description
+	 * Interrupt an in-flight LLM stream.
+	 */
+	abort: AbortTurnHandler;
 	/**
 	 * @description
 	 * Stream token from LLM.
@@ -158,6 +166,20 @@ export class TurnContext {
 	 */
 	public async abandon(input: AbandonTurnInput) {
 		return this.deps.abandon.execute(new AbandonTurnCommand(input));
+	}
+
+	/*
+	 * @description
+	 * Aborts a currently streaming turn.
+	 *
+	 * Signals the in-flight LLM stream to cancel. The turn transitions to
+	 * FAILED with StreamError.aborted(). Moderator may retry or abandon after.
+	 *
+	 * @param input - Turn ID of the streaming turn
+	 * @returns Result containing void
+	 */
+	public async abort(input: AbortTurnInput) {
+		return this.deps.abort.execute(new AbortTurnCommand(input));
 	}
 
 	/**

@@ -27,9 +27,8 @@ export function RoomInformationMobile() {
 
 	return (
 		<>
-			{/* Floating trigger — fixed di kanan bawah header */}
 			<Button
-				className="fixed right-4 top-20 z-40 md:hidden size-10 rounded-full shadow-lg border border-border/50 bg-background/80 backdrop-blur-sm"
+				className="fixed right-4 top-20 z-40 lg:hidden size-10 rounded-full shadow-lg border border-border/50 bg-background/80 backdrop-blur-sm"
 				onClick={() => setOpen(true)}
 				size="icon"
 				variant="ghost"
@@ -37,7 +36,6 @@ export function RoomInformationMobile() {
 				<PanelRightIcon className="size-4" />
 			</Button>
 
-			{/* Drawer / Sheet */}
 			<Sheet onOpenChange={setOpen} open={open}>
 				<SheetContent
 					className="w-80 p-0 border-l border-border/50"

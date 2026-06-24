@@ -126,15 +126,13 @@ export class InitiateParticipantTurnHandler
 
 		const messages = this.transcriptor.render({ participants, turns });
 
-		const streamResult = await this.streaming.streamAndSettle({
+		void this.streaming.streamAndSettle({
 			turnId: turn.id,
 			roomId: RoomId(roomId),
 			messages,
 			qualifiedModel: participant.qualifiedModel,
 			systemPrompt,
 		});
-
-		if (streamResult.isError()) return Result.error(streamResult.error());
 
 		return Result.success({ turnId: turn.id.value() });
 	}

@@ -24,7 +24,7 @@ export function RoomForm({ className, dialogRef }: RoomFormProps) {
 	const form = useRoomForm({
 		onRoomFormed: (roomId: string) => {
 			cancelForm();
-			router.push(`rooms/${roomId}`);
+			router.push(`/rooms/${roomId}`);
 		},
 	});
 

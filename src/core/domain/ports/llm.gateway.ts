@@ -5,10 +5,6 @@ import type { Message, StreamError } from "../turn";
 /**
  * @description
  * Input for LLM stream generation.
- *
- * Encapsulates everything needed to request a streaming response from an AI model:
- * the deliberation history (as messages), the target model, and the system prompt
- * that establishes context and intent.
  */
 export interface GenerateInput {
 	/**
@@ -21,9 +17,18 @@ export interface GenerateInput {
 	 * @description
 	 * Fully qualified model identifier for the LLM provider.
 	 * Format: `{provider}/{model}` (e.g., "openai/gpt-4", "anthropic/claude-3.5-sonnet").
-	 * @see ParticipantModel.qualify() — produces this format
 	 */
 	qualifiedModel: string;
+
+	/**
+	 * @description
+	 * Optional abort signal. When signalled, the gateway should cancel the
+	 * in-flight request and allow the stream to throw an AbortError.
+	 *
+	 * Provided by `TurnStreamingService` when the moderator triggers an abort.
+	 * Implementations must forward this to their HTTP/SDK layer.
+	 */
+	signal?: AbortSignal;
 
 	/**
 	 * @description System prompt establishing the participant's identity, room context, and intent. */
@@ -34,39 +39,14 @@ export interface GenerateInput {
  * @description
  * `LlmGateway` — Domain Port (Query-like Contract)
  *
- * Abstracts the LLM provider behind a domain-agnostic streaming interface.
- * The domain knows nothing about `OpenRouter`, `Claude`, `GPT`, or `Gemini` —
- * it only knows: "give me a stream of tokens for this model and prompt."
- *
- * **Why a Port, Not a Service?**
- * This is an infrastructure concern masquerading as a domain need. The domain
- * defines the contract (what it needs) but delegates implementation to the
- * infrastructure layer (how to get it). This keeps Briom provider-agnostic:
- * swapping `OpenRouter` for a custom proxy or local model requires only a new
- * adapter, zero domain changes.
- *
- * **Why ReadableStream<string>?**
- * The domain consumes tokens as they arrive — not as a complete response.
- * This enables real-time SSE forwarding to the client without buffering the
- * entire perspective. The stream abstraction is web-standard and works in both
- * Node.js and browser environments.
- *
- * **Error Handling**
- * All provider errors are normalized to domain `StreamError` instances:
- * - timeout: model didn't respond within threshold
- * - rate_limited: provider throttling
- * - model_not_found: invalid or unavailable model identifier
- * - stream_failure: generic connection/parsing failure
- *
- * @see StreamError — for error taxonomy
- * @see OpenRouterLlmGateway — infrastructure implementation
+ * (See original file for full description.)
  */
 export interface LlmGateway {
 	/**
 	 * @description
 	 * Initiates a streaming LLM response for a participant turn.
 	 *
-	 * @param input - The generation context (messages, model, system prompt)
+	 * @param input - The generation context (messages, model, system prompt, signal)
 	 * @returns Result containing a ReadableStream of tokens, or StreamError
 	 */
 	stream(

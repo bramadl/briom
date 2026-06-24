@@ -2,6 +2,7 @@
 
 import { briom } from "@briom";
 import type {
+	AbortTurnInput,
 	GetTurnProposalsInput,
 	GetTurnProposalsOutput,
 	GetTurnsInput,
@@ -75,6 +76,18 @@ export async function getTurnProposals(
 ): Promise<ServerActionResult<GetTurnProposalsOutput>> {
 	try {
 		const result = await briom.turns.getProposals(input);
+		if (result.isError()) return parseError(result.error());
+		return parseResponse(result.value());
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function abortTurn(
+	input: AbortTurnInput,
+): Promise<ServerActionResult<void>> {
+	try {
+		const result = await briom.turns.abort(input);
 		if (result.isError()) return parseError(result.error());
 		return parseResponse(result.value());
 	} catch (error) {

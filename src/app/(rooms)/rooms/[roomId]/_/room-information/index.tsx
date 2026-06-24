@@ -16,7 +16,7 @@ export function RoomInformation() {
 
 	return (
 		<Accordion
-			className="sticky z-1 top-14 w-72 h-full shrink-0 self-start hidden md:flex flex-col bg-background/80 backdrop-blur-sm border-l overflow-y-auto select-none"
+			className="sticky z-1 top-14 w-72 h-full shrink-0 self-start hidden lg:flex flex-col bg-background/80 backdrop-blur-sm border-l overflow-y-auto select-none"
 			defaultValue={["topic", "participants", "timeline"]}
 			type="multiple"
 		>

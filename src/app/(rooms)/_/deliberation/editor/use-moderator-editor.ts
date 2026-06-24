@@ -4,7 +4,9 @@ import { useHotkey } from "@tanstack/react-hotkeys";
 import type { LexicalEditor } from "lexical";
 import { $createParagraphNode, $getRoot } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
+
 import { ROOM_SETTING } from "../../room/config/setting";
+
 import { editorStateToMarkdown } from "./helpers/markdown-conversion";
 import { extractMentionees, type Mentionee } from "./helpers/mention-extractor";
 
@@ -16,6 +18,7 @@ export interface MentionItem {
 
 interface UseModeratorEditorOptions {
 	canEdit?: boolean;
+	draftKey?: string;
 	mentionList?: MentionItem[];
 	onSend?: (content: string, mentionees: Mentionee[]) => void | Promise<void>;
 	placeholder: string;
@@ -27,19 +30,24 @@ export function useModeratorEditor({
 	onSend,
 	placeholder,
 }: UseModeratorEditorOptions) {
+	const clearDraftRef = useRef<(() => void) | null>(null);
 	const editorRef = useRef<LexicalEditor | null>(null);
 	const isSendingRef = useRef(false);
+
 	const [isEmpty, setIsEmpty] = useState(true);
 	const [isSending, setIsSending] = useState(false);
 
 	const clear = useCallback(() => {
 		const editor = editorRef.current;
 		if (!editor) return;
+
 		editor.update(() => {
 			const root = $getRoot();
 			root.clear();
 			root.append($createParagraphNode());
 		});
+
+		clearDraftRef.current?.();
 	}, []);
 
 	const focus = useCallback(() => {
@@ -76,6 +84,7 @@ export function useModeratorEditor({
 
 	return {
 		clear,
+		clearDraftRef,
 		editorRef,
 		focus,
 		isEmpty,
