@@ -66,7 +66,7 @@ export function ModeratorEditor({
 			<ContentEditable
 				aria-placeholder={placeholder}
 				className={cn(
-					"min-h-24 lg:min-h-16 max-h-[36rem] w-full bg-transparent",
+					"min-h-20 lg:min-h-16 max-h-[36rem] w-full bg-transparent",
 					"px-4 pt-3 pb-1 text-sm leading-relaxed",
 					"overflow-y-auto focus:outline-none",
 				)}

@@ -51,7 +51,7 @@ export function RoomDeliberation({
 	return (
 		<section className="relative min-w-0 min-h-0 h-full flex-1 flex flex-col overflow-hidden">
 			<div
-				className="flex-1 flex flex-col gap-8 p-8 py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar"
+				className="flex-1 flex flex-col gap-8 p-8 lg:py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar"
 				ref={onScrollerLoaded}
 			>
 				{isFreshRoom ? (

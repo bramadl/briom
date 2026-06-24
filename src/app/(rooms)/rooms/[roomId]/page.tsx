@@ -4,6 +4,7 @@ import { prefetchRoom } from "@briom/rooms/_/room/queries/services/prefetch-room
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 import { RoomInformation } from "./_/room-information";
+import { RoomInformationMobile } from "./_/room-information/mobile";
 import { RoomOrchestration } from "./_/room-orchestration";
 import { RoomSettings } from "./_/room-settings";
 import { RoomTitle } from "./_/room-title";
@@ -28,7 +29,10 @@ export default async function RoomPage({
 				</header>
 				<section className="flex flex-1 items-start min-w-0 overflow-hidden">
 					<RoomOrchestration />
-					<RoomInformation />
+					<div className="hidden md:block">
+						<RoomInformation />
+					</div>
+					<RoomInformationMobile />
 				</section>
 			</div>
 		</HydrationBoundary>

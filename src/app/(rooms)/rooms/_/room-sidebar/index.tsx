@@ -7,6 +7,8 @@ import {
 	SidebarHeader,
 } from "@briom/components/ui/sidebar";
 
+import { RoomList } from "../room-list";
+
 import { SidebarExpander } from "./_/sidebar-expander";
 import { SidebarQuickActions } from "./_/sidebar-quick-actions";
 
@@ -34,8 +36,13 @@ export function RoomSidebar({ children, menu }: RoomSidebarProps) {
 							<SidebarQuickActions />
 						</SidebarGroupContent>
 					</SidebarGroup>
+					<SidebarGroup className="border-t md:hidden">
+						<SidebarGroupContent>
+							<RoomList />
+						</SidebarGroupContent>
+					</SidebarGroup>
 				</SidebarContent>
-				<SidebarFooter>{menu}</SidebarFooter>
+				<SidebarFooter className="border-t md:border-t-0">{menu}</SidebarFooter>
 			</Sidebar>
 			{children}
 		</Sidebar>

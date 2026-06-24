@@ -10,7 +10,7 @@ export function EmptySequence() {
 	} = useRoom(roomId);
 
 	return (
-		<div className="flex flex-1 flex-col items-center justify-center gap-16 px-6 text-center">
+		<div className="flex flex-1 flex-col items-center justify-center gap-8 lg:gap-16 px-6 text-center">
 			<div className="flex flex-col gap-2">
 				<p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
 					Fresh Room

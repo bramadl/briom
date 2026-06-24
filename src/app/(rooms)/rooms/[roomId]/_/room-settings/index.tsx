@@ -28,12 +28,12 @@ export function RoomSettings() {
 	const isConcluded = room.status === "concluded";
 	const isDeliberating = room.status === "deliberating";
 	const isForming = room.status === "forming";
-	const isMaxParticipants =
+	const maxParticipantReached =
 		room.participants.length >= ROOM_SETTING.MAXIMUM_PARTICIPANT;
 
 	return (
 		<div className="flex items-center gap-1">
-			{isForming && !isMaxParticipants && (
+			{isForming && !maxParticipantReached && (
 				<InviteParticipant
 					existingParticipants={room.participants}
 					roomId={roomId}
