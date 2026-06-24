@@ -12,7 +12,7 @@ import { RoomTopic } from "./_/room-topic";
 
 export function RoomInformation() {
 	const { roomId } = useParams<{ roomId: string }>();
-	const { room, turns } = useRoom(roomId);
+	const { multiDeliberation, room, turns } = useRoom(roomId);
 
 	return (
 		<Accordion
@@ -22,7 +22,11 @@ export function RoomInformation() {
 		>
 			<RoomTopic topic={room.topic} />
 			<RoomParticipants participants={room.participants} />
-			<RoomTimeline participants={room.participants} turns={turns} />
+			<RoomTimeline
+				multiDeliberation={multiDeliberation}
+				participants={room.participants}
+				turns={turns}
+			/>
 			<RoomDetails room={room} />
 			<Separator />
 		</Accordion>

@@ -1,24 +1,34 @@
 "use client";
 
-import type { RoomDTO } from "@briom/app";
+import type { RoomDTO, TurnProposalDTO } from "@briom/app";
 import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
 import { useParams } from "next/navigation";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 
 import { ModeratorTurn } from "./_/moderator-turn";
 import { ParticipantTurn } from "./_/participant-turn";
 import { TurnProposals } from "./_/turn-proposals";
 
-function TurnSequenceComponent() {
-	const { roomId } = useParams<{ roomId: string }>();
-	const { turns, multiDeliberation, room } = useRoom(roomId);
+interface TurnSequenceProps {
+	onProposalAccepted: (proposal: TurnProposalDTO) => void;
+	proposals: TurnProposalDTO[];
+}
 
-	const lastParticipantTurn = [...turns]
-		.reverse()
-		.find((t) => t.author.type === "participant");
+function TurnSequenceComponent({
+	onProposalAccepted,
+	proposals,
+}: TurnSequenceProps) {
+	const { roomId } = useParams<{ roomId: string }>();
+	const { streaming, multiDeliberation, room, turns } = useRoom(roomId);
+
+	const lastParticipantTurn = useMemo(() => {
+		return [...turns].reverse().find((t) => t.author.type === "participant");
+	}, [turns]);
 
 	const showProposals =
-		multiDeliberation && lastParticipantTurn?.status === "settled";
+		multiDeliberation &&
+		lastParticipantTurn?.status === "settled" &&
+		!streaming;
 
 	return (
 		<div className="w-full max-w-3xl mx-auto px-8 flex flex-col gap-10">
@@ -39,7 +49,9 @@ function TurnSequenceComponent() {
 					/>
 				),
 			)}
-			{showProposals && <TurnProposals act={() => {}} proposals={[]} />}
+			{showProposals && (
+				<TurnProposals onSelect={onProposalAccepted} proposals={proposals} />
+			)}
 		</div>
 	);
 }

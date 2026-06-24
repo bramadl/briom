@@ -24,10 +24,12 @@ export function RoomDeliberation({
 	onTurnRegistered,
 }: RoomDeliberationProps) {
 	const {
+		acceptProposal,
 		fresh: isFreshRoom,
 		multiDeliberation: isMultiDeliberationRoom,
 		streaming: isStreaming,
 		participants,
+		proposals,
 		sequenceTurns,
 		turns,
 	} = useDeliberation();
@@ -52,7 +54,14 @@ export function RoomDeliberation({
 				className="flex-1 flex flex-col gap-8 p-8 py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar"
 				ref={onScrollerLoaded}
 			>
-				{isFreshRoom ? <EmptySequence /> : <TurnSequence />}
+				{isFreshRoom ? (
+					<EmptySequence />
+				) : (
+					<TurnSequence
+						onProposalAccepted={acceptProposal}
+						proposals={proposals}
+					/>
+				)}
 			</div>
 			{children}
 			<div className="sticky bottom-0 z-10 shrink-0 p-8 pt-0">

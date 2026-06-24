@@ -29,28 +29,30 @@ export function RoomSettings() {
 	const isForming = room.status === "forming";
 
 	return (
-		<DropdownMenu>
-			<DropdownMenuTrigger asChild>
-				<Button size="icon" variant="secondary">
-					<EllipsisVertical className="size-4" />
-				</Button>
-			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="w-52">
-				<DropdownMenuGroup>
-					<DropdownMenuLabel>Room Settings</DropdownMenuLabel>
-					<DropdownMenuSeparator />
-					{isForming && <InviteParticipant />}
-					{isDeliberating && <ConcludeRoom />}
-					{isConcluded && (
-						<Fragment>
-							<ShareRoom />
-							<ArchiveRoom />
-						</Fragment>
-					)}
-					<DropdownMenuSeparator />
-					<CloseRoom />
-				</DropdownMenuGroup>
-			</DropdownMenuContent>
-		</DropdownMenu>
+		<div className="flex items-center gap-1">
+			{isForming && <InviteParticipant />}
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button size="icon" variant="secondary">
+						<EllipsisVertical className="size-4" />
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent align="end" className="w-52">
+					<DropdownMenuGroup>
+						<DropdownMenuLabel>Room Settings</DropdownMenuLabel>
+						<DropdownMenuSeparator />
+						{isDeliberating && <ConcludeRoom />}
+						{isConcluded && (
+							<Fragment>
+								<ShareRoom />
+								<ArchiveRoom />
+							</Fragment>
+						)}
+						<DropdownMenuSeparator />
+						<CloseRoom />
+					</DropdownMenuGroup>
+				</DropdownMenuContent>
+			</DropdownMenu>
+		</div>
 	);
 }

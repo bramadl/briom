@@ -171,7 +171,7 @@ export class RoomDeliberation {
 			}
 		}
 
-		return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 4);
+		return proposals.sort((a, b) => b.confidence - a.confidence).slice(0, 8);
 	}
 
 	/**

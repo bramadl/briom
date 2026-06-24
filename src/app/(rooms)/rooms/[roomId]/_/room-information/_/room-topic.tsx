@@ -17,7 +17,7 @@ export function RoomTopic({ topic }: RoomTopicProps) {
 		<AccordionItem value="topic">
 			<AccordionExpander title="Topic" />
 			<AccordionContent className="border-t p-4">
-				<div className="whitespace-nowrap line-clamp-2" ref={containerRef}>
+				<div ref={containerRef}>
 					{text ? (
 						<p
 							className="text-xs text-muted-foreground leading-relaxed font-mono"

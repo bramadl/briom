@@ -5,6 +5,7 @@ import {
 	HoverCardTrigger,
 } from "@briom/components/ui/hover-card";
 import { cn } from "@briom/libs/utils";
+import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
 
 interface TimelineBarProps {
 	className: string;
@@ -12,6 +13,7 @@ interface TimelineBarProps {
 	isModeratorTurn?: boolean;
 	onClick: () => void;
 	participant: RoomDTO["participants"][number] | null;
+	showIntent?: boolean;
 	turn: TurnDTO;
 	width: string;
 }
@@ -22,9 +24,11 @@ export function TimelineBar({
 	isModeratorTurn,
 	onClick,
 	participant,
+	showIntent,
 	turn,
 	width,
 }: TimelineBarProps) {
+	const theme = getParticipantTheme(participant?.id);
 	return (
 		<HoverCard closeDelay={0} openDelay={0}>
 			<HoverCardTrigger
@@ -54,6 +58,16 @@ export function TimelineBar({
 						)}
 					>
 						{isModeratorTurn ? "You" : (participant?.name ?? "Participant")}
+						{showIntent && !isModeratorTurn && (
+							<span
+								className={cn(
+									"capitalize text-[8px], px-0.5 rounded ml-1",
+									theme.all,
+								)}
+							>
+								{turn.status === "failed" ? "failed" : turn.intent}
+							</span>
+						)}
 					</p>
 					{
 						<p

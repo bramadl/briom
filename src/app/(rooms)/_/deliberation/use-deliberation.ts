@@ -1,13 +1,15 @@
 import type {
 	InitiateModeratorTurnInput,
 	InitiateTopicTurnInput,
+	TurnProposalDTO,
 } from "@briom/app";
 import { getModeratorId } from "@briom/libs/faker";
 import { isServerError } from "@briom/libs/server-action";
 import { useParams } from "next/navigation";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import { useRoom } from "../room/queries/data/use-room";
+import { useTurnProposals } from "../turn/queries/data/use-turn-proposals";
 import { useInitiateModeratorTurnMutation } from "../turn/queries/mutations/use-initiate-moderator-turn-mutation";
 import { useInitiateParticipantTurnMutation } from "../turn/queries/mutations/use-initiate-participant-turn-mutation";
 import { useInitiateTopicTurnMutation } from "../turn/queries/mutations/use-initiate-topic-turn-mutation";
@@ -17,10 +19,34 @@ import type { Mentionee } from "./editor/helpers/mention-extractor";
 export function useDeliberation() {
 	const { roomId } = useParams<{ roomId: string }>();
 	const { room, fresh, multiDeliberation, streaming, turns } = useRoom(roomId);
+	const { proposals, invalidate: invalidateTurnProposals } =
+		useTurnProposals(roomId);
+
+	const [isSequencing, setIsSequencing] = useState<boolean>(false);
 
 	const { mutateAsync: initiateTopic } = useInitiateTopicTurnMutation();
 	const { mutateAsync: initiateModerator } = useInitiateModeratorTurnMutation();
 	const { mutate: initiateParticipant } = useInitiateParticipantTurnMutation();
+
+	const releaseSequence = useCallback(() => {
+		invalidateTurnProposals(roomId);
+		setIsSequencing(false);
+	}, [invalidateTurnProposals, roomId]);
+
+	const acceptProposal = useCallback(
+		(proposal: TurnProposalDTO) => {
+			if (!multiDeliberation) return;
+			initiateParticipant(
+				{
+					roomId,
+					participantId: proposal.participantId,
+					intent: proposal.intent,
+				},
+				{ onSettled: () => releaseSequence() },
+			);
+		},
+		[roomId, multiDeliberation, initiateParticipant, releaseSequence],
+	);
 
 	const sequenceTurns = useCallback(
 		async (content: string, mentionedParticipants: Mentionee[]) => {
@@ -43,11 +69,14 @@ export function useDeliberation() {
 					? (mentionedParticipants.find((m) => m.isPrimary) ?? firstParticipant)
 					: firstParticipant;
 
-				initiateParticipant({
-					roomId,
-					participantId: nextToRespond.id,
-					intent: multiDeliberation ? "respond" : "direct",
-				});
+				initiateParticipant(
+					{
+						roomId,
+						participantId: nextToRespond.id,
+						intent: multiDeliberation ? "respond" : "direct",
+					},
+					{ onSettled: () => releaseSequence() },
+				);
 
 				return;
 			}
@@ -56,11 +85,55 @@ export function useDeliberation() {
 				const result = await initiateModerator(turnPayload);
 				if (isServerError(result) || !firstParticipant) return;
 
-				initiateParticipant({
-					roomId,
-					participantId: firstParticipant.id,
-					intent: "direct",
-				});
+				initiateParticipant(
+					{
+						roomId,
+						participantId: firstParticipant.id,
+						intent: "direct",
+					},
+					{ onSettled: () => releaseSequence() },
+				);
+
+				return;
+			}
+
+			const result = await initiateModerator(turnPayload);
+			if (isServerError(result)) return;
+
+			const primaryMention = mentionedParticipants.find((m) => m.isPrimary);
+			if (primaryMention) {
+				initiateParticipant(
+					{
+						roomId,
+						participantId: primaryMention.id,
+						intent: "direct",
+					},
+					{ onSettled: () => releaseSequence() },
+				);
+			} else {
+				const lastTurn = turns.at(-1);
+				const lastActiveParticipantId =
+					lastTurn?.author.type === "participant"
+						? lastTurn.author.participantId
+						: null;
+
+				const candidates = room.participants.filter(
+					(p) => p.id !== lastActiveParticipantId,
+				);
+
+				const pool = candidates.length > 0 ? candidates : room.participants;
+				const randomParticipant = pool[Math.floor(Math.random() * pool.length)];
+
+				if (randomParticipant) {
+					initiateParticipant(
+						{
+							roomId,
+							participantId: randomParticipant.id,
+							intent: "respond",
+						},
+						{ onSettled: () => releaseSequence() },
+					);
+				}
 			}
 		},
 		[
@@ -68,19 +141,23 @@ export function useDeliberation() {
 			multiDeliberation,
 			room.participants,
 			roomId,
-			initiateTopic,
+			turns,
 			initiateModerator,
 			initiateParticipant,
+			initiateTopic,
+			releaseSequence,
 		],
 	);
 
 	return {
 		fresh,
 		multiDeliberation,
-		streaming,
+		streaming: isSequencing && streaming,
 		room,
 		participants: room.participants,
+		proposals,
 		turns,
 		sequenceTurns,
+		acceptProposal,
 	};
 }

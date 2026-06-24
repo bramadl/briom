@@ -41,7 +41,7 @@ export function ModeratorInput({
 		canEdit,
 		mentionList: canMention
 			? participants?.map((p) => ({
-					id: p.name,
+					id: p.id,
 					label: p.name,
 					subtitle: p.qualifiedModel,
 				}))

@@ -10,11 +10,16 @@ import { useMiniTimeline } from "@briom/rooms/_/deliberation/use-mini-timeline";
 import { TimelineBar } from "./_/timeline-bar";
 
 interface RoomTimelineProps {
+	multiDeliberation?: boolean;
 	participants: RoomDTO["participants"];
 	turns: TurnDTO[];
 }
 
-export function RoomTimeline({ participants, turns }: RoomTimelineProps) {
+export function RoomTimeline({
+	multiDeliberation,
+	participants,
+	turns,
+}: RoomTimelineProps) {
 	const { calculateLogarithmicWidth, handleScrollToTurn, participantMap } =
 		useMiniTimeline({ participants, turns });
 
@@ -65,6 +70,7 @@ export function RoomTimeline({ participants, turns }: RoomTimelineProps) {
 								key={turn.id}
 								onClick={() => handleScrollToTurn(turn.id)}
 								participant={participant}
+								showIntent={multiDeliberation}
 								turn={turn}
 								width={barWidth}
 							/>

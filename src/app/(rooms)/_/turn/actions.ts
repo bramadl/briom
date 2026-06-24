@@ -2,6 +2,8 @@
 
 import { briom } from "@briom";
 import type {
+	GetTurnProposalsInput,
+	GetTurnProposalsOutput,
 	GetTurnsInput,
 	GetTurnsOutput,
 	InitiateModeratorTurnInput,
@@ -61,6 +63,18 @@ export async function initiateParticipantTurn(
 ): Promise<ServerActionResult<InitiateParticipantTurnOutput>> {
 	try {
 		const result = await briom.turns.initiateParticipantTurn(input);
+		if (result.isError()) return parseError(result.error());
+		return parseResponse(result.value());
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function getTurnProposals(
+	input: GetTurnProposalsInput,
+): Promise<ServerActionResult<GetTurnProposalsOutput>> {
+	try {
+		const result = await briom.turns.getProposals(input);
 		if (result.isError()) return parseError(result.error());
 		return parseResponse(result.value());
 	} catch (error) {

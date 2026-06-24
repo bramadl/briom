@@ -24,9 +24,7 @@ export default async function RoomPage({
 						<SidebarTrigger className="md:hidden" />
 						<RoomTitle />
 					</div>
-					<div className="flex items-center gap-1">
-						<RoomSettings />
-					</div>
+					<RoomSettings />
 				</header>
 				<section className="flex flex-1 items-start min-w-0 overflow-hidden">
 					<RoomOrchestration />

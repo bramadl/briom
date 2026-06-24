@@ -2,6 +2,7 @@
 
 import { briom } from "@briom";
 import type {
+	DeleteRoomInput,
 	FormRoomInput,
 	FormRoomOutput,
 	GetRoomInput,
@@ -60,6 +61,20 @@ export async function renameRoom(
 ): Promise<ServerActionResult<void>> {
 	try {
 		const result = await briom.rooms.rename(input);
+		if (result.isError()) return parseError(result.error());
+		revalidatePath("/rooms", "layout");
+		revalidatePath(`/rooms/${input.roomId}`, "page");
+		return parseResponse(undefined);
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function closeRoom(
+	input: DeleteRoomInput,
+): Promise<ServerActionResult<void>> {
+	try {
+		const result = await briom.rooms.delete(input);
 		if (result.isError()) return parseError(result.error());
 		revalidatePath("/rooms", "layout");
 		revalidatePath(`/rooms/${input.roomId}`, "page");
