@@ -9,6 +9,7 @@ import {
 	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@briom/components/ui/dropdown-menu";
+import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
 import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
 import { EllipsisVertical } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -27,10 +28,17 @@ export function RoomSettings() {
 	const isConcluded = room.status === "concluded";
 	const isDeliberating = room.status === "deliberating";
 	const isForming = room.status === "forming";
+	const isMaxParticipants =
+		room.participants.length >= ROOM_SETTING.MAXIMUM_PARTICIPANT;
 
 	return (
 		<div className="flex items-center gap-1">
-			{isForming && <InviteParticipant />}
+			{isForming && !isMaxParticipants && (
+				<InviteParticipant
+					existingParticipants={room.participants}
+					roomId={roomId}
+				/>
+			)}
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button size="icon" variant="secondary">
@@ -40,8 +48,12 @@ export function RoomSettings() {
 				<DropdownMenuContent align="end" className="w-52">
 					<DropdownMenuGroup>
 						<DropdownMenuLabel>Room Settings</DropdownMenuLabel>
-						<DropdownMenuSeparator />
-						{isDeliberating && <ConcludeRoom />}
+						{isDeliberating && (
+							<Fragment>
+								<DropdownMenuSeparator />
+								<ConcludeRoom />
+							</Fragment>
+						)}
 						{isConcluded && (
 							<Fragment>
 								<ShareRoom />
