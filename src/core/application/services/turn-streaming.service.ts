@@ -62,14 +62,6 @@ export class TurnStreamingService {
 	 * @param turnId - The turn to abort
 	 */
 	public abort(turnId: TurnId): void {
-		console.log(
-			"[Abort] Called for",
-			turnId.value(),
-			"| registry size:",
-			this.abortControllers.size,
-			"| found:",
-			this.abortControllers.has(turnId.value()),
-		);
 		const controller = this.abortControllers.get(turnId.value());
 		if (controller) {
 			controller.abort();
@@ -94,13 +86,6 @@ export class TurnStreamingService {
 
 		const controller = new AbortController();
 		this.abortControllers.set(turnId.value(), controller);
-
-		console.log(
-			"[Streaming] Registered abort controller for",
-			turnId.value(),
-			"| registry size:",
-			this.abortControllers.size,
-		);
 
 		const cleanup = (): void => {
 			this.abortControllers.delete(turnId.value());

@@ -27,27 +27,35 @@ export function RoomDeliberation({
 		abortStreaming,
 		acceptProposal,
 		fresh: isFreshRoom,
+		isParticipantActive,
+		isSendingModerator,
+		isSequencing,
 		multiDeliberation: isMultiDeliberationRoom,
-		sequenceStep,
 		participants,
 		proposals,
 		sequenceTurns,
 		turns,
 	} = useDeliberation();
 
-	const lastTurnContentLength = useMemo(() => {
-		return turns.at(-1)?.perspective.content.length ?? 0;
-	}, [turns]);
+	const lastTurnContentLength = useMemo(
+		() => turns.at(-1)?.perspective.content.length ?? 0,
+		[turns],
+	);
 
 	useEffect(() => {
 		if (
 			isNearBottomRef.current &&
-			sequenceStep === "participant:streaming" &&
+			isParticipantActive &&
 			lastTurnContentLength > 0
 		) {
 			onStreaming?.();
 		}
-	}, [isNearBottomRef, lastTurnContentLength, sequenceStep, onStreaming]);
+	}, [
+		isNearBottomRef,
+		isParticipantActive,
+		lastTurnContentLength,
+		onStreaming,
+	]);
 
 	useEffect(() => {
 		onLoaded?.();
@@ -65,17 +73,17 @@ export function RoomDeliberation({
 					<TurnSequence
 						onProposalAccepted={acceptProposal}
 						proposals={proposals}
-						showProposals={sequenceStep === "idle"}
+						showProposals={!isSequencing}
 					/>
 				)}
 			</div>
 			{children}
 			<div className="sticky bottom-0 z-10 shrink-0 p-8 pt-0">
 				<ModeratorInput
-					canEdit={sequenceStep === "idle"}
+					canEdit={!isSequencing}
 					canMention={isMultiDeliberationRoom}
-					isPending={sequenceStep === "moderator:sending"}
-					isStreaming={sequenceStep === "participant:streaming"}
+					isPending={isSendingModerator}
+					isStreaming={isParticipantActive}
 					onAbort={abortStreaming}
 					onSend={(content, mentionees) => {
 						sequenceTurns(content, mentionees);
