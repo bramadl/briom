@@ -29,9 +29,7 @@ export default async function RoomPage({
 				</header>
 				<section className="flex flex-1 items-start min-w-0 overflow-hidden">
 					<RoomOrchestration />
-					<div className="hidden md:block">
-						<RoomInformation />
-					</div>
+					<RoomInformation />
 					<RoomInformationMobile />
 				</section>
 			</div>

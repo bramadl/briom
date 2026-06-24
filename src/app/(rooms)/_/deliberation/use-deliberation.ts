@@ -18,7 +18,7 @@ import type { Mentionee } from "./editor/helpers/mention-extractor";
 
 export function useDeliberation() {
 	const { roomId } = useParams<{ roomId: string }>();
-	const { room, fresh, multiDeliberation, streaming, turns } = useRoom(roomId);
+	const { room, fresh, multiDeliberation, turns } = useRoom(roomId);
 	const { proposals, invalidate: invalidateTurnProposals } =
 		useTurnProposals(roomId);
 
@@ -35,21 +35,34 @@ export function useDeliberation() {
 
 	const acceptProposal = useCallback(
 		(proposal: TurnProposalDTO) => {
-			if (!multiDeliberation) return;
+			if (!multiDeliberation || isSequencing) return;
+
+			setIsSequencing(true);
 			initiateParticipant(
 				{
 					roomId,
 					participantId: proposal.participantId,
 					intent: proposal.intent,
 				},
-				{ onSettled: () => releaseSequence() },
+				{
+					onSettled: () => releaseSequence(),
+					onError: () => releaseSequence(),
+				},
 			);
 		},
-		[roomId, multiDeliberation, initiateParticipant, releaseSequence],
+		[
+			isSequencing,
+			multiDeliberation,
+			roomId,
+			initiateParticipant,
+			releaseSequence,
+		],
 	);
 
 	const sequenceTurns = useCallback(
 		async (content: string, mentionedParticipants: Mentionee[]) => {
+			setIsSequencing(true);
+
 			const firstParticipant = room.participants[0];
 			const moderatorId = getModeratorId();
 			const clientTurnId = crypto.randomUUID();
@@ -63,7 +76,9 @@ export function useDeliberation() {
 
 			if (fresh) {
 				const result = await initiateTopic(turnPayload);
-				if (isServerError(result) || !firstParticipant) return;
+				if (isServerError(result) || !firstParticipant) {
+					return releaseSequence();
+				}
 
 				const nextToRespond = multiDeliberation
 					? (mentionedParticipants.find((m) => m.isPrimary) ?? firstParticipant)
@@ -83,7 +98,9 @@ export function useDeliberation() {
 
 			if (!multiDeliberation) {
 				const result = await initiateModerator(turnPayload);
-				if (isServerError(result) || !firstParticipant) return;
+				if (isServerError(result) || !firstParticipant) {
+					return releaseSequence();
+				}
 
 				initiateParticipant(
 					{
@@ -98,7 +115,7 @@ export function useDeliberation() {
 			}
 
 			const result = await initiateModerator(turnPayload);
-			if (isServerError(result)) return;
+			if (isServerError(result)) return releaseSequence();
 
 			const primaryMention = mentionedParticipants.find((m) => m.isPrimary);
 			if (primaryMention) {
@@ -152,7 +169,7 @@ export function useDeliberation() {
 	return {
 		fresh,
 		multiDeliberation,
-		streaming: isSequencing && streaming,
+		streaming: isSequencing,
 		room,
 		participants: room.participants,
 		proposals,

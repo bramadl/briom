@@ -60,6 +60,7 @@ export function RoomDeliberation({
 					<TurnSequence
 						onProposalAccepted={acceptProposal}
 						proposals={proposals}
+						showProposals={!isStreaming}
 					/>
 				)}
 			</div>
@@ -69,8 +70,8 @@ export function RoomDeliberation({
 					canEdit={!isStreaming}
 					canMention={isMultiDeliberationRoom}
 					isStreaming={isStreaming}
-					onSend={async (content, mentionees) => {
-						await sequenceTurns(content, mentionees);
+					onSend={(content, mentionees) => {
+						sequenceTurns(content, mentionees);
 						onTurnRegistered?.();
 					}}
 					participants={participants}
