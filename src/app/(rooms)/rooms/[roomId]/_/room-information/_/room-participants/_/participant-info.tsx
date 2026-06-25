@@ -1,9 +1,9 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomDeliberationParticipantDTO } from "@briom/app";
 import { cn } from "@briom/libs/utils";
 import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
 
 interface ParticipantInfoProps {
-	participant: RoomDTO["participants"][number];
+	participant: RoomDeliberationParticipantDTO;
 }
 
 export function ParticipantInfo({ participant }: ParticipantInfoProps) {
@@ -21,7 +21,7 @@ export function ParticipantInfo({ participant }: ParticipantInfoProps) {
 					{participant.name}
 				</p>
 				<p className="text-[10px] text-muted-foreground/60 font-mono truncate">
-					{participant.provider}/{participant.model}
+					{participant.model}
 				</p>
 			</div>
 		</li>

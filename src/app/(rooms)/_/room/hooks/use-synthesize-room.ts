@@ -9,6 +9,7 @@ import { useRoomInvalidation } from "@briom/rooms/_/room/queries/invalidations/u
 import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet-store";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface UseSynthesizeRoomInput {
 	roomId: string;
@@ -64,9 +65,10 @@ export function useSynthesizeRoom({
 			openSheet();
 			invalidateRoom(roomId);
 		},
-		onError: async (_error) => {
+		onError: async (error) => {
 			await failSynthesis({ roomId });
 			invalidateRoom(roomId);
+			toast.error("Failed to synthesize", { description: error.message });
 		},
 	});
 

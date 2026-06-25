@@ -1,13 +1,12 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app";
 import { Separator } from "@briom/components/ui/separator";
 
 import { RoomCreationDate } from "./_/room-creation-date";
 import { RoomIdHash } from "./_/room-id-hash";
 import { RoomParticipants } from "./_/room-participants";
-import { RoomStatus } from "./_/room-status";
 
 interface RoomDetailsProps {
-	room: RoomDTO;
+	room: RoomOverviewDTO;
 }
 
 export function RoomDetails({ room }: RoomDetailsProps) {
@@ -17,13 +16,12 @@ export function RoomDetails({ room }: RoomDetailsProps) {
 				<h2 className="font-serif text-base font-bold line-clamp-1">
 					{room.title}
 				</h2>
-				<RoomStatus status={room.status} />
 			</div>
 			<RoomParticipants participants={room.participants} />
 			<Separator />
 			<div className="flex items-center justify-between">
 				<RoomIdHash id={room.id} />
-				<RoomCreationDate createdAt={room.createdAt} />
+				<RoomCreationDate formedAt={room.formedAt} />
 			</div>
 		</div>
 	);

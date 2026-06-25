@@ -7,8 +7,6 @@ import type {
 import type { ServerActionResult } from "@briom/libs/server-action";
 import { roomQueryKeys } from "@briom/rooms/_/room/queries/keys";
 import { roomQueries } from "@briom/rooms/_/room/queries/registry";
-import { turnQueryKeys } from "@briom/rooms/_/turn/queries/keys";
-import { turnQueries } from "@briom/rooms/_/turn/queries/registry";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -32,55 +30,42 @@ export function buildModeratorTurnMutation<
 		return useMutation({
 			mutationFn,
 
-			onMutate: async ({ roomId, clientTurnId, content, moderatorId }) => {
-				const turnsKey = turnQueries.getTurns({ roomId }).queryKey;
-				const roomKey = roomQueries.getRoom({ roomId }).queryKey;
+			onMutate: async ({ roomId, clientTurnId, content }) => {
+				const deliberationKey = roomQueries.getRoomDeliberation({
+					roomId,
+				}).queryKey;
 
-				await queryClient.cancelQueries({ queryKey: turnQueryKeys.all });
 				await queryClient.cancelQueries({ queryKey: roomQueryKeys.all });
 
-				const previousTurns = queryClient.getQueryData(turnsKey);
-				const previousRoom = queryClient.getQueryData(roomKey);
+				const previousDeliberation = queryClient.getQueryData(deliberationKey);
 
-				if (previousTurns) {
-					queryClient.setQueryData(turnsKey, (old) => {
-						if (!old?.turns) return old;
-						return {
-							...old,
-							turns: [
-								...old.turns,
-								buildOptimisticModeratorTurn({
-									clientTurnId,
-									content,
-									moderatorId,
-									roomId,
-									sequence: old.turns.length,
-								}),
-							],
-						};
-					});
-				}
-
-				if (previousRoom) {
-					queryClient.setQueryData(roomKey, (old) => {
+				if (previousDeliberation) {
+					queryClient.setQueryData(deliberationKey, (old) => {
 						if (!old?.room) return old;
 						return {
-							...old,
 							room: {
 								...old.room,
-								turnIds: [...old.room.turnIds, `optimistic-${clientTurnId}`],
+								turns: [
+									...old.room.turns,
+									buildOptimisticModeratorTurn({
+										clientTurnId,
+										content,
+									}),
+								],
 							},
 						};
 					});
 				}
 
-				return { previousTurns, previousRoom, turnsKey, roomKey, roomId };
+				return { previousDeliberation, deliberationKey, roomId };
 			},
 
 			onError: (error, _, context) => {
 				if (context) {
-					queryClient.setQueryData(context.turnsKey, context.previousTurns);
-					queryClient.setQueryData(context.roomKey, context.previousRoom);
+					queryClient.setQueryData(
+						context.deliberationKey,
+						context.previousDeliberation,
+					);
 				}
 				toast.error(errorMessage, { description: error.message });
 			},

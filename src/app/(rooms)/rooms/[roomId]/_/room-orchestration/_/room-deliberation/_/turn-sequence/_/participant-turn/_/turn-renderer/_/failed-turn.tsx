@@ -11,6 +11,7 @@ interface FailedTurnProps {
 	error: string;
 	isRetrying?: boolean;
 	onRetried?: () => void;
+	showAbort?: boolean;
 	title: string;
 }
 
@@ -18,6 +19,7 @@ export function FailedTurn({
 	error,
 	isRetrying,
 	onRetried,
+	showAbort,
 	title,
 }: FailedTurnProps) {
 	return (
@@ -25,21 +27,23 @@ export function FailedTurn({
 			<AlertCircleIcon />
 			<AlertTitle>{title}</AlertTitle>
 			<AlertDescription>Cause: {error}</AlertDescription>
-			<AlertAction>
-				<Button
-					disabled={isRetrying}
-					onClick={onRetried}
-					size="sm"
-					variant="destructive"
-				>
-					{isRetrying ? (
-						<LoaderCircleIcon className="animate-spin" />
-					) : (
-						<RotateCcwIcon />
-					)}
-					{isRetrying ? "Retrying" : "Retry"}
-				</Button>
-			</AlertAction>
+			{showAbort && (
+				<AlertAction>
+					<Button
+						disabled={isRetrying}
+						onClick={onRetried}
+						size="sm"
+						variant="destructive"
+					>
+						{isRetrying ? (
+							<LoaderCircleIcon className="animate-spin" />
+						) : (
+							<RotateCcwIcon />
+						)}
+						{isRetrying ? "Retrying" : "Retry"}
+					</Button>
+				</AlertAction>
+			)}
 		</Alert>
 	);
 }

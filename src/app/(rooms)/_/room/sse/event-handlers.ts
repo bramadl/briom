@@ -1,9 +1,8 @@
 import type {
 	RoomDeliberationConcludedPayload,
 	RoomDeliberationStartedPayload,
+	RoomDeliberationTurnDTO,
 	RoomParticipantJoinedPayload,
-	RoomTurnRegisteredPayload,
-	TurnDTO,
 	TurnFailedPayload,
 	TurnInitiatedPayload,
 	TurnSettledPayload,
@@ -13,7 +12,7 @@ import type {
 import type { QueryClient } from "@tanstack/react-query";
 
 import type { RoomEventName } from "./event-names";
-import { patchRoom, patchTurns } from "./helpers/query-patchers";
+import { patchDeliberation } from "./helpers/query-patchers";
 import { bufferToken, flushTokenBuffer } from "./helpers/token-buffers";
 
 type SseEventContext<TPayload = unknown> = {
@@ -37,7 +36,7 @@ export const ROOM_EVENT_HANDLERS: Record<
 	"room:deliberation-started": deliberationStartedHandler,
 	"room:formed": noopHandler,
 	"room:participant-joined": participantJoinedHandler,
-	"room:turn-registered": turnRegisteredHandler,
+	"room:turn-registered": noopHandler,
 	"turn:failed": turnFailedHandler,
 	"turn:initiated": turnInitiatedHandler,
 	"turn:settled": turnSettledHandler,
@@ -51,7 +50,7 @@ function deliberationConcludedHandler({
 	queryClient,
 	roomId,
 }: SseEventContext<RoomDeliberationConcludedPayload>): void {
-	patchRoom(queryClient, roomId, (room) => ({
+	patchDeliberation(queryClient, roomId, (room) => ({
 		...room,
 		status: "concluded",
 	}));
@@ -62,7 +61,7 @@ function deliberationStartedHandler({
 	queryClient,
 	roomId,
 }: SseEventContext<RoomDeliberationStartedPayload>): void {
-	patchRoom(queryClient, roomId, (room) => ({
+	patchDeliberation(queryClient, roomId, (room) => ({
 		...room,
 		topic: data.topic,
 		status: "deliberating",
@@ -74,7 +73,7 @@ function participantJoinedHandler({
 	queryClient,
 	roomId,
 }: SseEventContext<RoomParticipantJoinedPayload>): void {
-	patchRoom(queryClient, roomId, (room) => {
+	patchDeliberation(queryClient, roomId, (room) => {
 		if (room.participants.some((p) => p.id === data.participantId)) return room;
 		return {
 			...room,
@@ -84,24 +83,8 @@ function participantJoinedHandler({
 					id: data.participantId,
 					model: data.model,
 					name: data.name,
-					provider: data.provider,
-					qualifiedModel: data.qualifiedModel,
 				},
 			],
-		};
-	});
-}
-
-function turnRegisteredHandler({
-	data,
-	queryClient,
-	roomId,
-}: SseEventContext<RoomTurnRegisteredPayload>): void {
-	patchRoom(queryClient, roomId, (room) => {
-		if (room.turnIds.includes(data.turnId)) return room;
-		return {
-			...room,
-			turnIds: [...room.turnIds, data.turnId],
 		};
 	});
 }
@@ -112,18 +95,26 @@ function turnFailedHandler({
 	roomId,
 }: SseEventContext<TurnFailedPayload>): void {
 	flushTokenBuffer();
-	patchTurns(queryClient, roomId, (turns) =>
-		turns.map((turn) =>
+	patchDeliberation(queryClient, roomId, (room) => ({
+		...room,
+		turns: room.turns.map((turn) =>
 			turn.id === data.turnId
 				? {
 						...turn,
 						status: "failed",
-						error: data.error,
-						failedAt: new Date().toISOString(),
+						error: {
+							attributes: data.error.retryAfter
+								? {
+										retryIn: data.error.retryAfter,
+									}
+								: null,
+							kind: data.error.kind,
+							message: data.error.message,
+						},
 					}
 				: turn,
 		),
-	);
+	}));
 }
 
 function turnInitiatedHandler({
@@ -135,71 +126,59 @@ function turnInitiatedHandler({
 		? `optimistic-${data.clientTurnId}`
 		: null;
 
-	patchTurns(queryClient, roomId, (turns) => {
-		const existingIndex = turns.findIndex((t) => t.id === data.turnId);
+	patchDeliberation(queryClient, roomId, (room) => {
+		const existingIndex = room.turns.findIndex((t) => t.id === data.turnId);
 
 		if (existingIndex !== -1) {
-			const existing = turns[existingIndex];
-			if (existing.status === "pending") return turns;
+			const existing = room.turns[existingIndex];
+			if (existing.status === "pending") return room;
 
-			const next = [...turns];
+			const next = [...room.turns];
 			next[existingIndex] = {
 				...existing,
 				status: "pending",
-				perspective: { content: "", renderedAt: null },
+				content: "",
 				error: null,
-				failedAt: null,
-				settledAt: null,
 			};
 
-			return next;
+			return { ...room, turns: next };
 		}
 
-		const now = new Date().toISOString();
-		const newTurn: TurnDTO = {
+		const participant = room.participants.find(
+			(p) => p.id === data.participantId,
+		);
+
+		const profile =
+			data.authorType === "participant"
+				? participant
+					? { displayName: participant.name, model: participant.model }
+					: null
+				: null;
+
+		const newTurn: RoomDeliberationTurnDTO = {
 			id: data.turnId,
-			roomId,
-			sequence: data.sequence,
 			author: {
 				type: data.authorType,
-				moderatorId: data.moderatorId ?? undefined,
-				participantId: data.participantId ?? undefined,
+				profile,
 			},
 			intent: data.intent ?? null,
-			perspective: { content: "", renderedAt: null },
+			content: "",
 			status: "pending",
-			tokens: [],
 			error: null,
-			previousTurnId: null,
-			createdAt: now,
-			settledAt: null,
-			failedAt: null,
 		};
 
 		const optimisticIndex = optimisticId
-			? turns.findIndex((t) => t.id === optimisticId)
+			? room.turns.findIndex((t) => t.id === optimisticId)
 			: -1;
 
 		if (optimisticIndex !== -1) {
-			const next = [...turns];
+			const next = [...room.turns];
 			next[optimisticIndex] = newTurn;
-			return next;
+			return { ...room, turns: next };
 		}
 
-		return [...turns, newTurn];
+		return { ...room, turns: [...room.turns, newTurn] };
 	});
-
-	if (optimisticId) {
-		patchRoom(queryClient, roomId, (room) => {
-			if (!room.turnIds.includes(optimisticId)) return room;
-			return {
-				...room,
-				turnIds: room.turnIds.map((id) =>
-					id === optimisticId ? data.turnId : id,
-				),
-			};
-		});
-	}
 }
 
 function turnSettledHandler({
@@ -208,21 +187,18 @@ function turnSettledHandler({
 	roomId,
 }: SseEventContext<TurnSettledPayload>): void {
 	flushTokenBuffer();
-	patchTurns(queryClient, roomId, (turns) =>
-		turns.map((turn) =>
+	patchDeliberation(queryClient, roomId, (room) => ({
+		...room,
+		turns: room.turns.map((turn) =>
 			turn.id === data.turnId
 				? {
 						...turn,
 						status: "settled",
-						perspective: {
-							content: data.content,
-							renderedAt: new Date().toISOString(),
-						},
-						settledAt: new Date().toISOString(),
+						content: data.content,
 					}
 				: turn,
 		),
-	);
+	}));
 }
 
 function turnStartedHandler({
@@ -230,11 +206,12 @@ function turnStartedHandler({
 	queryClient,
 	roomId,
 }: SseEventContext<TurnStreamStartedPayload>): void {
-	patchTurns(queryClient, roomId, (turns) =>
-		turns.map((turn) =>
+	patchDeliberation(queryClient, roomId, (room) => ({
+		...room,
+		turns: room.turns.map((turn) =>
 			turn.id === data.turnId ? { ...turn, status: "streaming" } : turn,
 		),
-	);
+	}));
 }
 
 function turnTokenHandler({

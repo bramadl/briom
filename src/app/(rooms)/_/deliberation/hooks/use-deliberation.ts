@@ -6,7 +6,7 @@ import type {
 import { getModeratorId } from "@briom/libs/faker";
 import { isServerError } from "@briom/libs/server-action";
 import { useParams } from "next/navigation";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { useRoom } from "../../room/hooks/use-room";
 import { useTurnProposals } from "../../turn/hooks/use-turn-proposals";
@@ -43,13 +43,15 @@ export function useDeliberation() {
 	const { mutate: initiateParticipant } = useInitiateParticipantTurnMutation();
 	const { mutate: abortTurn } = useAbortTurnMutation();
 
-	const releaseModeratorFlag = useCallback(() => {
-		setIsSendingModerator(false);
-		invalidateTurnProposals(roomId);
-	}, [invalidateTurnProposals, roomId]);
+	const [hasAccepted, setHasAccepted] = useState(false);
+	useEffect(() => {
+		if (!isSequencing) setHasAccepted(false);
+	}, [isSequencing]);
 
 	const acceptProposal = useCallback(
 		(proposal: TurnProposalDTO) => {
+			setHasAccepted(true);
+
 			if (!multiDeliberation || isSequencing) return;
 			initiateParticipant(
 				{
@@ -68,6 +70,11 @@ export function useDeliberation() {
 			invalidateTurnProposals,
 		],
 	);
+
+	const releaseModeratorFlag = useCallback(() => {
+		setIsSendingModerator(false);
+		invalidateTurnProposals(roomId);
+	}, [invalidateTurnProposals, roomId]);
 
 	const sequenceTurns = useCallback(
 		async (content: string, mentionedParticipants: Mentionee[]) => {
@@ -141,7 +148,9 @@ export function useDeliberation() {
 				const lastTurn = turns.at(-1);
 				const lastActiveParticipantId =
 					lastTurn?.author.type === "participant"
-						? lastTurn.author.participantId
+						? (room.participants.find(
+								(p) => p.name === lastTurn.author.profile?.displayName,
+							)?.id ?? null)
 						: null;
 
 				const candidates = room.participants.filter(
@@ -185,6 +194,8 @@ export function useDeliberation() {
 		abortStreaming,
 		acceptProposal,
 		canAbort: isParticipantActive,
+		canAcceptProposal:
+			!isConcluded && !isSequencing && proposals.length > 0 && !hasAccepted,
 		fresh,
 		isConcluded,
 		isParticipantActive,

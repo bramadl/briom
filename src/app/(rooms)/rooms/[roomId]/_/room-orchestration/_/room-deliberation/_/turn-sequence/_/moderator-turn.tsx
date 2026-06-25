@@ -1,6 +1,6 @@
 "use client";
 
-import type { TurnDTO } from "@briom/app";
+import type { RoomDeliberationTurnDTO } from "@briom/app";
 import { TurnPerspective } from "@briom/rooms/_/turn/ui/turn-perspective";
 import { TurnPerspectiveActions } from "@briom/rooms/_/turn/ui/turn-perspective-actions";
 import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective-expander";
@@ -8,13 +8,12 @@ import { format, parseISO } from "date-fns";
 import { memo } from "react";
 
 interface ModeratorTurnProps {
-	turn: TurnDTO;
+	turn: RoomDeliberationTurnDTO;
 }
 
 function ModeratorTurnComponent({ turn }: ModeratorTurnProps) {
-	const timeSent = turn.settledAt
-		? format(parseISO(turn.settledAt), "HH:mm")
-		: "--:--";
+	const time = turn.settledAt || turn.failedAt || turn.createdAt || null;
+	const timeSent = time ? format(parseISO(time), "HH:mm") : "––:––";
 
 	return (
 		<div
@@ -23,13 +22,10 @@ function ModeratorTurnComponent({ turn }: ModeratorTurnProps) {
 		>
 			<div className="relative bg-muted/50 p-4 rounded-lg">
 				<TurnPerspectiveExpander className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert">
-					<TurnPerspective content={turn.perspective.content} />
+					<TurnPerspective content={turn.content} />
 				</TurnPerspectiveExpander>
 			</div>
-			<TurnPerspectiveActions
-				content={turn.perspective.content}
-				time={timeSent}
-			/>
+			<TurnPerspectiveActions content={turn.content} time={timeSent} />
 		</div>
 	);
 }

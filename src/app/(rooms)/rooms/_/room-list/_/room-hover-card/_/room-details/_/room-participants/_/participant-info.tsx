@@ -1,8 +1,8 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app";
 import { ParticipantBadge } from "@briom/rooms/_/participant/ui/participant-badge";
 
 interface ParticipantInfoProps {
-	participant: RoomDTO["participants"][number];
+	participant: RoomOverviewDTO["participants"][number];
 }
 
 export function ParticipantInfo({ participant }: ParticipantInfoProps) {
@@ -17,7 +17,7 @@ export function ParticipantInfo({ participant }: ParticipantInfoProps) {
 					{participant.name}
 				</span>
 				<span className="text-[10px] font-mono text-muted-foreground/60 mt-0.5">
-					{participant.provider}/{participant.model}
+					{participant.model}
 				</span>
 			</div>
 		</div>

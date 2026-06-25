@@ -2,7 +2,7 @@ import { supabaseClient } from "@briom/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { useTurnsInvalidation } from "../../turn/queries/invalidations/use-turns.invalidation";
+import { useRoomInvalidation } from "../queries/invalidations/use-room.invalidation";
 import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
 
 import { ROOM_EVENT_HANDLERS } from "./event-handlers";
@@ -16,7 +16,7 @@ interface UseRoomSSEOptions {
 export function useRoomSSE({ onTurnInitiated, roomId }: UseRoomSSEOptions) {
 	const queryClient = useQueryClient();
 	const { invalidate: invalidateRooms } = useRoomsInvalidation();
-	const { invalidate: invalidateTurns } = useTurnsInvalidation();
+	const { invalidate: invalidateRoom } = useRoomInvalidation();
 
 	useEffect(() => {
 		const channel = supabaseClient.channel(`room:${roomId}`);
@@ -33,7 +33,7 @@ export function useRoomSSE({ onTurnInitiated, roomId }: UseRoomSSEOptions) {
 				if (eventName === "turn:initiated") onTurnInitiated?.();
 				if (eventName === "turn:settled") {
 					invalidateRooms();
-					invalidateTurns(roomId);
+					invalidateRoom(roomId);
 				}
 			});
 		}
@@ -46,5 +46,5 @@ export function useRoomSSE({ onTurnInitiated, roomId }: UseRoomSSEOptions) {
 		});
 
 		return () => void supabaseClient.removeChannel(channel);
-	}, [invalidateRooms, invalidateTurns, onTurnInitiated, queryClient, roomId]);
+	}, [invalidateRooms, invalidateRoom, onTurnInitiated, queryClient, roomId]);
 }

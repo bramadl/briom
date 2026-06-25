@@ -1,6 +1,9 @@
 "use client";
 
-import type { RoomDTO, TurnDTO } from "@briom/app";
+import type {
+	RoomDeliberationParticipantDTO,
+	RoomDeliberationTurnDTO,
+} from "@briom/app";
 import { cn } from "@briom/libs/utils";
 import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
 import { TurnPerspectiveActions } from "@briom/rooms/_/turn/ui/turn-perspective-actions";
@@ -13,29 +16,28 @@ import { TurnRenderer } from "./_/turn-renderer";
 
 interface ParticipantTurnProps {
 	isLastTurn?: boolean;
-	participant: RoomDTO["participants"][number];
+	participant: RoomDeliberationParticipantDTO;
+	showAbort?: boolean;
 	showIntent?: boolean;
-	turn: TurnDTO;
+	turn: RoomDeliberationTurnDTO;
 }
 
 function ParticipantTurnComponent({
 	isLastTurn,
 	participant,
+	showAbort,
 	showIntent,
 	turn,
 }: ParticipantTurnProps) {
-	const theme = getParticipantTheme(turn.author.participantId);
+	const theme = getParticipantTheme(participant.id);
 
 	const isFailed = turn.status === "failed";
 	const isPending = turn.status === "pending";
 	const isSettled = turn.status === "settled";
 	const isStreaming = turn.status === "streaming";
 
-	const timeSent = turn.settledAt
-		? format(parseISO(turn.settledAt), "HH:mm")
-		: turn.failedAt
-			? format(parseISO(turn.failedAt), "HH:mm")
-			: "--:--";
+	const time = turn.settledAt || turn.failedAt || turn.createdAt || null;
+	const timeSent = time ? format(parseISO(time), "HH:mm") : "––:––";
 
 	return (
 		<div
@@ -47,7 +49,7 @@ function ParticipantTurnComponent({
 					<TurnPending
 						className={theme.text}
 						displayName={participant.name}
-						qualifiedModel={participant.qualifiedModel}
+						qualifiedModel={participant.model}
 					/>
 				) : (
 					<Fragment>
@@ -58,15 +60,16 @@ function ParticipantTurnComponent({
 							showIntent={showIntent}
 							turn={turn}
 						/>
-						<TurnRenderer isLastTurn={isLastTurn} turn={turn} />
+						<TurnRenderer
+							isLastTurn={isLastTurn}
+							showAbort={showAbort}
+							turn={turn}
+						/>
 					</Fragment>
 				)}
 			</div>
 			{isSettled && (
-				<TurnPerspectiveActions
-					content={turn.perspective.content}
-					time={timeSent}
-				/>
+				<TurnPerspectiveActions content={turn.content} time={timeSent} />
 			)}
 		</div>
 	);

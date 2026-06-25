@@ -7,7 +7,7 @@ import { roomQueries } from "../queries/registry";
 
 export function useRenameRoomMutation() {
 	const queryClient = useQueryClient();
-	const roomsKey = roomQueries.getRooms({}).queryKey;
+	const roomsKey = roomQueries.getRoomsOverview({}).queryKey;
 
 	return useMutation({
 		mutationFn: renameRoom,
@@ -15,7 +15,7 @@ export function useRenameRoomMutation() {
 		onMutate: async ({ roomId, newTitle }) => {
 			await queryClient.cancelQueries({ queryKey: roomQueryKeys.all });
 
-			const roomKey = roomQueries.getRoom({ roomId }).queryKey;
+			const roomKey = roomQueries.getRoomDeliberation({ roomId }).queryKey;
 			const previousRoom = queryClient.getQueryData(roomKey);
 			const previousRooms = queryClient.getQueryData(roomsKey);
 

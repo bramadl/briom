@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDTO } from "@briom/app";
+import type { RoomDeliberationDTO } from "@briom/app";
 import type { Mentionee } from "@briom/rooms/_/deliberation/editor/helpers/mention-extractor";
 import { useModeratorEditor } from "@briom/rooms/_/deliberation/hooks/use-moderator-editor";
 import { useParams } from "next/navigation";
@@ -17,7 +17,7 @@ interface ModeratorInputProps {
 	isStreaming?: boolean;
 	onAbort?: () => void;
 	onSend?: (content: string, mentionees: Mentionee[]) => void | Promise<void>;
-	participants?: RoomDTO["participants"];
+	participants?: RoomDeliberationDTO["participants"];
 }
 
 export function ModeratorInput({
@@ -53,7 +53,7 @@ export function ModeratorInput({
 			? participants?.map((p) => ({
 					id: p.id,
 					label: p.name,
-					subtitle: p.qualifiedModel,
+					subtitle: p.model,
 				}))
 			: undefined,
 		onSend,

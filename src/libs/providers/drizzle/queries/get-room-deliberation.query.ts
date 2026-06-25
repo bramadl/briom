@@ -80,7 +80,11 @@ export class DrizzleGetRoomDeliberationQuery
 		const participantMap = new Map(
 			participantRecords.map((p) => [
 				p.id,
-				{ displayName: p.displayName, model: `${p.provider}/${p.model}` },
+				{
+					id: p.id,
+					displayName: p.displayName,
+					model: `${p.provider}/${p.model}`,
+				},
 			]),
 		);
 
@@ -112,6 +116,9 @@ export class DrizzleGetRoomDeliberationQuery
 				intent: record.intent as IntentOption | null,
 				status: record.status as TurnStatusOption,
 				error,
+				failedAt: record.failedAt?.toISOString() ?? null,
+				settledAt: record.settledAt?.toISOString() ?? null,
+				createdAt: record.createdAt.toISOString(),
 			} satisfies RoomDeliberationTurnDTO;
 		});
 

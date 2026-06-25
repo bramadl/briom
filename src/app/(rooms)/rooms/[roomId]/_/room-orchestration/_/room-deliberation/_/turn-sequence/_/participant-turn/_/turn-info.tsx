@@ -1,4 +1,7 @@
-import type { RoomDTO, TurnDTO } from "@briom/app";
+import type {
+	RoomDeliberationParticipantDTO,
+	RoomDeliberationTurnDTO,
+} from "@briom/app";
 import { Badge } from "@briom/components/ui/badge";
 import { cn } from "@briom/libs/utils";
 import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
@@ -6,9 +9,9 @@ import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
 interface ParticipantInfoProps {
 	isFailed?: boolean;
 	isStreaming?: boolean;
-	participant: RoomDTO["participants"][number];
+	participant: RoomDeliberationParticipantDTO;
 	showIntent?: boolean;
-	turn: TurnDTO;
+	turn: RoomDeliberationTurnDTO;
 }
 
 export function ParticipantInfo({
@@ -50,9 +53,7 @@ export function ParticipantInfo({
 					</Badge>
 				)}
 			</div>
-			<span className="text-xs text-muted-foreground">
-				{participant.qualifiedModel}
-			</span>
+			<span className="text-xs text-muted-foreground">{participant.model}</span>
 		</div>
 	);
 }

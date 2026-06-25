@@ -1,7 +1,7 @@
-import type { ParticipantDTO } from "@briom/app";
+import type { RoomDeliberationParticipantDTO } from "@briom/app";
 
 interface EmptySequenceProps {
-	participants?: ParticipantDTO[];
+	participants?: RoomDeliberationParticipantDTO[];
 }
 
 export function EmptySequence({ participants }: EmptySequenceProps) {

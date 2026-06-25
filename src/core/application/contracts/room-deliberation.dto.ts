@@ -65,26 +65,7 @@ export interface RoomDeliberationDTO {
 	 * Invited AI participants. Updated by SSE on `room:participant-joined`.
 	 * Ordered by invite sequence.
 	 */
-	participants: Array<{
-		/**
-		 * @description
-		 * Unique participant identifier. Required for turn authorship matching
-		 * and participant-specific actions (proposals, synthesis selection).
-		 */
-		id: string;
-
-		/**
-		 * @description
-		 * Moderator-assigned display name.
-		 */
-		name: string;
-
-		/**
-		 * @description
-		 * Fully qualified model string in `{provider}/{model}` format.
-		 */
-		model: string;
-	}>;
+	participants: Array<RoomDeliberationParticipantDTO>;
 
 	/**
 	 * @description
@@ -158,6 +139,12 @@ export interface RoomDeliberationTurnDTO {
 		profile: {
 			/**
 			 * @description
+			 * Participant ID if `author.type` is "participant".
+			 */
+			id: string;
+
+			/**
+			 * @description
 			 * Moderator-assigned display name (e.g. "Claude", "GPT-4").
 			 */
 			displayName: string;
@@ -175,6 +162,12 @@ export interface RoomDeliberationTurnDTO {
 	 * The accumulated perspective text. Empty string while pending/streaming.
 	 */
 	content: string;
+
+	/**
+	 * @description
+	 * ISO 8601 timestamp of creation, never null.
+	 */
+	createdAt: string;
 
 	/**
 	 * @description
@@ -205,6 +198,13 @@ export interface RoomDeliberationTurnDTO {
 			retryIn?: number;
 		} | null;
 	} | null;
+
+	/**
+	 * @description
+	 * ISO 8601 timestamp of failure, null if never failed.
+	 */
+	failedAt: string | null;
+
 	/**
 	 * @description
 	 * Unique turn identifier.
@@ -216,6 +216,12 @@ export interface RoomDeliberationTurnDTO {
 	 * Participant intent. Null for moderator turns.
 	 */
 	intent: IntentOption | null;
+
+	/**
+	 * @description
+	 * ISO 8601 timestamp when turn settled, null if not settled.
+	 */
+	settledAt: string | null;
 
 	/**
 	 * @description
@@ -253,4 +259,25 @@ export interface RoomDeliberationSynthesisDTO {
 	 * Display name of the participant who generated this synthesis.
 	 */
 	createdBy: string;
+}
+
+export interface RoomDeliberationParticipantDTO {
+	/**
+	 * @description
+	 * Unique participant identifier. Required for turn authorship matching
+	 * and participant-specific actions (proposals, synthesis selection).
+	 */
+	id: string;
+
+	/**
+	 * @description
+	 * Fully qualified model string in `{provider}/{model}` format.
+	 */
+	model: string;
+
+	/**
+	 * @description
+	 * Moderator-assigned display name.
+	 */
+	name: string;
 }

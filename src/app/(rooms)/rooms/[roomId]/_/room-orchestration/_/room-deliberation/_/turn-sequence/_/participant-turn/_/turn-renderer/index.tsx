@@ -1,6 +1,6 @@
 "use client";
 
-import type { TurnDTO } from "@briom/app";
+import type { RoomDeliberationTurnDTO } from "@briom/app";
 import { Logo } from "@briom/components/logo";
 import { useRetryTurnMutation } from "@briom/rooms/_/turn/mutations/use-retry-turn.mutation";
 import { TurnPerspective } from "@briom/rooms/_/turn/ui/turn-perspective";
@@ -9,14 +9,20 @@ import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective
 import { FailedTurn } from "./_/failed-turn";
 
 interface TurnRendererProps {
+	canAbort?: boolean;
 	isLastTurn?: boolean;
-	turn: TurnDTO;
+	showAbort?: boolean;
+	turn: RoomDeliberationTurnDTO;
 }
 
-export function TurnRenderer({ isLastTurn, turn }: TurnRendererProps) {
+export function TurnRenderer({
+	isLastTurn,
+	showAbort,
+	turn,
+}: TurnRendererProps) {
 	const retryMutation = useRetryTurnMutation();
 
-	const content = turn.perspective.content;
+	const content = turn.content;
 	const hasContent = content.trim().length > 0;
 
 	const isFailed = turn.status === "failed";
@@ -31,6 +37,7 @@ export function TurnRenderer({ isLastTurn, turn }: TurnRendererProps) {
 					error={turn.error?.message ?? "Unknown error"}
 					isRetrying={isRetrying}
 					onRetried={() => retryMutation.mutate({ turnId: turn.id })}
+					showAbort={showAbort}
 					title="Perspective was not generated"
 				/>
 			);

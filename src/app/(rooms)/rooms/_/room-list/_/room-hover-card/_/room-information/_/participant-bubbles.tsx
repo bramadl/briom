@@ -1,8 +1,8 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app";
 import { ParticipantBadge } from "@briom/rooms/_/participant/ui/participant-badge";
 
 interface ParticipantBubblesProps {
-	participants: RoomDTO["participants"];
+	participants: RoomOverviewDTO["participants"];
 }
 
 export function ParticipantBubbles({ participants }: ParticipantBubblesProps) {

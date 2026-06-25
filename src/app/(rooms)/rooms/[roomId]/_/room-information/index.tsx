@@ -35,8 +35,8 @@ export function RoomInformation() {
 			<RoomSynthesis
 				onOpenSheet={openSheet}
 				synthesis={room.synthesis}
-				synthesisCreatedAt={room.synthesisCreatedAt}
-				synthesisCreatedBy={room.synthesisCreatedBy}
+				synthesisCreatedAt={room.synthesis?.createdAt ?? null}
+				synthesisCreatedBy={room.synthesis?.createdBy ?? null}
 				synthesisStatus={room.synthesisStatus}
 			/>
 			<RoomTopic topic={room.topic} />

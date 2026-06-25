@@ -1,4 +1,7 @@
-import type { RoomDTO, TurnDTO } from "@briom/app";
+import type {
+	RoomDeliberationParticipantDTO,
+	RoomDeliberationTurnDTO,
+} from "@briom/app";
 import { useMemo } from "react";
 
 import {
@@ -6,15 +9,13 @@ import {
 	type PARTICIPANT_THEMES,
 } from "../../participant/config/theme";
 
-type Participant = RoomDTO["participants"][number];
-
-export type ParticipantWithTheme = Participant & {
+export type ParticipantWithTheme = RoomDeliberationParticipantDTO & {
 	theme: (typeof PARTICIPANT_THEMES)[number];
 };
 
 interface UseTimelineProps {
-	participants: Participant[];
-	turns: TurnDTO[];
+	participants: RoomDeliberationParticipantDTO[];
+	turns: RoomDeliberationTurnDTO[];
 }
 
 export function useTimeline({ participants, turns }: UseTimelineProps) {
@@ -28,7 +29,7 @@ export function useTimeline({ participants, turns }: UseTimelineProps) {
 
 	const maxContentLength = useMemo(() => {
 		if (turns.length === 0) return 1;
-		return Math.max(...turns.map((t) => t.perspective.content?.length || 0), 1);
+		return Math.max(...turns.map((t) => t.content?.length || 0), 1);
 	}, [turns]);
 
 	const calculateLogarithmicWidth = (content: string): string => {

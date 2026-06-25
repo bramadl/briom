@@ -83,7 +83,9 @@ export function ParticipantField({
 								</FieldContent>
 							</Field>
 							<p className="flex items-center text-xs font-mono text-muted-foreground">
-								<span className="shrink-0">{participant.provider}</span>
+								<span className="shrink-0">
+									{participant.model?.split("/")[0]}
+								</span>
 								<span className="mx-1">/</span>
 								<span className="min-w-0 flex-1 line-clamp-1">
 									{participant.model}

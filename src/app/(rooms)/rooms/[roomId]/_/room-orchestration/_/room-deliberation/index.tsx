@@ -26,6 +26,7 @@ export function RoomDeliberation({
 	const {
 		abortStreaming,
 		acceptProposal,
+		canAcceptProposal,
 		fresh: isFreshRoom,
 		isConcluded,
 		isParticipantActive,
@@ -39,7 +40,7 @@ export function RoomDeliberation({
 	} = useDeliberation();
 
 	const lastTurnContentLength = useMemo(
-		() => turns.at(-1)?.perspective.content.length ?? 0,
+		() => turns.at(-1)?.content.length ?? 0,
 		[turns],
 	);
 
@@ -74,7 +75,7 @@ export function RoomDeliberation({
 					<TurnSequence
 						onProposalAccepted={acceptProposal}
 						proposals={proposals}
-						showProposals={!isSequencing}
+						showProposals={canAcceptProposal}
 					/>
 				)}
 			</div>

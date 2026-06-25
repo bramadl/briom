@@ -30,14 +30,14 @@ import { useIsMobile } from "@briom/hooks/use-mobile";
 import { isServerError } from "@briom/libs/server-action";
 import { cn } from "@briom/libs/utils";
 import { useParticipantSelector } from "@briom/rooms/_/participant/hooks/use-participant-selector";
-import { useInviteParticipantMutation } from "@briom/rooms/_/participant/mutations/use-invite-participant-mutation";
+import { useInviteParticipantMutation } from "@briom/rooms/_/participant/mutations/use-invite-participant.mutation";
 import { ParticipantBadge } from "@briom/rooms/_/participant/ui/participant-badge";
 import { Loader2Icon, UserPlus2Icon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 interface InviteParticipantProps {
-	existingParticipants?: Array<{ qualifiedModel: string; name: string }>;
+	existingParticipants?: Array<{ model: string; name: string }>;
 	roomId: string;
 }
 
@@ -53,7 +53,7 @@ export function InviteParticipant({
 
 	const dialogRef = useRef<HTMLDivElement>(null);
 	const chosenParticipants = useMemo(
-		() => existingParticipants.map((p) => p.qualifiedModel).join(","),
+		() => existingParticipants.map((p) => p.model).join(","),
 		[existingParticipants],
 	);
 
@@ -237,7 +237,6 @@ export function InviteParticipant({
 						/>
 					</div>
 
-					{/* Live Preview */}
 					{selectedModel && (
 						<div className="rounded-xl border border-border/50 bg-muted/30 p-4 space-y-3">
 							<p className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">
@@ -253,7 +252,7 @@ export function InviteParticipant({
 										{displayName || selectedModel.name}
 									</span>
 									<span className="text-xs text-muted-foreground font-mono truncate">
-										{selectedModel.qualifiedModel}
+										{selectedModel.model}
 									</span>
 								</div>
 								{!selectedModel.isFree && (

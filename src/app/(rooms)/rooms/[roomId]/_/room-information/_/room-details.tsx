@@ -1,4 +1,4 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomDeliberationDTO } from "@briom/app";
 import {
 	AccordionContent,
 	AccordionExpander,
@@ -9,12 +9,12 @@ import { ROOM_THEME } from "@briom/rooms/_/room/config/theme";
 import { formatDistanceToNow } from "date-fns";
 
 interface RoomDetails {
-	room: RoomDTO;
+	room: RoomDeliberationDTO;
 }
 
 export function RoomDetails({ room }: RoomDetails) {
 	const hashId = `#${room.id.slice(0, 8)}`;
-	const created = formatDistanceToNow(new Date(room.createdAt));
+	const created = formatDistanceToNow(new Date(room.info.formedAt));
 	const theme = ROOM_THEME.status[room.status];
 
 	return (

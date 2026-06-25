@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDTO, TurnDTO } from "@briom/app";
+import type { RoomDeliberationDTO, RoomDeliberationTurnDTO } from "@briom/app";
 import {
 	AccordionContent,
 	AccordionExpander,
@@ -13,8 +13,8 @@ import { TimelineBar } from "./_/timeline-bar";
 
 interface RoomTimelineProps {
 	multiDeliberation?: boolean;
-	participants: RoomDTO["participants"];
-	turns: TurnDTO[];
+	participants: RoomDeliberationDTO["participants"];
+	turns: RoomDeliberationTurnDTO[];
 }
 
 export function RoomTimeline({
@@ -40,8 +40,8 @@ export function RoomTimeline({
 						const isFailed = turn.status === "failed";
 
 						const moderator = turn.author.type === "moderator";
-						const participant = turn.author.participantId
-							? (participantMap.get(turn.author.participantId) ?? null)
+						const participant = turn.author.profile?.id
+							? (participantMap.get(turn.author.profile?.id) ?? null)
 							: null;
 
 						const participantColor =
@@ -54,7 +54,7 @@ export function RoomTimeline({
 						const barWidth = (() => {
 							if (isPending) return "30%";
 							if (isFailed) return "100%";
-							return calculateLogarithmicWidth(turn.perspective.content);
+							return calculateLogarithmicWidth(turn.content);
 						})();
 
 						const barClass = cn(

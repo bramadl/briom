@@ -1,4 +1,4 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomDeliberationDTO } from "@briom/app";
 import { Button } from "@briom/components/ui/button";
 import {
 	Popover,
@@ -17,7 +17,7 @@ import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
 
 interface SynthesizeRoomProps {
-	participants: RoomDTO["participants"];
+	participants: RoomDeliberationDTO["participants"];
 	roomId: string;
 }
 
@@ -96,7 +96,7 @@ export function SynthesizeRoom({ roomId, participants }: SynthesizeRoomProps) {
 									<span className="flex flex-col items-start">
 										<span>{participant.name}</span>
 										<span className="text-muted-foreground text-xs">
-											{participant.qualifiedModel}
+											{participant.model}
 										</span>
 									</span>
 								</button>

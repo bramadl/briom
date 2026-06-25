@@ -1,4 +1,4 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app";
 import { ParticipantCount } from "./_/participant-count";
 import { ParticipantEmpty } from "./_/participant-empty";
 import { ParticipantInfo } from "./_/participant-info";
@@ -6,7 +6,7 @@ import { ParticipantInfo } from "./_/participant-info";
 export function RoomParticipants({
 	participants,
 }: {
-	participants: RoomDTO["participants"];
+	participants: RoomOverviewDTO["participants"];
 }) {
 	if (participants.length === 0) return <ParticipantEmpty />;
 	return (

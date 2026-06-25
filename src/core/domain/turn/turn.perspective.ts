@@ -74,8 +74,20 @@ export class TurnPerspective extends ValueObject<TurnPerspectiveProps> {
 			return Result.error(new EmptyPerspectiveError());
 		}
 
+		let cleanedContent = content.trim();
+		const prefixRegex =
+			/^(?:\[[^\]\n]+\]|\([^)\n]+\)|[a-zA-Z0-9_\-\s]+)\s*[:\-–—]\s*/;
+
+		while (prefixRegex.test(cleanedContent)) {
+			cleanedContent = cleanedContent.replace(prefixRegex, "").trim();
+		}
+
+		if (cleanedContent.length === 0) {
+			return Result.error(new EmptyPerspectiveError());
+		}
+
 		const perspective = new TurnPerspective({
-			content,
+			content: cleanedContent,
 			renderedAt: new Date(),
 		});
 

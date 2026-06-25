@@ -1,27 +1,30 @@
-import type { GetRoomInput, GetRoomsInput } from "@briom/app";
+import type {
+	GetRoomDeliberationInput,
+	GetRoomsOverviewInput,
+} from "@briom/app";
 import { isServerError } from "@briom/libs/server-action";
 import { queryOptions } from "@tanstack/react-query";
 
-import { getRoom, getRooms } from "../actions";
+import { getRoomDeliberation, getRoomsOverview } from "../actions";
 
 import { roomQueryKeys } from "./keys";
 
 export const roomQueries = {
-	getRoom(input: GetRoomInput) {
+	getRoomDeliberation(input: GetRoomDeliberationInput) {
 		return queryOptions({
-			queryKey: roomQueryKeys.room(input.roomId),
+			queryKey: roomQueryKeys.deliberation(input.roomId),
 			queryFn: async () => {
-				const result = await getRoom(input);
+				const result = await getRoomDeliberation(input);
 				if (isServerError(result)) throw result.error;
 				return result.data;
 			},
 		});
 	},
-	getRooms(input: GetRoomsInput) {
+	getRoomsOverview(_input: GetRoomsOverviewInput) {
 		return queryOptions({
 			queryKey: roomQueryKeys.rooms(),
 			queryFn: async () => {
-				const result = await getRooms(input);
+				const result = await getRoomsOverview({});
 				if (isServerError(result)) throw result.error;
 				return result.data;
 			},

@@ -7,7 +7,7 @@ export function useRooms() {
 	const { invalidate } = useRoomsInvalidation();
 	const {
 		data: { rooms },
-	} = useSuspenseQuery(roomQueries.getRooms({}));
+	} = useSuspenseQuery(roomQueries.getRoomsOverview({}));
 
 	const isEmpty = rooms.length === 0;
 	return { invalidate, isEmpty, rooms };

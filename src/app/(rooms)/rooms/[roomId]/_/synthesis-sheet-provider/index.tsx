@@ -16,7 +16,7 @@ export function SynthesisSheetProvider() {
 	if (!room.synthesis) return null;
 	return (
 		<SynthesisSheet
-			content={room.synthesis}
+			content={room.synthesis.content}
 			onOpenChange={(open) => {
 				if (!open) close();
 			}}

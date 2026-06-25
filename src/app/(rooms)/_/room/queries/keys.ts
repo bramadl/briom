@@ -1,7 +1,7 @@
 export const roomQueryKeys = {
 	all: ["all"] as const,
-	room(roomId: string) {
-		return [...roomQueryKeys.all, "room", roomId] as const;
+	deliberation(roomId: string) {
+		return [...roomQueryKeys.all, "deliberation", roomId] as const;
 	},
 	rooms() {
 		return [...roomQueryKeys.all, "rooms"] as const;

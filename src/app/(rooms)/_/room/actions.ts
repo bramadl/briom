@@ -10,10 +10,10 @@ import type {
 	FormRoomOutput,
 	GenerateSynthesisInput,
 	GenerateSynthesisOutput,
-	GetRoomInput,
-	GetRoomOutput,
-	GetRoomsInput,
-	GetRoomsOutput,
+	GetRoomDeliberationInput,
+	GetRoomDeliberationOutput,
+	GetRoomsOverviewInput,
+	GetRoomsOverviewOutput,
 	InitiateSynthesisInput,
 	InitiateSynthesisOutput,
 	RenameRoomInput,
@@ -28,11 +28,11 @@ import {
 } from "@briom/libs/server-action";
 import { revalidatePath } from "next/cache";
 
-export async function getRooms(
-	input: GetRoomsInput,
-): Promise<ServerActionResult<GetRoomsOutput>> {
+export async function getRoomsOverview(
+	input: GetRoomsOverviewInput,
+): Promise<ServerActionResult<GetRoomsOverviewOutput>> {
 	try {
-		const result = await briom.rooms.list(input);
+		const result = await briom.rooms.overview(input);
 		if (result.isError()) return parseError(result.error());
 		return parseResponse(result.value());
 	} catch (error) {
@@ -53,11 +53,11 @@ export async function formRoom(
 	}
 }
 
-export async function getRoom(
-	input: GetRoomInput,
-): Promise<ServerActionResult<GetRoomOutput>> {
+export async function getRoomDeliberation(
+	input: GetRoomDeliberationInput,
+): Promise<ServerActionResult<GetRoomDeliberationOutput>> {
 	try {
-		const result = await briom.rooms.get(input);
+		const result = await briom.rooms.deliberation(input);
 		if (result.isError()) return parseError(result.error());
 		return parseResponse(result.value());
 	} catch (error) {

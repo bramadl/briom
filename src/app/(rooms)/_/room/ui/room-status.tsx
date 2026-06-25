@@ -1,8 +1,8 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app";
 import { cn } from "@briom/libs/utils";
 import { ROOM_THEME } from "@briom/rooms/_/room/config/theme";
 
-export function RoomStatus({ status }: { status: RoomDTO["status"] }) {
+export function RoomStatus({ status }: { status: RoomOverviewDTO["status"] }) {
 	const theme = ROOM_THEME.status[status];
 	return (
 		<span

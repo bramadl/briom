@@ -1,34 +1,20 @@
-import type { TurnDTO } from "@briom/app";
+import type { RoomDeliberationTurnDTO } from "@briom/app";
 
 interface BuildOptimisticModeratorTurnInput {
 	clientTurnId?: string;
 	content: string;
-	moderatorId: string;
-	roomId: string;
-	sequence: number;
 }
 
 export function buildOptimisticModeratorTurn({
 	clientTurnId,
 	content,
-	moderatorId,
-	roomId,
-	sequence,
-}: BuildOptimisticModeratorTurnInput): TurnDTO {
-	const now = new Date().toISOString();
+}: BuildOptimisticModeratorTurnInput): RoomDeliberationTurnDTO {
 	return {
-		author: { type: "moderator", moderatorId },
-		createdAt: now,
+		author: { type: "moderator", profile: null },
+		content,
 		error: null,
-		failedAt: null,
 		id: `optimistic-${clientTurnId}`,
 		intent: null,
-		perspective: { content, renderedAt: now },
-		previousTurnId: null,
-		roomId,
-		sequence,
-		settledAt: now,
 		status: "settled",
-		tokens: [],
 	};
 }

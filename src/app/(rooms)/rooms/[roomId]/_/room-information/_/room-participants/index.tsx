@@ -1,4 +1,4 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomDeliberationDTO } from "@briom/app";
 import {
 	AccordionContent,
 	AccordionExpander,
@@ -9,7 +9,7 @@ import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
 import { ParticipantInfo } from "./_/participant-info";
 
 interface RoomParticipantsProps {
-	participants: RoomDTO["participants"];
+	participants: RoomDeliberationDTO["participants"];
 }
 
 export function RoomParticipants({ participants }: RoomParticipantsProps) {

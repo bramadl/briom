@@ -1,15 +1,16 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app";
 import { AnchorLink } from "@briom/components/ui/anchor-link";
 import { Separator } from "@briom/components/ui/separator";
 import { cn } from "@briom/libs/utils";
+import { RoomStatus } from "@briom/rooms/_/room/ui/room-status";
 
-import { RoomParticipants } from "./_/room-participants";
+import { ParticipantBubbles } from "./_/participant-bubbles";
 import { RoomTitle } from "./_/room-title";
 import { RoomTopic } from "./_/room-topic";
 
 export interface RoomInformationProps {
 	isActive?: boolean;
-	room: RoomDTO;
+	room: RoomOverviewDTO;
 }
 
 export function RoomInformation({
@@ -34,7 +35,10 @@ export function RoomInformation({
 			<Separator />
 			<RoomTopic topic={room.topic} />
 			<Separator />
-			<RoomParticipants participants={room.participants} />
+			<div className="flex items-center justify-between">
+				<RoomStatus status={room.status} />
+				<ParticipantBubbles participants={room.participants} />
+			</div>
 		</div>
 	);
 }

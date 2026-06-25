@@ -1,6 +1,9 @@
 "use client";
 
-import type { RoomDTO, TurnDTO } from "@briom/app";
+import type {
+	RoomDeliberationParticipantDTO,
+	RoomDeliberationTurnDTO,
+} from "@briom/app";
 import {
 	HoverCard,
 	HoverCardContent,
@@ -15,9 +18,9 @@ interface TimelineBarProps {
 	isError?: boolean;
 	isModeratorTurn?: boolean;
 	onClick: () => void;
-	participant: RoomDTO["participants"][number] | null;
+	participant: RoomDeliberationParticipantDTO | null;
 	showIntent?: boolean;
-	turn: TurnDTO;
+	turn: RoomDeliberationTurnDTO;
 	width: string;
 }
 
@@ -94,7 +97,7 @@ export function TimelineBar({
 						>
 							{isError
 								? `Error: ${turn.error?.message}`
-								: turn.perspective.content?.replace(/^\[.*?\]\s*/, "") ||
+								: turn.content?.replace(/^\[.*?\]\s*/, "") ||
 									"Empty perspective."}
 						</p>
 					}

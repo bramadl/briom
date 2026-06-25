@@ -1,4 +1,4 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app";
 import {
 	HoverCard,
 	HoverCardContent,
@@ -10,7 +10,7 @@ import { RoomInformation } from "./_/room-information";
 
 export interface RoomHoverCardProps {
 	isActive?: boolean;
-	room: RoomDTO;
+	room: RoomOverviewDTO;
 }
 
 export function RoomHoverCard({ isActive, room }: RoomHoverCardProps) {

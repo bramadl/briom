@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDTO, TurnProposalDTO } from "@briom/app";
+import type { TurnProposalDTO } from "@briom/app";
 import { useRoom } from "@briom/rooms/_/room/hooks/use-room";
 import { useParams } from "next/navigation";
 import { memo, useMemo } from "react";
@@ -38,9 +38,10 @@ function TurnSequenceComponent({
 						key={turn.id}
 						participant={
 							room.participants.find(
-								(p) => p.id === turn.author.participantId,
-							) as RoomDTO["participants"][number]
+								(p) => p.name === turn.author.profile?.id,
+							) ?? room.participants[0]
 						}
+						showAbort={room.status === "deliberating"}
 						showIntent={multiDeliberation}
 						turn={turn}
 					/>

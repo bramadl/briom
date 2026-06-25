@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDTO } from "@briom/app";
+import type { RoomDeliberationDTO } from "@briom/app";
 import {
 	AccordionContent,
 	AccordionExpander,
@@ -11,10 +11,10 @@ import { ExpandIcon } from "lucide-react";
 
 interface RoomSynthesisProps {
 	onOpenSheet?: () => void;
-	synthesis: RoomDTO["synthesis"];
-	synthesisCreatedAt: RoomDTO["synthesisCreatedAt"];
-	synthesisCreatedBy: RoomDTO["synthesisCreatedBy"];
-	synthesisStatus: RoomDTO["synthesisStatus"];
+	synthesis: RoomDeliberationDTO["synthesis"];
+	synthesisCreatedAt: string | null;
+	synthesisCreatedBy: string | null;
+	synthesisStatus: RoomDeliberationDTO["synthesisStatus"];
 }
 
 export function RoomSynthesis({
@@ -33,17 +33,19 @@ export function RoomSynthesis({
 	return (
 		<AccordionItem value="synthesis">
 			<AccordionExpander title="Synthesis">
-				<Button
-					className="text-muted-foreground/50 hover:text-muted-foreground"
-					onClick={(e) => {
-						e.stopPropagation();
-						onOpenSheet?.();
-					}}
-					size="icon-xs"
-					variant={"ghost"}
-				>
-					<ExpandIcon />
-				</Button>
+				{isCompleted && (
+					<Button
+						className="text-muted-foreground/50 hover:text-muted-foreground"
+						onClick={(e) => {
+							e.stopPropagation();
+							onOpenSheet?.();
+						}}
+						size="icon-xs"
+						variant={"ghost"}
+					>
+						<ExpandIcon />
+					</Button>
+				)}
 			</AccordionExpander>
 			<AccordionContent className="border-t p-4">
 				<div className="flex flex-col gap-3">
