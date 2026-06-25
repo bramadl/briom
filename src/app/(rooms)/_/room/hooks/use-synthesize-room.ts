@@ -6,7 +6,7 @@ import {
 	saveSynthesis,
 } from "@briom/rooms/_/room/actions";
 import { useRoomInvalidation } from "@briom/rooms/_/room/queries/invalidations/use-room.invalidation";
-import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet-store";
+import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet.store";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { toast } from "sonner";

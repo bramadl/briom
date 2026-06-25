@@ -11,7 +11,7 @@ import {
 	SheetTitle,
 } from "@briom/components/ui/sheet";
 import { useRoom } from "@briom/rooms/_/room/hooks/use-room";
-import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet-store";
+import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet.store";
 import { PanelRightIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Fragment, useState } from "react";

@@ -3,7 +3,7 @@
 import { FieldGroup } from "@briom/components/ui/field";
 import { cn } from "@briom/libs/utils";
 import { useRoomForm } from "@briom/rooms/_/room/hooks/use-room-form";
-import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form-store";
+import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form.store";
 import { Form } from "@formisch/react";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRoomScroller } from "@briom/rooms/_/room/hooks/use-room-scroller";
-import { useRoomSSE } from "@briom/rooms/_/room/sse/use-room-sse";
+import { useRoomSSE } from "@briom/rooms/_/room/hooks/use-room-sse";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useState } from "react";

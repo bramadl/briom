@@ -7,12 +7,12 @@ import { useEffect, useRef } from "react";
 import { useRoomInvalidation } from "../queries/invalidations/use-room.invalidation";
 import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
 
-import { ROOM_EVENT_HANDLERS } from "./event-handlers";
-import { ROOM_EVENT_NAMES } from "./event-names";
+import { ROOM_EVENT_HANDLERS } from "../sse/event-handlers";
+import { ROOM_EVENT_NAMES } from "../sse/event-names";
 import {
 	destroyTokenBufferManager,
 	getTokenBufferManager,
-} from "./helpers/token-buffers";
+} from "../sse/helpers/token-buffers";
 
 interface UseRoomSSEOptions {
 	onTurnInitiated?: () => void;

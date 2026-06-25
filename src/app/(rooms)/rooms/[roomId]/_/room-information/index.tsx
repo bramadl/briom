@@ -3,7 +3,7 @@
 import { Accordion } from "@briom/components/ui/accordion";
 import { Separator } from "@briom/components/ui/separator";
 import { useRoom } from "@briom/rooms/_/room/hooks/use-room";
-import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet-store";
+import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet.store";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
 
