@@ -63,7 +63,7 @@ export class DrizzleGetRoomDeliberationQuery
 			where: eq(roomsTable.id, input.roomId),
 		});
 
-		if (!room) return { deliberation: null };
+		if (!room) return { room: null };
 
 		const [participantRecords, turnRecords] = await Promise.all([
 			this.db
@@ -110,7 +110,7 @@ export class DrizzleGetRoomDeliberationQuery
 				},
 				content: record.content,
 				intent: record.intent as IntentOption | null,
-				state: record.status as TurnStatusOption,
+				status: record.status as TurnStatusOption,
 				error,
 			} satisfies RoomDeliberationTurnDTO;
 		});
@@ -148,6 +148,6 @@ export class DrizzleGetRoomDeliberationQuery
 			},
 		};
 
-		return { deliberation };
+		return { room: deliberation };
 	}
 }

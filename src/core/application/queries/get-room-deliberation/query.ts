@@ -21,7 +21,7 @@ export interface GetRoomDeliberationOutput {
 	 * @description
 	 * Full deliberation view, or null if the room does not exist.
 	 */
-	deliberation: RoomDeliberationDTO | null;
+	room: RoomDeliberationDTO | null;
 }
 
 /**

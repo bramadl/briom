@@ -219,14 +219,14 @@ export interface RoomDeliberationTurnDTO {
 
 	/**
 	 * @description
-	 * Current lifecycle state of the turn.
+	 * Current lifecycle status of the turn.
 	 * - `pending`: initiated, LLM not yet streaming
 	 * - `streaming`: actively receiving tokens
 	 * - `settled`: complete
 	 * - `failed`: errored (may be retried)
 	 * - `abandoned`: permanently dismissed
 	 */
-	state: TurnStatusOption;
+	status: TurnStatusOption;
 }
 
 /**
