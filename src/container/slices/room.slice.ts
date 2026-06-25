@@ -5,8 +5,10 @@ import {
 	FormRoomHandler,
 	GenerateSynthesisHandler,
 	GetParticipantModelsHandler,
+	GetRoomDeliberationHandler,
 	GetRoomHandler,
 	GetRoomsHandler,
+	GetRoomsOverviewHandler,
 	InitiateSynthesisHandler,
 	InviteParticipantHandler,
 	PauseDeliberationHandler,
@@ -17,7 +19,9 @@ import {
 } from "@briom/core/application";
 import { RoomContext } from "@briom/libs/briom/contexts";
 import {
+	DrizzleGetRoomDeliberationQuery,
 	DrizzleGetRoomQuery,
+	DrizzleGetRoomsOverviewQuery,
 	DrizzleGetRoomsQuery,
 } from "@briom/libs/providers/drizzle";
 import { OpenRouterGetParticipantModelsQuery } from "@briom/libs/providers/open-router";
@@ -32,8 +36,14 @@ export const roomSlice = (
 		.add("Query:GetRoom", (r) => {
 			return new DrizzleGetRoomQuery(r["Client:Database"]);
 		})
+		.add("Query:GetRoomDeliberation", (r) => {
+			return new DrizzleGetRoomDeliberationQuery(r["Client:Database"]);
+		})
 		.add("Query:GetRooms", (r) => {
 			return new DrizzleGetRoomsQuery(r["Client:Database"]);
+		})
+		.add("Query:GetRoomsOverview", (r) => {
+			return new DrizzleGetRoomsOverviewQuery(r["Client:Database"]);
 		})
 		.add("Query:GetParticipantModels", (r) => {
 			return new OpenRouterGetParticipantModelsQuery(r["Client:OpenRouter"]);
@@ -47,11 +57,17 @@ export const roomSlice = (
 		.add("Handler:DeleteRoom", (r) => {
 			return new DeleteRoomHandler(r["Repository:Room"]);
 		})
+		.add("Handler:GetRoomDeliberation", (r) => {
+			return new GetRoomDeliberationHandler(r["Query:GetRoomDeliberation"]);
+		})
 		.add("Handler:GetRoom", (r) => {
 			return new GetRoomHandler(r["Query:GetRoom"]);
 		})
 		.add("Handler:GetRooms", (r) => {
 			return new GetRoomsHandler(r["Query:GetRooms"]);
+		})
+		.add("Handler:GetRoomsOverview", (r) => {
+			return new GetRoomsOverviewHandler(r["Query:GetRoomsOverview"]);
 		})
 		.add("Handler:GetParticipantModels", (r) => {
 			return new GetParticipantModelsHandler(
@@ -119,6 +135,7 @@ export const roomSlice = (
 			return new RoomContext({
 				conclude: r["Handler:ConcludeDeliberation"],
 				delete: r["Handler:DeleteRoom"],
+				deliberation: r["Handler:GetRoomDeliberation"],
 				failSynthesis: r["Handler:FailSynthesis"],
 				form: r["Handler:FormRoom"],
 				generateSynthesis: r["Handler:GenerateSynthesis"],
@@ -126,6 +143,7 @@ export const roomSlice = (
 				initiateSynthesis: r["Handler:InitiateSynthesis"],
 				inviteParticipant: r["Handler:InviteParticipant"],
 				list: r["Handler:GetRooms"],
+				overview: r["Handler:GetRoomsOverview"],
 				pause: r["Handler:PauseDeliberation"],
 				participantModels: r["Handler:GetParticipantModels"],
 				rename: r["Handler:RenameRoom"],

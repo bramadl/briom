@@ -16,10 +16,14 @@ import {
 	type GenerateSynthesisInput,
 	type GetParticipantModelsHandler,
 	type GetParticipantModelsInput,
+	type GetRoomDeliberationHandler,
+	type GetRoomDeliberationInput,
 	type GetRoomHandler,
 	type GetRoomInput,
 	type GetRoomsHandler,
 	type GetRoomsInput,
+	type GetRoomsOverviewHandler,
+	type GetRoomsOverviewInput,
 	InitiateSynthesisCommand,
 	type InitiateSynthesisHandler,
 	type InitiateSynthesisInput,
@@ -63,6 +67,11 @@ interface RoomContextDeps {
 	delete: DeleteRoomHandler;
 	/**
 	 * @description
+	 * Full denormalized deliberation view for the room page.
+	 */
+	deliberation: GetRoomDeliberationHandler;
+	/**
+	 * @description
 	 * Mark synthesis as failed.
 	 */
 	failSynthesis: FailSynthesisHandler;
@@ -79,6 +88,8 @@ interface RoomContextDeps {
 	/**
 	 * @description
 	 * Get single room.
+	 *
+	 * @deprecated Use `getDeliberation` for the room page.
 	 */
 	get: GetRoomHandler;
 	/**
@@ -94,8 +105,15 @@ interface RoomContextDeps {
 	/**
 	 * @description
 	 * List all rooms.
+	 *
+	 * @deprecated Use `listOverview` for the sidebar.
 	 */
 	list: GetRoomsHandler;
+	/**
+	 * @description
+	 * Lightweight room summaries for the sidebar.
+	 */
+	overview: GetRoomsOverviewHandler;
 	/**
 	 * @description
 	 * List of all provider models.
@@ -196,6 +214,19 @@ export class RoomContext {
 
 	/**
 	 * @description
+	 * Returns the full denormalized deliberation view for the room page.
+	 *
+	 * Single round-trip replacing the old `get()` + `turns.list()` pattern.
+	 * Turns have embedded author display info — no FE join required.
+	 *
+	 * @param input - Room ID to retrieve
+	 */
+	public async deliberation(input: GetRoomDeliberationInput) {
+		return this.deps.deliberation.execute(input);
+	}
+
+	/**
+	 * @description
 	 * Creates a new room in `FORMING` status.
 	 *
 	 * The first step in any deliberation. Room awaits participant invitations.
@@ -242,6 +273,19 @@ export class RoomContext {
 	 */
 	public async list(input: GetRoomsInput) {
 		return this.deps.list.execute(input);
+	}
+
+	/**
+	 * @description
+	 * Lists lightweight room overviews for the sidebar.
+	 *
+	 * Returns only display-relevant fields — no turns, no synthesis content.
+	 * Substantially cheaper than `list()`.
+	 *
+	 * @param input - Empty criteria (reserved for future filtering)
+	 */
+	public async overview(input: GetRoomsOverviewInput) {
+		return this.deps.overview.execute(input);
 	}
 
 	/**
