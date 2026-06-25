@@ -41,6 +41,7 @@ export const ExitInlineFormatExtension = defineExtension({
 					node.insertAfter(plainNode);
 					plainNode.select(1, 1);
 				});
+
 				return true;
 			},
 			COMMAND_PRIORITY_NORMAL,

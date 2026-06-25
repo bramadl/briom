@@ -38,6 +38,7 @@ export const ExitCodeBlockExtension = defineExtension({
 					parent.insertAfter(paragraph);
 					paragraph.select();
 				});
+
 				return true;
 			},
 			COMMAND_PRIORITY_NORMAL,

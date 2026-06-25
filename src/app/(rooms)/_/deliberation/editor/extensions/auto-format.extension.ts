@@ -39,14 +39,17 @@ export const AutoFormatExtension = defineExtension({
 					if (/^(1\.|-)$/.test(beforeCursor)) {
 						event.preventDefault();
 						const isOrdered = beforeCursor === "1.";
+
 						editor.update(() => {
 							const list = $createListNode(isOrdered ? "number" : "bullet");
 							const item = $createListItemNode();
 							list.append(item);
+
 							const paragraph = node.getParent();
 							if (paragraph) paragraph.replace(list);
 							item.select();
 						});
+
 						return true;
 					}
 
@@ -54,12 +57,14 @@ export const AutoFormatExtension = defineExtension({
 					if (codeMatch) {
 						event.preventDefault();
 						const language = codeMatch[1] || undefined;
+
 						editor.update(() => {
 							const code = $createCodeNode(language);
 							const paragraph = node.getParent();
 							if (paragraph) paragraph.replace(code);
 							code.select();
 						});
+
 						return true;
 					}
 
@@ -68,14 +73,17 @@ export const AutoFormatExtension = defineExtension({
 						editor.update(() => {
 							const hr = $createHorizontalRuleNode();
 							const paragraph = node.getParent();
+
 							if (paragraph) {
 								paragraph.insertAfter(hr);
 								const p = $createParagraphNode();
+
 								hr.insertAfter(p);
 								p.select();
 								paragraph.remove();
 							}
 						});
+
 						return true;
 					}
 
@@ -92,6 +100,7 @@ export const AutoFormatExtension = defineExtension({
 
 							if (before !== "") {
 								const beforeNode = $createTextNode(before);
+
 								node.replace(beforeNode);
 								beforeNode.insertAfter(code);
 							} else {
@@ -104,6 +113,7 @@ export const AutoFormatExtension = defineExtension({
 
 							spaceNode.select(1, 1);
 						});
+
 						return true;
 					}
 				}
@@ -113,12 +123,15 @@ export const AutoFormatExtension = defineExtension({
 					if (codeMatch) {
 						event.preventDefault();
 						const language = codeMatch[1] || undefined;
+
 						editor.update(() => {
 							const code = $createCodeNode(language);
 							const paragraph = node.getParent();
+
 							if (paragraph) paragraph.replace(code);
 							code.select();
 						});
+
 						return true;
 					}
 
@@ -127,14 +140,17 @@ export const AutoFormatExtension = defineExtension({
 						editor.update(() => {
 							const hr = $createHorizontalRuleNode();
 							const paragraph = node.getParent();
+
 							if (paragraph) {
 								paragraph.insertAfter(hr);
 								const p = $createParagraphNode();
+
 								hr.insertAfter(p);
 								p.select();
 								paragraph.remove();
 							}
 						});
+
 						return true;
 					}
 				}

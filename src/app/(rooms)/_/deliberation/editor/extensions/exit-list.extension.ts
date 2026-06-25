@@ -42,8 +42,10 @@ export const ExitListExtension = defineExtension({
 					if (list && list.getChildrenSize() === 0) {
 						list.remove();
 					}
+
 					paragraph.select();
 				});
+
 				return true;
 			},
 			COMMAND_PRIORITY_NORMAL,

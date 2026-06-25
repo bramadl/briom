@@ -13,6 +13,7 @@ export const MentionRoleExtension = defineExtension({
 				if (node.getIsPrimary() !== isFirst) {
 					node.getWritable().setIsPrimary(isFirst);
 				}
+
 				isFirst = false;
 			}
 		});

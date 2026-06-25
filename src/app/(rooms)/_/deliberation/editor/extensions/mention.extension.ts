@@ -90,7 +90,6 @@ export const MentionExtension = defineExtension({
 					const afterCursor = text.slice(offset);
 
 					const mention = $createMentionNode(payload.id, payload.label);
-
 					if (beforeAt === "") {
 						node.replace(mention);
 					} else {
@@ -105,6 +104,7 @@ export const MentionExtension = defineExtension({
 
 					spaceNode.select(1, 1);
 				});
+
 				store.visible.value = false;
 				return true;
 			},

@@ -22,7 +22,6 @@ export const SendExtension = defineExtension({
 				if (!$isRangeSelection(selection)) return false;
 
 				const anchorNode = selection.anchor.getNode();
-
 				if (event?.shiftKey) {
 					event.preventDefault();
 
@@ -34,17 +33,18 @@ export const SendExtension = defineExtension({
 						if (listItem.getTextContent().trim() === "") {
 							const list = listItem.getParent();
 							const paragraph = $createParagraphNode();
+
 							list?.insertAfter(paragraph);
 							listItem.remove();
-							if (list && list.getChildrenSize() === 0) {
-								list.remove();
-							}
+
+							if (list && list.getChildrenSize() === 0) list.remove();
 							paragraph.select();
 						} else {
 							const newItem = $createListItemNode();
 							listItem.insertAfter(newItem);
 							newItem.select();
 						}
+
 						return true;
 					}
 
