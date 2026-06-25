@@ -1,7 +1,7 @@
 "use client";
 
-import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
-import { useSynthesisSheetStore } from "@briom/rooms/_/room/synthesis/use-synthesis-sheet-store";
+import { useRoom } from "@briom/rooms/_/room/hooks/use-room";
+import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet-store";
 import { useParams } from "next/navigation";
 
 import { SynthesisSheet } from "./_/synthesis-sheet";

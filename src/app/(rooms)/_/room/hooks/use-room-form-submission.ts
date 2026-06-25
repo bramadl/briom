@@ -5,10 +5,10 @@ import { toast } from "sonner";
 
 import { useInviteParticipantMutation } from "../../participant/mutations/use-invite-participant-mutation";
 import { useFormRoomMutation } from "../mutations/use-form-room.mutation";
-import { useRoomsInvalidation } from "../queries/invalidations/use-rooms-invalidation";
+import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
 
-import { inviteSequentially } from "./helpers/form-submission.helper";
-import type { RoomFormSchema } from "./schema";
+import { inviteSequentially } from "../form/helpers/form-submission.helper";
+import type { RoomFormSchema } from "../form/schema";
 
 interface UseRoomFormSubmissionOptions {
 	onRoomFormed?: (roomId: string) => void;

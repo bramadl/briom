@@ -1,7 +1,7 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 
-import { useRoomsInvalidation } from "../invalidations/use-rooms-invalidation";
-import { roomQueries } from "../registry";
+import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
+import { roomQueries } from "../queries/registry";
 
 export function useRooms() {
 	const { invalidate } = useRoomsInvalidation();

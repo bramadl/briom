@@ -1,6 +1,6 @@
 "use client";
 
-import { useRooms } from "@briom/rooms/_/room/queries/data/use-rooms";
+import { useRooms } from "@briom/rooms/_/room/hooks/use-rooms";
 import { useParams } from "next/navigation";
 
 import { RoomEmpty } from "./_/room-empty";

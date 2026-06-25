@@ -1,5 +1,3 @@
-"use client";
-
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { $getRoot, $isParagraphNode } from "lexical";
 import { useEffect, useState } from "react";
@@ -16,10 +14,12 @@ export function useEditorEmpty(): boolean {
 					setIsEmpty(true);
 					return;
 				}
+
 				if (children.length > 1) {
 					setIsEmpty(false);
 					return;
 				}
+
 				const onlyChild = children[0];
 				setIsEmpty(
 					$isParagraphNode(onlyChild) && onlyChild.getChildrenSize() === 0,

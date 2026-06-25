@@ -10,7 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@briom/components/ui/dropdown-menu";
 import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
-import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
+import { useRoom } from "@briom/rooms/_/room/hooks/use-room";
 import { EllipsisVertical } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Fragment } from "react/jsx-runtime";

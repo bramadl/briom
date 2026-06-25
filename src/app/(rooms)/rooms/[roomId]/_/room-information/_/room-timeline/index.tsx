@@ -7,7 +7,7 @@ import {
 	AccordionItem,
 } from "@briom/components/ui/accordion";
 import { cn } from "@briom/libs/utils";
-import { useMiniTimeline } from "@briom/rooms/_/deliberation/use-mini-timeline";
+import { useTimeline } from "@briom/rooms/_/deliberation/hooks/use-timeline";
 
 import { TimelineBar } from "./_/timeline-bar";
 
@@ -23,7 +23,7 @@ export function RoomTimeline({
 	turns,
 }: RoomTimelineProps) {
 	const { calculateLogarithmicWidth, handleScrollToTurn, participantMap } =
-		useMiniTimeline({ participants, turns });
+		useTimeline({ participants, turns });
 
 	return (
 		<AccordionItem value="timeline">

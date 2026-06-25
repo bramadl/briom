@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 } from "@briom/components/ui/dialog";
 import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
-import { useRoomFormStore } from "@briom/rooms/_/room/form/use-room-form-store";
+import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form-store";
 import { useHotkey } from "@tanstack/react-hotkeys";
 
 interface RoomFormDialogProps extends React.PropsWithChildren {

@@ -1,7 +1,7 @@
 "use client";
 
 import type { RoomDTO, TurnProposalDTO } from "@briom/app";
-import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
+import { useRoom } from "@briom/rooms/_/room/hooks/use-room";
 import { useParams } from "next/navigation";
 import { memo, useMemo } from "react";
 

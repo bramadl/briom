@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@briom/components/ui/button";
-import { useRoomFormStore } from "@briom/rooms/_/room/form/use-room-form-store";
+import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form-store";
 import { PlusIcon } from "lucide-react";
 
 export function RoomFormDialogToggler() {

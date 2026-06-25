@@ -1,10 +1,10 @@
-import { useTurnsInvalidation } from "@briom/rooms/_/turn/queries/invalidations/use-turns-invalidation";
+import { useTurnsInvalidation } from "@briom/rooms/_/turn/queries/invalidations/use-turns.invalidation";
 import { turnQueries } from "@briom/rooms/_/turn/queries/registry";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 
-import { useRoomInvalidation } from "../invalidations/use-room-invalidation";
-import { roomQueries } from "../registry";
+import { useRoomInvalidation } from "../queries/invalidations/use-room.invalidation";
+import { roomQueries } from "../queries/registry";
 
 export function useRoom(roomId: string) {
 	const { invalidate: invalidateRoom } = useRoomInvalidation();

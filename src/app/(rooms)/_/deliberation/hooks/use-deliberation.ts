@@ -8,14 +8,14 @@ import { isServerError } from "@briom/libs/server-action";
 import { useParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
-import { useRoom } from "../room/queries/data/use-room";
-import { useTurnProposals } from "../turn/queries/data/use-turn-proposals";
-import { useAbortTurnMutation } from "../turn/queries/mutations/use-abort-turn";
-import { useInitiateModeratorTurnMutation } from "../turn/queries/mutations/use-initiate-moderator-turn-mutation";
-import { useInitiateParticipantTurnMutation } from "../turn/queries/mutations/use-initiate-participant-turn-mutation";
-import { useInitiateTopicTurnMutation } from "../turn/queries/mutations/use-initiate-topic-turn-mutation";
+import { useRoom } from "../../room/hooks/use-room";
+import { useTurnProposals } from "../../turn/hooks/use-turn-proposals";
+import { useAbortTurnMutation } from "../../turn/mutations/use-abort-turn.mutation";
+import { useInitiateModeratorTurnMutation } from "../../turn/mutations/use-initiate-moderator-turn.mutation";
+import { useInitiateParticipantTurnMutation } from "../../turn/mutations/use-initiate-participant-turn.mutation";
+import { useInitiateTopicTurnMutation } from "../../turn/mutations/use-initiate-topic-turn.mutation";
 
-import type { Mentionee } from "./editor/helpers/mention-extractor";
+import type { Mentionee } from "../editor/helpers/mention-extractor";
 
 export function useDeliberation() {
 	const { roomId } = useParams<{ roomId: string }>();

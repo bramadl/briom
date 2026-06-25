@@ -1,7 +1,7 @@
 "use client";
 
+import { useRoom } from "@briom/rooms/_/room/hooks/use-room";
 import { useRenameRoomMutation } from "@briom/rooms/_/room/mutations/use-rename-room.mutation";
-import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
 import { useParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 

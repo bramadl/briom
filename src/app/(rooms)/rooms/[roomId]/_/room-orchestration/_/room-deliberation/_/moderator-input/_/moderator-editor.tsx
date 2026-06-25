@@ -5,8 +5,8 @@ import { ChatEditorExtension } from "@briom/rooms/_/deliberation/editor/extensio
 import { createDraftingExtension } from "@briom/rooms/_/deliberation/editor/extensions/drafting.extension";
 import { SUBMIT_COMMAND } from "@briom/rooms/_/deliberation/editor/extensions/send.extension";
 import { MentionPopup } from "@briom/rooms/_/deliberation/editor/ui/mention-popup";
-import { useEditorEmpty } from "@briom/rooms/_/deliberation/editor/use-editor-empty";
-import type { MentionItem } from "@briom/rooms/_/deliberation/editor/use-moderator-editor";
+import { useEditorEmpty } from "@briom/rooms/_/deliberation/hooks/use-editor-empty";
+import type { MentionItem } from "@briom/rooms/_/deliberation/hooks/use-moderator-editor";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";

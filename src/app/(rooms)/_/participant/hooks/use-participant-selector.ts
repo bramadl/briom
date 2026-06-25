@@ -1,7 +1,7 @@
 import type { ParticipantModelDTO } from "@briom/app";
 import { useCallback, useDeferredValue, useMemo } from "react";
 
-import { useParticipantModels } from "../queries/data/use-participant-models";
+import { useParticipantModels } from "./use-participant-models";
 
 interface GroupedItems {
 	items: ParticipantModelDTO[];

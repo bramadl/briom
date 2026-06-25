@@ -8,7 +8,7 @@ import {
 	SidebarGroupContent,
 	SidebarHeader,
 } from "@briom/components/ui/sidebar";
-import { useRooms } from "@briom/rooms/_/room/queries/data/use-rooms";
+import { useRooms } from "@briom/rooms/_/room/hooks/use-rooms";
 
 interface RoomCollapsibleSidebarProps {
 	children: React.ReactNode;

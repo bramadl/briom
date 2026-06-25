@@ -2,8 +2,8 @@ import { supabaseClient } from "@briom/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { useTurnsInvalidation } from "../../turn/queries/invalidations/use-turns-invalidation";
-import { useRoomsInvalidation } from "../queries/invalidations/use-rooms-invalidation";
+import { useTurnsInvalidation } from "../../turn/queries/invalidations/use-turns.invalidation";
+import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
 
 import { ROOM_EVENT_HANDLERS } from "./event-handlers";
 import { ROOM_EVENT_NAMES } from "./event-names";

@@ -2,7 +2,7 @@ import { reset, useFieldArray, useForm } from "@formisch/react";
 
 import { ROOM_SETTING } from "../config/setting";
 
-import { RoomFormSchema } from "./schema";
+import { RoomFormSchema } from "../form/schema";
 import { useRoomFormSubmission } from "./use-room-form-submission";
 
 interface UseRoomFormOptions {

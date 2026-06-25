@@ -12,7 +12,7 @@ import { Separator } from "@briom/components/ui/separator";
 import { useIsMobile } from "@briom/hooks/use-mobile";
 import { cn } from "@briom/libs/utils";
 import { ParticipantBadge } from "@briom/rooms/_/participant/ui/participant-badge";
-import { useSynthesizeRoom } from "@briom/rooms/_/room/synthesis/use-synthesize-room";
+import { useSynthesizeRoom } from "@briom/rooms/_/room/hooks/use-synthesize-room";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
 
@@ -21,33 +21,6 @@ interface SynthesizeRoomProps {
 	roomId: string;
 }
 
-/**
- * @description
- * `SynthesizeRoom` — Feature Component
- *
- * Popover-based participant selection for synthesis initiation.
- *
- * **UX Flow**
- * 1. User clicks "Synthesize" button → Popover opens
- * 2. User selects a participant (model) from the list
- * 3. User clicks "Synthesize" in Popover → mutation starts
- * 4. Popover closes, loading state shown on button
- * 5. LLM generates synthesis (blocking query in background)
- * 6. On success: Sheet auto-opens with the synthesis document
- * 7. On error: Toast notification, synthesis status reset
- *
- * **Why Popover for Selection?**
- * Popover is the right container for selection UI — compact, anchored
- * to the trigger. The *result* goes in a Sheet (see SynthesisSheet).
- *
- * **Domain Language**
- * The UI button says "Synthesize" (domain ubiquitous language),
- * not "Summarize" (user-facing synonym). This maintains consistency
- * with the domain model where `Synthesis` is the core concept.
- *
- * @see SynthesisSheet — for displaying the synthesis result (lives in room page)
- * @see useSynthesizeRoom — for the synthesis orchestration hook
- */
 export function SynthesizeRoom({ roomId, participants }: SynthesizeRoomProps) {
 	const isMobile = useIsMobile();
 

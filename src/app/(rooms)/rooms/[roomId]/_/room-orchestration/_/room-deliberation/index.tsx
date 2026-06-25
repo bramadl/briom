@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeliberation } from "@briom/rooms/_/deliberation/use-deliberation";
+import { useDeliberation } from "@briom/rooms/_/deliberation/hooks/use-deliberation";
 import { useEffect, useMemo } from "react";
 
 import { EmptySequence } from "./_/empty-sequence";

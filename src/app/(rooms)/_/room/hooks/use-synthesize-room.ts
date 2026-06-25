@@ -5,8 +5,8 @@ import {
 	initiateSynthesis,
 	saveSynthesis,
 } from "@briom/rooms/_/room/actions";
-import { useRoomInvalidation } from "@briom/rooms/_/room/queries/invalidations/use-room-invalidation";
-import { useSynthesisSheetStore } from "@briom/rooms/_/room/synthesis/use-synthesis-sheet-store";
+import { useRoomInvalidation } from "@briom/rooms/_/room/queries/invalidations/use-room.invalidation";
+import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet-store";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 

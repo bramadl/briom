@@ -2,7 +2,7 @@
 
 import type { TurnDTO } from "@briom/app";
 import { Logo } from "@briom/components/logo";
-import { useRetryTurnMutation } from "@briom/rooms/_/turn/queries/mutations/use-retry-turn";
+import { useRetryTurnMutation } from "@briom/rooms/_/turn/mutations/use-retry-turn.mutation";
 import { TurnPerspective } from "@briom/rooms/_/turn/ui/turn-perspective";
 import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective-expander";
 

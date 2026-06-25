@@ -1,14 +1,14 @@
-"use client";
-
 import { useHotkey } from "@tanstack/react-hotkeys";
 import type { LexicalEditor } from "lexical";
 import { $createParagraphNode, $getRoot } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { ROOM_SETTING } from "../../room/config/setting";
-
-import { editorStateToMarkdown } from "./helpers/markdown-conversion";
-import { extractMentionees, type Mentionee } from "./helpers/mention-extractor";
+import { editorStateToMarkdown } from "../editor/helpers/markdown-conversion";
+import {
+	extractMentionees,
+	type Mentionee,
+} from "../editor/helpers/mention-extractor";
 
 export interface MentionItem {
 	id: string;

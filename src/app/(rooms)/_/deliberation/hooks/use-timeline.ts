@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import {
 	getParticipantTheme,
 	type PARTICIPANT_THEMES,
-} from "../participant/config/theme";
+} from "../../participant/config/theme";
 
 type Participant = RoomDTO["participants"][number];
 
@@ -12,12 +12,12 @@ export type ParticipantWithTheme = Participant & {
 	theme: (typeof PARTICIPANT_THEMES)[number];
 };
 
-interface UseMiniTimelineProps {
+interface UseTimelineProps {
 	participants: Participant[];
 	turns: TurnDTO[];
 }
 
-export function useMiniTimeline({ participants, turns }: UseMiniTimelineProps) {
+export function useTimeline({ participants, turns }: UseTimelineProps) {
 	const participantMap = useMemo(() => {
 		const map = new Map<string, ParticipantWithTheme>();
 		participants.forEach((p) => {
