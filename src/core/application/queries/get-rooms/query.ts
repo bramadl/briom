@@ -1,4 +1,4 @@
-import type { RoomDTO } from "../get-room/query";
+import type { RoomDTO } from "@briom/app/contracts";
 
 /**
  * @description

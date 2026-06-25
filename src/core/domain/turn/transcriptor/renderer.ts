@@ -1,4 +1,4 @@
-import type { Participant } from "../../room";
+import { type Participant, SynthesisPrompt } from "../../room";
 import type { IntentOption, Turn } from "..";
 
 import type { Message } from "./message";
@@ -14,6 +14,10 @@ interface BuildSystemPromptInput {
 	currentParticipant: Participant;
 	intent: IntentOption;
 	participants: Participant[];
+}
+
+interface BuildSynthesisPromptInput {
+	participant: Participant;
 }
 
 /**
@@ -68,6 +72,26 @@ export class TranscriptorRenderer {
 			others,
 			intent,
 		});
+	}
+
+	/**
+	 * @description
+	 * Builds a system prompt for synthesis.
+	 *
+	 * Generates a synthesis by:
+	 * 1. Loading the room and participant
+	 * 2. Fetching all turns in the room
+	 * 3. Building a synthesis-specific system prompt
+	 * 4. Rendering turn history as LLM messages
+	 * 5. Calling the LLM gateway and collecting the full response
+	 *
+	 * @param input - Current participant
+	 * @returns System prompt for LLM consumption
+	 */
+	public buildSynthesisPrompt({
+		participant,
+	}: BuildSynthesisPromptInput): string {
+		return SynthesisPrompt.build(participant);
 	}
 
 	/**

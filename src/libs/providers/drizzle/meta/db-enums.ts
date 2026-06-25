@@ -60,3 +60,14 @@ export const roomStatusEnum = pgEnum(
 		...RoomStatusOption[],
 	],
 );
+
+/**
+ * @description
+ * PostgreSQL enum for room synthesizing process.
+ */
+export const roomSynthesisEnum = pgEnum("room_synthesis_status", [
+	"idle",
+	"pending",
+	"completed",
+	"failed",
+]);

@@ -1,21 +1,24 @@
 import {
 	ConcludeDeliberationHandler,
 	DeleteRoomHandler,
+	FailSynthesisHandler,
 	FormRoomHandler,
+	GenerateSynthesisHandler,
 	GetParticipantModelsHandler,
 	GetRoomHandler,
 	GetRoomsHandler,
+	InitiateSynthesisHandler,
 	InviteParticipantHandler,
 	PauseDeliberationHandler,
 	RenameRoomHandler,
 	ResumeDeliberationHandler,
+	SaveSynthesisHandler,
 	StartDeliberationHandler,
 } from "@briom/core/application";
 import { RoomContext } from "@briom/libs/briom/contexts";
 import {
 	DrizzleGetRoomQuery,
 	DrizzleGetRoomsQuery,
-	DrizzleRoomRepository,
 } from "@briom/libs/providers/drizzle";
 import { OpenRouterGetParticipantModelsQuery } from "@briom/libs/providers/open-router";
 
@@ -26,9 +29,6 @@ export const roomSlice = (
 ) => {
 	const USE_FREE_MODELS = process.env.USE_FREE_MODELS === "true";
 	return container
-		.add("Repository:Room", (r) => {
-			return new DrizzleRoomRepository(r["Client:Database"]);
-		})
 		.add("Query:GetRoom", (r) => {
 			return new DrizzleGetRoomQuery(r["Client:Database"]);
 		})
@@ -89,18 +89,48 @@ export const roomSlice = (
 				r["Adapter:EventBus"],
 			);
 		})
+		.add("Handler:GenerateSynthesis", (r) => {
+			return new GenerateSynthesisHandler(
+				r["Repository:Room"],
+				r["Repository:Turn"],
+				r["Adapter:LlmGateway"],
+				r["Policy:TranscriptorRenderer"],
+			);
+		})
+		.add("Handler:InitiateSynthesis", (r) => {
+			return new InitiateSynthesisHandler(
+				r["Repository:Room"],
+				r["Adapter:EventBus"],
+			);
+		})
+		.add("Handler:SaveSynthesis", (r) => {
+			return new SaveSynthesisHandler(
+				r["Repository:Room"],
+				r["Adapter:EventBus"],
+			);
+		})
+		.add("Handler:FailSynthesis", (r) => {
+			return new FailSynthesisHandler(
+				r["Repository:Room"],
+				r["Adapter:EventBus"],
+			);
+		})
 		.add("Context:Room", (r) => {
 			return new RoomContext({
 				conclude: r["Handler:ConcludeDeliberation"],
 				delete: r["Handler:DeleteRoom"],
+				failSynthesis: r["Handler:FailSynthesis"],
 				form: r["Handler:FormRoom"],
+				generateSynthesis: r["Handler:GenerateSynthesis"],
 				get: r["Handler:GetRoom"],
+				initiateSynthesis: r["Handler:InitiateSynthesis"],
 				inviteParticipant: r["Handler:InviteParticipant"],
 				list: r["Handler:GetRooms"],
 				pause: r["Handler:PauseDeliberation"],
 				participantModels: r["Handler:GetParticipantModels"],
 				rename: r["Handler:RenameRoom"],
 				resume: r["Handler:ResumeDeliberation"],
+				saveSynthesis: r["Handler:SaveSynthesis"],
 				start: r["Handler:StartDeliberation"],
 			});
 		});

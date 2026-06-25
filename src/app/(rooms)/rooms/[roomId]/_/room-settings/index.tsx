@@ -20,7 +20,7 @@ import { CloseRoom } from "./_/close-room";
 import { ConcludeRoom } from "./_/conclude-room";
 import { InviteParticipant } from "./_/invite-participant";
 import { ShareRoom } from "./_/share-room";
-import { SummarizeDiscussion } from "./_/summarize-discussion";
+import { SynthesizeRoom } from "./_/synthesize-room";
 
 export function RoomSettings() {
 	const { roomId } = useParams<{ roomId: string }>();
@@ -42,7 +42,9 @@ export function RoomSettings() {
 					roomId={roomId}
 				/>
 			)}
-			{isConcluded && <SummarizeDiscussion participants={room.participants} />}
+			{isConcluded && room.synthesisStatus !== "completed" && (
+				<SynthesizeRoom participants={room.participants} roomId={roomId} />
+			)}
 			<DropdownMenu>
 				<DropdownMenuTrigger asChild>
 					<Button size="icon" variant="secondary">

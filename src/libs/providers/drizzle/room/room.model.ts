@@ -1,6 +1,6 @@
 import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-import { roomStatusEnum } from "../schema";
+import { roomStatusEnum, roomSynthesisEnum } from "../schema";
 
 /**
  * @description
@@ -38,6 +38,32 @@ export const roomsTable = pgTable(
 		 * Current lifecycle status.
 		 */
 		status: roomStatusEnum("status").notNull().default("forming"),
+
+		/**
+		 * @description
+		 * Summary of the room's deliberation.
+		 */
+		synthesis: text("synthesis"),
+
+		/**
+		 * @description
+		 * Current synthesis process status.
+		 */
+		synthesisStatus: roomSynthesisEnum("synthesis_status")
+			.notNull()
+			.default("idle"),
+
+		/**
+		 * @description
+		 * Settled time when the synthesis is done generated.
+		 */
+		synthesisCreatedAt: timestamp("synthesis_created_at"),
+
+		/**
+		 * @description
+		 * Participant (AI model) which generates the synthesis.
+		 */
+		synthesisCreatedBy: text("synthesis_created_by"),
 
 		/**
 		 * @description

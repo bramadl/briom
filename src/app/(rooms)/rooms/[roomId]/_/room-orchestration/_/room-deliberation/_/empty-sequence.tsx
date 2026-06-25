@@ -1,14 +1,10 @@
-"use client";
+import type { ParticipantDTO } from "@briom/app";
 
-import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
-import { useParams } from "next/navigation";
+interface EmptySequenceProps {
+	participants?: ParticipantDTO[];
+}
 
-export function EmptySequence() {
-	const { roomId } = useParams<{ roomId: string }>();
-	const {
-		room: { participants },
-	} = useRoom(roomId);
-
+export function EmptySequence({ participants }: EmptySequenceProps) {
 	return (
 		<div className="flex flex-1 flex-col items-center justify-center gap-8 lg:gap-16 px-6 text-center">
 			<div className="flex flex-col gap-2">
@@ -22,7 +18,7 @@ export function EmptySequence() {
 					started, no more participants can be added.
 				</p>
 			</div>
-			{participants.length > 0 && (
+			{participants && participants.length > 0 && (
 				<div className="flex flex-col items-center gap-2">
 					<span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/50">
 						In this room

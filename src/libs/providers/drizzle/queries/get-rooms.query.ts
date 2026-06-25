@@ -74,6 +74,10 @@ export class DrizzleGetRoomsQuery implements GetRoomsQuery {
 						name: p.name,
 						qualifiedModel: `${p.provider}/${p.name}`,
 					})),
+					synthesis: room.synthesis,
+					synthesisCreatedAt: room.synthesisCreatedAt?.toISOString() ?? null,
+					synthesisCreatedBy: room.synthesisCreatedBy,
+					synthesisStatus: room.synthesisStatus,
 					turnIds: turns.map((t) => t.id),
 					createdAt: room.createdAt.toISOString(),
 				} satisfies RoomDTO;

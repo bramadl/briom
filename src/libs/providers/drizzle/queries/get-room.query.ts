@@ -3,7 +3,7 @@ import type {
 	GetRoomOutput,
 	GetRoomQuery,
 } from "@briom/core/application";
-import type { RoomStatusOption } from "@briom/core/domain";
+import type { RoomStatusOption, SynthesisProcess } from "@briom/core/domain";
 import type { Database } from "@briom/drizzle/client";
 import {
 	participantsTable,
@@ -71,6 +71,10 @@ export class DrizzleGetRoomQuery implements GetRoomQuery {
 					provider: p.provider,
 					qualifiedModel: `${p.provider}/${p.model}`,
 				})),
+				synthesis: room.synthesis,
+				synthesisStatus: room.synthesisStatus as SynthesisProcess,
+				synthesisCreatedAt: room.synthesisCreatedAt?.toISOString() ?? null,
+				synthesisCreatedBy: room.synthesisCreatedBy,
 				turnIds: turns.map((t) => t.id),
 				createdAt: room.createdAt.toISOString(),
 			},

@@ -5,15 +5,24 @@ import {
 	DeleteRoomCommand,
 	type DeleteRoomHandler,
 	type DeleteRoomInput,
+	FailSynthesisCommand,
+	type FailSynthesisHandler,
+	type FailSynthesisInput,
 	FormRoomCommand,
 	type FormRoomHandler,
 	type FormRoomInput,
+	GenerateSynthesisCommand,
+	type GenerateSynthesisHandler,
+	type GenerateSynthesisInput,
 	type GetParticipantModelsHandler,
 	type GetParticipantModelsInput,
 	type GetRoomHandler,
 	type GetRoomInput,
 	type GetRoomsHandler,
 	type GetRoomsInput,
+	InitiateSynthesisCommand,
+	type InitiateSynthesisHandler,
+	type InitiateSynthesisInput,
 	InviteParticipantCommand,
 	type InviteParticipantHandler,
 	type InviteParticipantInput,
@@ -26,6 +35,9 @@ import {
 	ResumeDeliberationCommand,
 	type ResumeDeliberationHandler,
 	type ResumeDeliberationInput,
+	SaveSynthesisCommand,
+	type SaveSynthesisHandler,
+	type SaveSynthesisInput,
 	StartDeliberationCommand,
 	type StartDeliberationHandler,
 	type StartDeliberationInput,
@@ -51,14 +63,29 @@ interface RoomContextDeps {
 	delete: DeleteRoomHandler;
 	/**
 	 * @description
+	 * Mark synthesis as failed.
+	 */
+	failSynthesis: FailSynthesisHandler;
+	/**
+	 * @description
 	 * Create new room.
 	 */
 	form: FormRoomHandler;
 	/**
 	 * @description
+	 * Generate synthesis via LLM.
+	 */
+	generateSynthesis: GenerateSynthesisHandler;
+	/**
+	 * @description
 	 * Get single room.
 	 */
 	get: GetRoomHandler;
+	/**
+	 * @description
+	 * Initiate synthesis process.
+	 */
+	initiateSynthesis: InitiateSynthesisHandler;
 	/**
 	 * @description
 	 * Add AI participant to room.
@@ -89,6 +116,11 @@ interface RoomContextDeps {
 	 * Resume paused deliberation.
 	 */
 	resume: ResumeDeliberationHandler;
+	/**
+	 * @description
+	 * Save completed synthesis.
+	 */
+	saveSynthesis: SaveSynthesisHandler;
 	/**
 	 * @description
 	 * Start deliberation with topic.
@@ -272,5 +304,63 @@ export class RoomContext {
 	 */
 	public async start(input: StartDeliberationInput) {
 		return this.deps.start.execute(new StartDeliberationCommand(input));
+	}
+
+	/**
+	 * @description
+	 * Initiates the synthesis process for a concluded room.
+	 *
+	 * Idempotent guard — prevents concurrent synthesis requests.
+	 * Room must be in CONCLUDED status.
+	 *
+	 * @param input - Room ID
+	 */
+	public async initiateSynthesis(input: InitiateSynthesisInput) {
+		return this.deps.initiateSynthesis.execute(
+			new InitiateSynthesisCommand(input),
+		);
+	}
+
+	/**
+	 * @description
+	 * Generates a synthesis by calling the LLM.
+	 *
+	 * **Blocking query** — consumes the full LLM stream before returning.
+	 * The moderator explicitly chooses which participant's perspective
+	 * synthesizes the deliberation.
+	 *
+	 * @param input - Room ID and participant ID
+	 * @returns Synthesis content and author name
+	 */
+	public async generateSynthesis(input: GenerateSynthesisInput) {
+		return this.deps.generateSynthesis.execute(
+			new GenerateSynthesisCommand(input),
+		);
+	}
+
+	/**
+	 * @description
+	 * Saves a completed synthesis to the room.
+	 *
+	 * Must be called after `generateSynthesis` succeeds.
+	 * Transitions synthesisStatus from "pending" to "completed".
+	 *
+	 * @param input - Room ID, content, and author
+	 */
+	public async saveSynthesis(input: SaveSynthesisInput) {
+		return this.deps.saveSynthesis.execute(new SaveSynthesisCommand(input));
+	}
+
+	/**
+	 * @description
+	 * Marks an in-flight synthesis as failed.
+	 *
+	 * Idempotent — safe to call even if no synthesis is in progress.
+	 * Used when LLM call fails or times out.
+	 *
+	 * @param input - Room ID
+	 */
+	public async failSynthesis(input: FailSynthesisInput) {
+		return this.deps.failSynthesis.execute(new FailSynthesisCommand(input));
 	}
 }

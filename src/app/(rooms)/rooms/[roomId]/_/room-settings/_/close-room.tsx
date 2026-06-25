@@ -12,7 +12,7 @@ import {
 } from "@briom/components/ui/dialog";
 import { DropdownMenuItem } from "@briom/components/ui/dropdown-menu";
 import { isServerError } from "@briom/libs/server-action";
-import { useCloseRoomMutation } from "@briom/rooms/_/room/mutations/use-close-room-mutation";
+import { useCloseRoomMutation } from "@briom/rooms/_/room/mutations/use-close-room.mutation";
 import { Loader2Icon, MessageCircleOffIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";

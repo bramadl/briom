@@ -11,22 +11,26 @@ import {
 	SheetTitle,
 } from "@briom/components/ui/sheet";
 import { useRoom } from "@briom/rooms/_/room/queries/data/use-room";
+import { useSynthesisSheetStore } from "@briom/rooms/_/room/synthesis/use-synthesis-sheet-store";
 import { PanelRightIcon } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { RoomDetails } from "./_/room-details";
 import { RoomParticipants } from "./_/room-participants";
+import { RoomSynthesis } from "./_/room-synthesis";
 import { RoomTimeline } from "./_/room-timeline";
 import { RoomTopic } from "./_/room-topic";
 
 export function RoomInformationMobile() {
 	const { roomId } = useParams<{ roomId: string }>();
 	const { multiDeliberation, room, turns } = useRoom(roomId);
+
+	const openSheet = useSynthesisSheetStore((s) => s.open);
 	const [open, setOpen] = useState(false);
 
 	return (
-		<>
+		<Fragment>
 			<Button
 				className="fixed right-4 top-20 z-40 lg:hidden size-10 rounded-full shadow-lg border border-border/50 bg-background/80 backdrop-blur-sm"
 				onClick={() => setOpen(true)}
@@ -50,6 +54,13 @@ export function RoomInformationMobile() {
 							defaultValue={["topic", "participants", "timeline"]}
 							type="multiple"
 						>
+							<RoomSynthesis
+								onOpenSheet={openSheet}
+								synthesis={room.synthesis}
+								synthesisCreatedAt={room.synthesisCreatedAt}
+								synthesisCreatedBy={room.synthesisCreatedBy}
+								synthesisStatus={room.synthesisStatus}
+							/>
 							<RoomTopic topic={room.topic} />
 							<RoomParticipants participants={room.participants} />
 							<RoomTimeline
@@ -63,6 +74,6 @@ export function RoomInformationMobile() {
 					</div>
 				</SheetContent>
 			</Sheet>
-		</>
+		</Fragment>
 	);
 }

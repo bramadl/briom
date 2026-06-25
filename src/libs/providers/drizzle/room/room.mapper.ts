@@ -1,3 +1,4 @@
+import type { SynthesisProcess } from "@briom/domain";
 import {
 	ModeratorId,
 	ParticipantId,
@@ -103,6 +104,10 @@ export const RoomMapper = {
 			participants: participantRecords.map(ParticipantMapper.toDomain),
 			turnIds: turnIds.map((id) => TurnId(id)),
 			createdAt: record.createdAt,
+			synthesis: record.synthesis,
+			synthesisStatus: record.synthesisStatus as SynthesisProcess,
+			synthesisCreatedAt: record.synthesisCreatedAt,
+			synthesisCreatedBy: record.synthesisCreatedBy,
 		});
 	},
 
@@ -124,6 +129,10 @@ export const RoomMapper = {
 			status: room.get("status"),
 			topic: room.get("topic"),
 			createdAt: room.get("createdAt"),
+			synthesis: room.get("synthesis"),
+			synthesisStatus: room.get("synthesisStatus"),
+			synthesisCreatedAt: room.get("synthesisCreatedAt"),
+			synthesisCreatedBy: room.get("synthesisCreatedBy"),
 		};
 	},
 };

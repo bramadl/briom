@@ -19,6 +19,7 @@ export function TurnProposals({ proposals, onSelect }: TurnProposalsProps) {
 				{proposals.map((proposal) => {
 					const { label, participantId, name, confidence, intent } = proposal;
 					const tokens = label.split(new RegExp(`(${name})`, "g"));
+
 					return (
 						<Button
 							className="h-7 text-xs rounded-full border-border/50 text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-primary/5 transition-all font-normal"

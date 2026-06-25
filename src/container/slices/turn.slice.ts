@@ -12,35 +12,18 @@ import {
 	RetryTurnHandler,
 	SettleTurnHandler,
 	StartStreamHandler,
-	TurnLifecycleOrchestrator,
-	TurnStreamingService,
 } from "@briom/core/application";
-import {
-	RoomDeliberation,
-	TranscriptorRenderer,
-	TurnTimeoutPolicy,
-} from "@briom/core/domain";
 import { TurnContext } from "@briom/libs/briom/contexts";
 import {
 	DrizzleGetTurnProposalsQuery,
 	DrizzleGetTurnQuery,
 	DrizzleGetTurnsQuery,
-	DrizzleTurnRepository,
-	DrizzleTurnSequencer,
 } from "@briom/libs/providers/drizzle";
 
 import type { roomSlice } from "./room.slice";
 
-const TURN_TIMEOUT_MS = Number.parseInt(
-	(process.env.GLOBAL_TURN_TIMEOUT ?? "60000").replace(/_/g, ""),
-	10,
-);
-
 export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 	return container
-		.add("Repository:Turn", (r) => {
-			return new DrizzleTurnRepository(r["Client:Database"]);
-		})
 		.add("Query:GetTurn", (r) => {
 			return new DrizzleGetTurnQuery(r["Client:Database"]);
 		})
@@ -53,33 +36,6 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 		})
 		.add("Query:GetTurns", (r) => {
 			return new DrizzleGetTurnsQuery(r["Client:Database"]);
-		})
-		.add("Adapter:TurnSequencer", (r) => {
-			return new DrizzleTurnSequencer(r["Client:Database"]);
-		})
-		.add("Policy:TurnTimeout", () => {
-			return new TurnTimeoutPolicy({ ms: TURN_TIMEOUT_MS });
-		})
-		.add("Policy:RoomDeliberation", () => {
-			return new RoomDeliberation();
-		})
-		.add("Policy:TranscriptorRenderer", () => {
-			return new TranscriptorRenderer();
-		})
-		.add("Orchestrator:TurnLifecycle", (r) => {
-			return new TurnLifecycleOrchestrator(
-				r["Adapter:EventBus"],
-				r["Repository:Turn"],
-				r["Adapter:Scheduler"],
-				r["Policy:TurnTimeout"],
-			);
-		})
-		.add("Service:TurnStreaming", (r) => {
-			return new TurnStreamingService(
-				r["Orchestrator:TurnLifecycle"],
-				r["Adapter:LlmGateway"],
-				r["Adapter:SseForwarder"],
-			);
 		})
 		.add("Handler:AbandonTurn", (r) => {
 			return new AbandonTurnHandler(r["Orchestrator:TurnLifecycle"]);

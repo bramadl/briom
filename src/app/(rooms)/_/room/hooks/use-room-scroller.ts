@@ -7,10 +7,16 @@ interface UseRoomScrollerOptions {
 	threshold?: number;
 }
 
+interface UseRoomScrollerReturn {
+	isNearBottomRef: React.RefObject<boolean>;
+	scrollToBottom: (behavior?: ScrollBehavior) => void;
+	showScrollButton: boolean;
+}
+
 export function useRoomScroller({
 	scroller,
 	threshold = SCROLL_THRESHOLD,
-}: UseRoomScrollerOptions) {
+}: UseRoomScrollerOptions): UseRoomScrollerReturn {
 	const isNearBottomRef = useRef<boolean>(true);
 	const [showScrollButton, setShowScrollButton] = useState<boolean>(false);
 	const scrollToBottom = useCallback(
@@ -43,7 +49,6 @@ export function useRoomScroller({
 
 	return {
 		isNearBottomRef,
-		scroller,
 		scrollToBottom,
 		showScrollButton,
 	};

@@ -7,3 +7,4 @@ export * from "./room.deliberation";
 export * from "./room.id";
 export * from "./room.repository";
 export * from "./room.status";
+export * from "./synthesis";

@@ -1,3 +1,5 @@
+"use client";
+
 import type { RoomDTO, TurnDTO } from "@briom/app";
 import {
 	AccordionContent,

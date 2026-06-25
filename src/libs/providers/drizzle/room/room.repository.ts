@@ -91,6 +91,10 @@ export class DrizzleRoomRepository implements RoomRepository {
 					title: record.title,
 					status: record.status,
 					topic: record.topic,
+					synthesis: record.synthesis,
+					synthesisStatus: record.synthesisStatus,
+					synthesisCreatedAt: record.synthesisCreatedAt,
+					synthesisCreatedBy: record.synthesisCreatedBy,
 				},
 			});
 

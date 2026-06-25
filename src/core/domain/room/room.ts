@@ -13,9 +13,11 @@ import {
 	CannotPauseRoomError,
 	CannotResumeRoomError,
 	CannotStartDeliberationError,
+	CannotSynthesizeError,
 	EmptyTitleError,
 	EmptyTopicError,
 	MaximumParticipantReachedError,
+	NoSynthesisInProgressError,
 	ParticipantAlreadyInvitedError,
 	ParticipateAfterDeliberationError,
 } from "./errors";
@@ -32,6 +34,7 @@ import type { ModeratorId } from "./moderator.id";
 import type { Participant, ParticipantId } from "./participant";
 import type { RoomId } from "./room.id";
 import { ROOM_STATUS_OPTION, type RoomStatusOption } from "./room.status";
+import type { SynthesisProcess } from "./synthesis/process";
 
 interface RoomProps {
 	createdAt: Date;
@@ -39,6 +42,10 @@ interface RoomProps {
 	moderatorId: ModeratorId;
 	participants: Participant[];
 	status: RoomStatusOption;
+	synthesis: string | null;
+	synthesisCreatedAt: Date | null;
+	synthesisCreatedBy: string | null;
+	synthesisStatus: SynthesisProcess;
 	title: string;
 	topic: string | null;
 	turnIds: TurnId[];
@@ -122,6 +129,10 @@ export class Room extends Aggregate<RoomProps> {
 			participants: [],
 			turnIds: [],
 			status: ROOM_STATUS_OPTION.FORMING,
+			synthesis: null,
+			synthesisStatus: "idle",
+			synthesisCreatedAt: null,
+			synthesisCreatedBy: null,
 		};
 
 		const validation = Room.isValidProps(fullProps);
@@ -181,10 +192,18 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Whether the `Room` has reached maximum participants
+	 * Whether the `Room` has reached maximum participants.
 	 */
 	public get isMaximumParticipantsReached(): boolean {
 		return this.get("participants").length === this.MAXIMUM_PARTICIPANTS;
+	}
+
+	/**
+	 * @description
+	 * Whether the `Room` is in synthesizing process.
+	 */
+	public get isSynthesizing(): boolean {
+		return this.get("synthesisStatus") === "pending";
 	}
 
 	/**
@@ -423,5 +442,67 @@ export class Room extends Aggregate<RoomProps> {
 
 		this.change("title", newTitle);
 		return Result.success(undefined);
+	}
+
+	/**
+	 * @description
+	 * Start the synthesizing process.
+	 *
+	 * **Invariant**: `Room` must be `CONCLUDED`.
+	 * **Invariant**: `Room` must not have any synthesizing in-flights.
+	 */
+	public initiateSynthesis(): IResult<void, CannotSynthesizeError> {
+		if (!this.isConcluded) {
+			return Result.error(
+				new CannotSynthesizeError(
+					"Can only synthesize concluded deliberations",
+				),
+			);
+		}
+
+		if (this.isSynthesizing) {
+			return Result.error(
+				new CannotSynthesizeError("Synthesis already in progress"),
+			);
+		}
+
+		this.change("synthesisStatus", "pending");
+		this.change("synthesis", null);
+		this.change("synthesisCreatedAt", null);
+		this.change("synthesisCreatedBy", null);
+
+		return Result.success(undefined);
+	}
+
+	/**
+	 * @description
+	 * Save any synthesis made.
+	 *
+	 * **Invariant**: `Room` must have a prior synthesizing in-flight.
+	 */
+	public saveSynthesis(
+		content: string,
+		createdBy: string,
+	): IResult<void, DomainError> {
+		if (!this.isSynthesizing) {
+			return Result.error(new NoSynthesisInProgressError());
+		}
+
+		this.change("synthesis", content);
+		this.change("synthesisStatus", "completed");
+		this.change("synthesisCreatedAt", new Date());
+		this.change("synthesisCreatedBy", createdBy);
+
+		return Result.success(undefined);
+	}
+
+	/**
+	 * @description
+	 * Mark synthesizing process as fail.
+	 */
+	public failSynthesis(): void {
+		if (this.isSynthesizing) {
+			this.change("synthesisStatus", "failed");
+		}
 	}
 }

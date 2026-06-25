@@ -8,6 +8,7 @@ import { RoomInformationMobile } from "./_/room-information/mobile";
 import { RoomOrchestration } from "./_/room-orchestration";
 import { RoomSettings } from "./_/room-settings";
 import { RoomTitle } from "./_/room-title";
+import { SynthesisSheetProvider } from "./_/synthesis-sheet-provider";
 
 export default async function RoomPage({
 	params,
@@ -32,6 +33,7 @@ export default async function RoomPage({
 					<RoomInformation />
 					<RoomInformationMobile />
 				</section>
+				<SynthesisSheetProvider />
 			</div>
 		</HydrationBoundary>
 	);

@@ -4,13 +4,21 @@ import { briom } from "@briom";
 import type {
 	ConcludeDeliberationInput,
 	DeleteRoomInput,
+	FailSynthesisInput,
+	FailSynthesisOutput,
 	FormRoomInput,
 	FormRoomOutput,
+	GenerateSynthesisInput,
+	GenerateSynthesisOutput,
 	GetRoomInput,
 	GetRoomOutput,
 	GetRoomsInput,
 	GetRoomsOutput,
+	InitiateSynthesisInput,
+	InitiateSynthesisOutput,
 	RenameRoomInput,
+	SaveSynthesisInput,
+	SaveSynthesisOutput,
 } from "@briom/app";
 import {
 	internalServerError,
@@ -94,6 +102,57 @@ export async function closeRoom(
 		revalidatePath("/rooms", "layout");
 		revalidatePath(`/rooms/${input.roomId}`, "page");
 		return parseResponse(undefined);
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function initiateSynthesis(
+	input: InitiateSynthesisInput,
+): Promise<ServerActionResult<InitiateSynthesisOutput>> {
+	try {
+		const result = await briom.rooms.initiateSynthesis(input);
+		if (result.isError()) return parseError(result.error());
+		revalidatePath(`/rooms/${input.roomId}`, "page");
+		return parseResponse(result.value());
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function generateSynthesis(
+	input: GenerateSynthesisInput,
+): Promise<ServerActionResult<GenerateSynthesisOutput>> {
+	try {
+		const result = await briom.rooms.generateSynthesis(input);
+		if (result.isError()) return parseError(result.error());
+		return parseResponse(result.value());
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function saveSynthesis(
+	input: SaveSynthesisInput,
+): Promise<ServerActionResult<SaveSynthesisOutput>> {
+	try {
+		const result = await briom.rooms.saveSynthesis(input);
+		if (result.isError()) return parseError(result.error());
+		revalidatePath(`/rooms/${input.roomId}`, "page");
+		return parseResponse(result.value());
+	} catch (error) {
+		return internalServerError(error);
+	}
+}
+
+export async function failSynthesis(
+	input: FailSynthesisInput,
+): Promise<ServerActionResult<FailSynthesisOutput>> {
+	try {
+		const result = await briom.rooms.failSynthesis(input);
+		if (result.isError()) return parseError(result.error());
+		revalidatePath(`/rooms/${input.roomId}`, "page");
+		return parseResponse(result.value());
 	} catch (error) {
 		return internalServerError(error);
 	}

@@ -69,7 +69,7 @@ export function RoomDeliberation({
 				ref={onScrollerLoaded}
 			>
 				{isFreshRoom ? (
-					<EmptySequence />
+					<EmptySequence participants={participants} />
 				) : (
 					<TurnSequence
 						onProposalAccepted={acceptProposal}

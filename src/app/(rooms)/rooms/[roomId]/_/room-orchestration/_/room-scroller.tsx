@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@briom/components/ui/button";
 import { cn } from "@briom/libs/utils";
 
