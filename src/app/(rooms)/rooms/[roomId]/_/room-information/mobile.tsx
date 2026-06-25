@@ -65,7 +65,6 @@ export function RoomInformationMobile() {
 							<RoomParticipants participants={room.participants} />
 							<RoomTimeline
 								multiDeliberation={multiDeliberation}
-								participants={room.participants}
 								turns={turns}
 							/>
 							<RoomDetails room={room} />

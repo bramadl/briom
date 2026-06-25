@@ -6,9 +6,12 @@ import rehypeKatex from "rehype-katex";
 import rehypeSanitize, { defaultSchema } from "rehype-sanitize";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
+import type { PluggableList } from "unified";
 import "katex/dist/katex.min.css";
 
 import { MarkdownComponents } from "./markdown-components";
+
+// ─── Module-level constants — never recreate on render ───────────────
 
 const sanitizeSchema = {
 	...defaultSchema,
@@ -21,6 +24,16 @@ const sanitizeSchema = {
 	},
 };
 
+const REHYPE_PLUGINS: PluggableList = [
+	rehypeHighlight,
+	[rehypeSanitize, sanitizeSchema],
+	rehypeKatex,
+];
+
+const REMARK_PLUGINS: PluggableList = [remarkGfm, remarkMath];
+
+// ─── Component ─────────────────────────────────────────────────────────
+
 interface TurnPerspectiveProps {
 	content: string;
 }
@@ -29,12 +42,8 @@ export function TurnPerspective({ content }: TurnPerspectiveProps) {
 	return (
 		<ReactMarkdown
 			components={MarkdownComponents}
-			rehypePlugins={[
-				rehypeHighlight,
-				[rehypeSanitize, sanitizeSchema],
-				rehypeKatex,
-			]}
-			remarkPlugins={[remarkGfm, remarkMath]}
+			rehypePlugins={REHYPE_PLUGINS}
+			remarkPlugins={REMARK_PLUGINS}
 		>
 			{content}
 		</ReactMarkdown>

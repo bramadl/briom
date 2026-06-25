@@ -25,7 +25,6 @@ export function useRoom(roomId: string) {
 		multiDeliberation,
 		streaming,
 		invalidate,
-		invalidateRoom: () => invalidateRoom(roomId),
 		room,
 		roomId,
 		turns: room.turns,

@@ -2,9 +2,10 @@ import { Logo } from "@briom/components/logo";
 import { Button } from "@briom/components/ui/button";
 import { SidebarTrigger } from "@briom/components/ui/sidebar";
 
+import { AutoOpenSidebar } from "./_/auto-open-sidebar";
 import { RoomFormDialogToggler } from "./_/room-form-provider/_/room-form-dialog-toggler";
 
-export default async function RoomsPage() {
+export default function RoomsPage() {
 	return (
 		<main className="relative min-h-full flex-1 flex items-center justify-center">
 			<Button
@@ -30,6 +31,7 @@ export default async function RoomsPage() {
 				</div>
 				<RoomFormDialogToggler />
 			</div>
+			<AutoOpenSidebar />
 		</main>
 	);
 }

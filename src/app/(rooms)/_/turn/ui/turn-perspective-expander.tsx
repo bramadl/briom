@@ -5,7 +5,6 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const DEFAULT_COLLAPSED_HEIGHT = 64;
-const FADE_START_PERCENT = 1;
 
 interface TurnPerspectiveExpanderProps {
 	children: React.ReactNode;
@@ -22,53 +21,40 @@ export function TurnPerspectiveExpander({
 	className,
 	isStreaming = false,
 }: TurnPerspectiveExpanderProps) {
-	const ref = useRef<HTMLDivElement>(null);
 	const [expanded, setExpanded] = useState(!defaultCollapsed);
-	const [fullHeight, setFullHeight] = useState<number | null>(null);
-	const rafRef = useRef<number | null>(null);
+	const contentRef = useRef<HTMLDivElement>(null);
+	const [isOverflowing, setIsOverflowing] = useState(false);
 
-	const measure = useCallback(() => {
-		if (!ref.current) return;
-		setFullHeight(ref.current.scrollHeight);
-	}, []);
+	const checkOverflow = useCallback(() => {
+		const el = contentRef.current;
+		if (!el || isStreaming) {
+			setIsOverflowing(false);
+			return;
+		}
+		setIsOverflowing(el.scrollHeight > collapsedHeight + 1);
+	}, [collapsedHeight, isStreaming]);
 
 	useEffect(() => {
-		if (isStreaming || !ref.current) return;
-
-		measure();
-		const observer = new ResizeObserver(() => {
-			if (rafRef.current !== null) return;
-			rafRef.current = requestAnimationFrame(() => {
-				rafRef.current = null;
-				measure();
-			});
-		});
-
-		observer.observe(ref.current);
-		return () => {
-			observer.disconnect();
-			if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-		};
-	}, [measure, isStreaming]);
+		checkOverflow();
+	}, [checkOverflow]);
 
 	useEffect(() => {
 		setExpanded(!defaultCollapsed);
 	}, [defaultCollapsed]);
 
-	const overflowing =
-		!isStreaming && fullHeight !== null && fullHeight > collapsedHeight + 1;
+	const showFade = isOverflowing && !expanded && !isStreaming;
+	const showToggle = isOverflowing && !isStreaming;
 
-	const showFade = overflowing && !expanded;
 	const maxHeight = isStreaming
 		? undefined
 		: expanded
-			? (fullHeight ?? undefined)
-			: overflowing
+			? undefined
+			: isOverflowing
 				? collapsedHeight
 				: undefined;
 
 	const maskImage = showFade
-		? `linear-gradient(to bottom, black ${FADE_START_PERCENT}%, transparent 100%)`
+		? `linear-gradient(to bottom, black 60%, transparent 100%)`
 		: undefined;
 
 	return (
@@ -79,12 +65,12 @@ export function TurnPerspectiveExpander({
 					isStreaming && "transition-none",
 					className,
 				)}
-				ref={ref}
+				ref={contentRef}
 				style={{ maxHeight, maskImage, WebkitMaskImage: maskImage }}
 			>
 				{children}
 			</div>
-			{overflowing && (
+			{showToggle && (
 				<button
 					className="mt-1.5 flex items-center gap-1 text-[11px] font-mono uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
 					onClick={() => setExpanded((v) => !v)}

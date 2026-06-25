@@ -64,6 +64,7 @@ export function TurnRenderer({
 					error={turn.error?.message ?? "Unknown error"}
 					isRetrying={isRetrying}
 					onRetried={() => retryMutation.mutate({ turnId: turn.id })}
+					showAbort={showAbort}
 					title="Perspective was not fully generated"
 				/>
 			</TurnPerspectiveExpander>

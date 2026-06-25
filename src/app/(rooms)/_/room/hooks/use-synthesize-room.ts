@@ -8,7 +8,7 @@ import {
 import { useRoomInvalidation } from "@briom/rooms/_/room/queries/invalidations/use-room.invalidation";
 import { useSynthesisSheetStore } from "@briom/rooms/_/room/store/use-synthesis-sheet-store";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useCallback } from "react";
 import { toast } from "sonner";
 
 interface UseSynthesizeRoomInput {
@@ -17,10 +17,6 @@ interface UseSynthesizeRoomInput {
 
 interface UseSynthesizeRoomReturn {
 	isLoading: boolean;
-	isSheetOpen: boolean;
-	setSheetOpen: (open: boolean) => void;
-	synthesisAuthor: string | null;
-	synthesisContent: string | null;
 	synthesize: (participantId: string) => Promise<void>;
 }
 
@@ -28,11 +24,6 @@ export function useSynthesizeRoom({
 	roomId,
 }: UseSynthesizeRoomInput): UseSynthesizeRoomReturn {
 	const { invalidate: invalidateRoom } = useRoomInvalidation();
-
-	const [isSheetOpen, setSheetOpen] = useState(false);
-	const [synthesisContent, setSynthesisContent] = useState<string | null>(null);
-	const [synthesisAuthor, setSynthesisAuthor] = useState<string | null>(null);
-
 	const openSheet = useSynthesisSheetStore((s) => s.open);
 
 	const initiateMutation = useMutation({
@@ -53,15 +44,11 @@ export function useSynthesizeRoom({
 				content,
 				createdBy,
 			});
-			if (isServerError(saveResult)) {
-				throw new Error(saveResult.error.message);
-			}
 
+			if (isServerError(saveResult)) throw new Error(saveResult.error.message);
 			return { content, createdBy };
 		},
-		onSuccess: (data) => {
-			setSynthesisContent(data.content);
-			setSynthesisAuthor(data.createdBy);
+		onSuccess: () => {
 			openSheet();
 			invalidateRoom(roomId);
 		},
@@ -72,16 +59,15 @@ export function useSynthesizeRoom({
 		},
 	});
 
-	const synthesize = async (participantId: string) => {
-		await initiateMutation.mutateAsync(participantId);
-	};
+	const synthesize = useCallback(
+		async (participantId: string) => {
+			await initiateMutation.mutateAsync(participantId);
+		},
+		[initiateMutation],
+	);
 
 	return {
 		isLoading: initiateMutation.isPending,
-		isSheetOpen,
-		synthesisContent,
-		synthesisAuthor,
 		synthesize,
-		setSheetOpen,
 	};
 }

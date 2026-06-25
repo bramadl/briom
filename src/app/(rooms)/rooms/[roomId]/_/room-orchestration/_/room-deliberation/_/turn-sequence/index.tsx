@@ -23,30 +23,42 @@ function TurnSequenceComponent({
 	const { roomId } = useParams<{ roomId: string }>();
 	const { multiDeliberation, room, turns } = useRoom(roomId);
 
-	const lastParticipantTurn = useMemo(() => {
-		return [...turns].reverse().find((t) => t.author.type === "participant");
-	}, [turns]);
+	const { participantByName, lastParticipantTurn } = useMemo(() => {
+		const byName = new Map<string, (typeof room.participants)[0]>();
+		for (const p of room.participants) {
+			byName.set(p.name, p);
+		}
+
+		const lastParticipant = [...turns]
+			.reverse()
+			.find((t) => t.author.type === "participant");
+
+		return {
+			participantByName: byName,
+			lastParticipantTurn: lastParticipant,
+		};
+	}, [room.participants, turns]);
 
 	return (
 		<div className="w-full max-w-3xl mx-auto px-8 flex flex-col gap-12 lg:gap-16 min-w-0">
-			{turns.map((turn) =>
-				turn.author.type === "moderator" ? (
+			{turns.map((turn) => {
+				const participant =
+					participantByName.get(turn.author.profile?.displayName ?? "") ??
+					room.participants[0];
+
+				return turn.author.type === "moderator" ? (
 					<ModeratorTurn key={turn.id} turn={turn} />
 				) : (
 					<ParticipantTurn
 						isLastTurn={lastParticipantTurn?.id === turn.id}
 						key={turn.id}
-						participant={
-							room.participants.find(
-								(p) => p.name === turn.author.profile?.id,
-							) ?? room.participants[0]
-						}
+						participant={participant}
 						showAbort={room.status === "deliberating"}
 						showIntent={multiDeliberation}
 						turn={turn}
 					/>
-				),
-			)}
+				);
+			})}
 			{showProposals && (
 				<TurnProposals onSelect={onProposalAccepted} proposals={proposals} />
 			)}

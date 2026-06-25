@@ -1,8 +1,12 @@
 import type {
 	RoomDeliberationConcludedPayload,
+	RoomDeliberationPausedPayload,
+	RoomDeliberationResumedPayload,
 	RoomDeliberationStartedPayload,
 	RoomDeliberationTurnDTO,
+	RoomFormedPayload,
 	RoomParticipantJoinedPayload,
+	RoomTurnRegisteredPayload,
 	TurnFailedPayload,
 	TurnInitiatedPayload,
 	TurnSettledPayload,
@@ -13,7 +17,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 import type { RoomEventName } from "./event-names";
 import { patchDeliberation } from "./helpers/query-patchers";
-import { bufferToken, flushTokenBuffer } from "./helpers/token-buffers";
+import { getTokenBufferManager } from "./helpers/token-buffers";
 
 type SseEventContext<TPayload = unknown> = {
 	data: TPayload;
@@ -25,11 +29,24 @@ type SseEventHandler<TPayload = unknown> = (
 	ctx: SseEventContext<TPayload>,
 ) => void;
 
-export const ROOM_EVENT_HANDLERS: Record<
-	RoomEventName,
-	// biome-ignore lint/suspicious/noExplicitAny: structural — no variance issues
-	SseEventHandler<any>
-> = {
+interface RoomEventPayloadMap {
+	"room:deliberation-concluded": RoomDeliberationConcludedPayload;
+	"room:deliberation-paused": RoomDeliberationPausedPayload;
+	"room:deliberation-resumed": RoomDeliberationResumedPayload;
+	"room:deliberation-started": RoomDeliberationStartedPayload;
+	"room:formed": RoomFormedPayload;
+	"room:participant-joined": RoomParticipantJoinedPayload;
+	"room:turn-registered": RoomTurnRegisteredPayload;
+	"turn:failed": TurnFailedPayload;
+	"turn:initiated": TurnInitiatedPayload;
+	"turn:settled": TurnSettledPayload;
+	"turn:started": TurnStreamStartedPayload;
+	"turn:token": TurnTokenPayload;
+}
+
+export const ROOM_EVENT_HANDLERS: {
+	[K in RoomEventName]: SseEventHandler<RoomEventPayloadMap[K]>;
+} = {
 	"room:deliberation-concluded": deliberationConcludedHandler,
 	"room:deliberation-paused": noopHandler,
 	"room:deliberation-resumed": noopHandler,
@@ -94,7 +111,7 @@ function turnFailedHandler({
 	queryClient,
 	roomId,
 }: SseEventContext<TurnFailedPayload>): void {
-	flushTokenBuffer();
+	getTokenBufferManager().flush();
 	patchDeliberation(queryClient, roomId, (room) => ({
 		...room,
 		turns: room.turns.map((turn) =>
@@ -151,7 +168,11 @@ function turnInitiatedHandler({
 		const profile =
 			data.authorType === "participant"
 				? participant
-					? { displayName: participant.name, model: participant.model }
+					? {
+							id: participant.id,
+							displayName: participant.name,
+							model: participant.model,
+						}
 					: null
 				: null;
 
@@ -165,6 +186,9 @@ function turnInitiatedHandler({
 			content: "",
 			status: "pending",
 			error: null,
+			createdAt: new Date().toISOString(),
+			failedAt: null,
+			settledAt: null,
 		};
 
 		const optimisticIndex = optimisticId
@@ -186,7 +210,7 @@ function turnSettledHandler({
 	queryClient,
 	roomId,
 }: SseEventContext<TurnSettledPayload>): void {
-	flushTokenBuffer();
+	getTokenBufferManager().flush();
 	patchDeliberation(queryClient, roomId, (room) => ({
 		...room,
 		turns: room.turns.map((turn) =>
@@ -220,5 +244,5 @@ function turnTokenHandler({
 	roomId,
 }: SseEventContext<TurnTokenPayload>): void {
 	if (!data.token) return;
-	bufferToken(queryClient, roomId, data.turnId, data.token);
+	getTokenBufferManager().buffer(queryClient, roomId, data.turnId, data.token);
 }

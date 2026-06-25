@@ -6,7 +6,7 @@ import type {
 import { getModeratorId } from "@briom/libs/faker";
 import { isServerError } from "@briom/libs/server-action";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useRoom } from "../../room/hooks/use-room";
 import { useTurnProposals } from "../../turn/hooks/use-turn-proposals";
@@ -17,64 +17,109 @@ import { useInitiateTopicTurnMutation } from "../../turn/mutations/use-initiate-
 
 import type { Mentionee } from "../editor/helpers/mention-extractor";
 
-export function useDeliberation() {
-	const { roomId } = useParams<{ roomId: string }>();
+const actives = ["pending", "streaming"];
+
+// ─── Derived State Hook ──────────────────────────────────────────────
+
+function useDeliberationState(roomId: string) {
 	const { room, fresh, multiDeliberation, turns } = useRoom(roomId);
 	const { proposals, invalidate: invalidateTurnProposals } =
 		useTurnProposals(roomId);
 
 	const [isSendingModerator, setIsSendingModerator] = useState(false);
-	const isParticipantActive = useMemo(
-		() => turns.some((t) => t.status === "pending" || t.status === "streaming"),
-		[turns],
-	);
+	const [hasAccepted, setHasAccepted] = useState(false);
 
 	const isConcluded = room.status === "concluded";
+	const isParticipantActive = turns.some((t) => actives.includes(t.status));
 	const isSequencing = isSendingModerator || isParticipantActive;
-	const streamingTurnId = useMemo(
-		() =>
-			turns.findLast((t) => t.status === "streaming" || t.status === "pending")
-				?.id ?? null,
-		[turns],
-	);
 
-	const { mutateAsync: initiateTopic } = useInitiateTopicTurnMutation();
-	const { mutateAsync: initiateModerator } = useInitiateModeratorTurnMutation();
-	const { mutate: initiateParticipant } = useInitiateParticipantTurnMutation();
-	const { mutate: abortTurn } = useAbortTurnMutation();
-
-	const [hasAccepted, setHasAccepted] = useState(false);
 	useEffect(() => {
 		if (!isSequencing) setHasAccepted(false);
 	}, [isSequencing]);
 
+	const streamingTurnId = useMemo(() => {
+		return (
+			turns.findLast((t) => t.status === "streaming" || t.status === "pending")
+				?.id ?? null
+		);
+	}, [turns]);
+
+	return {
+		fresh,
+		hasAccepted,
+		invalidateTurnProposals,
+		isConcluded,
+		isParticipantActive,
+		isSendingModerator,
+		isSequencing,
+		multiDeliberation,
+		proposals,
+		room,
+		roomId,
+		setHasAccepted,
+		setIsSendingModerator,
+		streamingTurnId,
+		turns,
+	};
+}
+
+// ─── Turn Sequencing Hook ────────────────────────────────────────────
+
+function useTurnSequencing(state: ReturnType<typeof useDeliberationState>) {
+	const {
+		fresh,
+		invalidateTurnProposals,
+		isParticipantActive,
+		multiDeliberation,
+		room,
+		roomId,
+		setHasAccepted,
+		setIsSendingModerator,
+		turns,
+	} = state;
+
+	const { mutateAsync: initiateTopic } = useInitiateTopicTurnMutation();
+	const { mutateAsync: initiateModerator } = useInitiateModeratorTurnMutation();
+	const { mutate: initiateParticipant } = useInitiateParticipantTurnMutation();
+
+	const invalidateRef = useRef(invalidateTurnProposals);
+	invalidateRef.current = invalidateTurnProposals;
+
+	const releaseModeratorFlag = useCallback(() => {
+		setIsSendingModerator(false);
+		invalidateRef.current(roomId);
+	}, [setIsSendingModerator, roomId]);
+
 	const acceptProposal = useCallback(
-		(proposal: TurnProposalDTO) => {
+		({ participantId, intent }: TurnProposalDTO) => {
 			setHasAccepted(true);
 
-			if (!multiDeliberation || isSequencing) return;
+			if (!multiDeliberation || isParticipantActive) return;
 			initiateParticipant(
-				{
-					roomId,
-					participantId: proposal.participantId,
-					intent: proposal.intent,
-				},
-				{ onSettled: () => invalidateTurnProposals(roomId) },
+				{ roomId, participantId, intent },
+				{ onSettled: () => invalidateRef.current(roomId) },
 			);
 		},
 		[
 			multiDeliberation,
-			isSequencing,
+			isParticipantActive,
 			roomId,
 			initiateParticipant,
-			invalidateTurnProposals,
+			setHasAccepted,
 		],
 	);
 
-	const releaseModeratorFlag = useCallback(() => {
-		setIsSendingModerator(false);
-		invalidateTurnProposals(roomId);
-	}, [invalidateTurnProposals, roomId]);
+	const lastActiveParticipantId = useMemo(() => {
+		const lastTurn = turns.at(-1);
+		if (lastTurn?.author.type === "participant") {
+			return (
+				room.participants.find(
+					(p) => p.name === lastTurn.author.profile?.displayName,
+				)?.id ?? null
+			);
+		}
+		return null;
+	}, [turns, room.participants]);
 
 	const sequenceTurns = useCallback(
 		async (content: string, mentionedParticipants: Mentionee[]) => {
@@ -91,19 +136,21 @@ export function useDeliberation() {
 				roomId,
 			};
 
+			const handleError = () => {
+				setIsSendingModerator(false);
+				invalidateRef.current(roomId);
+			};
+
+			// ───── Fresh room: topic turn ──────────────────────────────────────────
 			if (fresh) {
 				const result = await initiateTopic(turnPayload);
-				if (isServerError(result) || !firstParticipant) {
-					setIsSendingModerator(false);
-					invalidateTurnProposals(roomId);
-					return;
-				}
+				if (isServerError(result) || !firstParticipant) return handleError();
 
 				const nextToRespond = multiDeliberation
 					? (mentionedParticipants.find((m) => m.isPrimary) ?? firstParticipant)
 					: firstParticipant;
 
-				initiateParticipant(
+				return initiateParticipant(
 					{
 						roomId,
 						participantId: nextToRespond.id,
@@ -111,64 +158,46 @@ export function useDeliberation() {
 					},
 					{ onSettled: releaseModeratorFlag },
 				);
-
-				return;
 			}
 
+			// ───── Single deliberation: moderator + direct ──────────────────────
 			if (!multiDeliberation) {
 				const result = await initiateModerator(turnPayload);
-				if (isServerError(result) || !firstParticipant) {
-					setIsSendingModerator(false);
-					invalidateTurnProposals(roomId);
-					return;
-				}
+				if (isServerError(result) || !firstParticipant) return handleError();
 
-				initiateParticipant(
+				return initiateParticipant(
 					{ roomId, participantId: firstParticipant.id, intent: "direct" },
 					{ onSettled: releaseModeratorFlag },
 				);
-
-				return;
 			}
 
+			// ───── Multi deliberation: moderator + smart response ────────────────
 			const result = await initiateModerator(turnPayload);
-			if (isServerError(result)) {
-				setIsSendingModerator(false);
-				invalidateTurnProposals(roomId);
-				return;
-			}
+			if (isServerError(result)) return handleError();
 
 			const primaryMention = mentionedParticipants.find((m) => m.isPrimary);
 			if (primaryMention) {
-				initiateParticipant(
+				return initiateParticipant(
 					{ roomId, participantId: primaryMention.id, intent: "direct" },
 					{ onSettled: releaseModeratorFlag },
 				);
-			} else {
-				const lastTurn = turns.at(-1);
-				const lastActiveParticipantId =
-					lastTurn?.author.type === "participant"
-						? (room.participants.find(
-								(p) => p.name === lastTurn.author.profile?.displayName,
-							)?.id ?? null)
-						: null;
+			}
 
-				const candidates = room.participants.filter(
-					(p) => p.id !== lastActiveParticipantId,
+			// Round-robin: exclude last active, fallback to all
+			const candidates = room.participants.filter(
+				(p) => p.id !== lastActiveParticipantId,
+			);
+
+			const pool = candidates.length > 0 ? candidates : room.participants;
+			const randomParticipant = pool[Math.floor(Math.random() * pool.length)];
+
+			if (randomParticipant) {
+				return initiateParticipant(
+					{ roomId, participantId: randomParticipant.id, intent: "respond" },
+					{ onSettled: releaseModeratorFlag },
 				);
-
-				const pool = candidates.length > 0 ? candidates : room.participants;
-				const randomParticipant = pool[Math.floor(Math.random() * pool.length)];
-
-				if (randomParticipant) {
-					initiateParticipant(
-						{ roomId, participantId: randomParticipant.id, intent: "respond" },
-						{ onSettled: releaseModeratorFlag },
-					);
-				} else {
-					setIsSendingModerator(false);
-					invalidateTurnProposals(roomId);
-				}
+			} else {
+				handleError();
 			}
 		},
 		[
@@ -176,36 +205,61 @@ export function useDeliberation() {
 			multiDeliberation,
 			room.participants,
 			roomId,
-			turns,
+			lastActiveParticipantId,
 			initiateModerator,
 			initiateParticipant,
 			initiateTopic,
 			releaseModeratorFlag,
-			invalidateTurnProposals,
+			setIsSendingModerator,
 		],
 	);
+
+	return { acceptProposal, releaseModeratorFlag, sequenceTurns };
+}
+
+// ─── Abort Hook ──────────────────────────────────────────────────────
+
+function useAbortStreaming(streamingTurnId: string | null) {
+	const { mutate: abortTurn } = useAbortTurnMutation();
 
 	const abortStreaming = useCallback(() => {
 		if (!streamingTurnId) return;
 		abortTurn({ turnId: streamingTurnId });
 	}, [abortTurn, streamingTurnId]);
 
+	return abortStreaming;
+}
+
+// ─── Main Hook ───────────────────────────────────────────────────────
+
+export function useDeliberation() {
+	const { roomId } = useParams<{ roomId: string }>();
+	const state = useDeliberationState(roomId);
+
+	const { acceptProposal, sequenceTurns } = useTurnSequencing(state);
+	const abortStreaming = useAbortStreaming(state.streamingTurnId);
+
+	const canAcceptProposal =
+		!state.isConcluded &&
+		!state.isSequencing &&
+		state.proposals.length > 0 &&
+		!state.hasAccepted;
+
 	return {
 		abortStreaming,
 		acceptProposal,
-		canAbort: isParticipantActive,
-		canAcceptProposal:
-			!isConcluded && !isSequencing && proposals.length > 0 && !hasAccepted,
-		fresh,
-		isConcluded,
-		isParticipantActive,
-		isSendingModerator,
-		isSequencing,
-		multiDeliberation,
-		participants: room.participants,
-		proposals,
-		room,
+		canAbort: state.isParticipantActive,
+		canAcceptProposal,
+		fresh: state.fresh,
+		isConcluded: state.isConcluded,
+		isParticipantActive: state.isParticipantActive,
+		isSendingModerator: state.isSendingModerator,
+		isSequencing: state.isSequencing,
+		multiDeliberation: state.multiDeliberation,
+		participants: state.room.participants,
+		proposals: state.proposals,
+		room: state.room,
 		sequenceTurns,
-		turns,
+		turns: state.turns,
 	};
 }

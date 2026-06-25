@@ -41,11 +41,7 @@ export function RoomInformation() {
 			/>
 			<RoomTopic topic={room.topic} />
 			<RoomParticipants participants={room.participants} />
-			<RoomTimeline
-				multiDeliberation={multiDeliberation}
-				participants={room.participants}
-				turns={turns}
-			/>
+			<RoomTimeline multiDeliberation={multiDeliberation} turns={turns} />
 			<RoomDetails room={room} />
 			<Separator />
 		</Accordion>

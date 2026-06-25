@@ -1,12 +1,18 @@
+"use client";
+
 import { supabaseClient } from "@briom/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 import { useRoomInvalidation } from "../queries/invalidations/use-room.invalidation";
 import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
 
 import { ROOM_EVENT_HANDLERS } from "./event-handlers";
 import { ROOM_EVENT_NAMES } from "./event-names";
+import {
+	destroyTokenBufferManager,
+	getTokenBufferManager,
+} from "./helpers/token-buffers";
 
 interface UseRoomSSEOptions {
 	onTurnInitiated?: () => void;
@@ -17,6 +23,15 @@ export function useRoomSSE({ onTurnInitiated, roomId }: UseRoomSSEOptions) {
 	const queryClient = useQueryClient();
 	const { invalidate: invalidateRooms } = useRoomsInvalidation();
 	const { invalidate: invalidateRoom } = useRoomInvalidation();
+
+	const onTurnInitiatedRef = useRef(onTurnInitiated);
+	onTurnInitiatedRef.current = onTurnInitiated;
+
+	const invalidateRoomsRef = useRef(invalidateRooms);
+	invalidateRoomsRef.current = invalidateRooms;
+
+	const invalidateRoomRef = useRef(invalidateRoom);
+	invalidateRoomRef.current = invalidateRoom;
 
 	useEffect(() => {
 		const channel = supabaseClient.channel(`room:${roomId}`);
@@ -30,10 +45,14 @@ export function useRoomSSE({ onTurnInitiated, roomId }: UseRoomSSEOptions) {
 				}
 
 				handler({ data: payload, queryClient, roomId });
-				if (eventName === "turn:initiated") onTurnInitiated?.();
-				if (eventName === "turn:settled") {
-					invalidateRooms();
-					invalidateRoom(roomId);
+				switch (eventName) {
+					case "turn:initiated":
+						onTurnInitiatedRef.current?.();
+						break;
+					case "turn:settled":
+						invalidateRoomsRef.current();
+						invalidateRoomRef.current(roomId);
+						break;
 				}
 			});
 		}
@@ -45,6 +64,10 @@ export function useRoomSSE({ onTurnInitiated, roomId }: UseRoomSSEOptions) {
 			}
 		});
 
-		return () => void supabaseClient.removeChannel(channel);
-	}, [invalidateRooms, invalidateRoom, onTurnInitiated, queryClient, roomId]);
+		return () => {
+			getTokenBufferManager().flush();
+			destroyTokenBufferManager();
+			supabaseClient.removeChannel(channel);
+		};
+	}, [queryClient, roomId]);
 }

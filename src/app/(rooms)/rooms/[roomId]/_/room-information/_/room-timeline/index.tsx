@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDeliberationDTO, RoomDeliberationTurnDTO } from "@briom/app";
+import type { RoomDeliberationTurnDTO } from "@briom/app";
 import {
 	AccordionContent,
 	AccordionExpander,
@@ -8,22 +8,19 @@ import {
 } from "@briom/components/ui/accordion";
 import { cn } from "@briom/libs/utils";
 import { useTimeline } from "@briom/rooms/_/deliberation/hooks/use-timeline";
+import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
 
 import { TimelineBar } from "./_/timeline-bar";
 
 interface RoomTimelineProps {
 	multiDeliberation?: boolean;
-	participants: RoomDeliberationDTO["participants"];
 	turns: RoomDeliberationTurnDTO[];
 }
 
-export function RoomTimeline({
-	multiDeliberation,
-	participants,
-	turns,
-}: RoomTimelineProps) {
-	const { calculateLogarithmicWidth, handleScrollToTurn, participantMap } =
-		useTimeline({ participants, turns });
+export function RoomTimeline({ multiDeliberation, turns }: RoomTimelineProps) {
+	const { calculateLogarithmicWidth, handleScrollToTurn } = useTimeline({
+		turns,
+	});
 
 	return (
 		<AccordionItem value="timeline">
@@ -39,20 +36,25 @@ export function RoomTimeline({
 						const isStreaming = turn.status === "streaming";
 						const isFailed = turn.status === "failed";
 
-						const moderator = turn.author.type === "moderator";
-						const participant = turn.author.profile?.id
-							? (participantMap.get(turn.author.profile?.id) ?? null)
+						const isModerator = turn.author.type === "moderator";
+						const participant = turn.author.profile
+							? {
+									id: turn.author.profile.id,
+									model: turn.author.profile.model,
+									name: turn.author.profile.displayName,
+								}
 							: null;
 
-						const participantColor =
-							!moderator && participant ? participant.theme : null;
+						const participantColor = participant
+							? getParticipantTheme(turn.author.profile?.id)
+							: null;
 
 						const barColorClass = isFailed
 							? "bg-destructive"
 							: participantColor?.dot || "bg-primary";
 
 						const barWidth = (() => {
-							if (isPending) return "30%";
+							if (isPending) return "25%";
 							if (isFailed) return "100%";
 							return calculateLogarithmicWidth(turn.content);
 						})();
@@ -68,7 +70,7 @@ export function RoomTimeline({
 							<TimelineBar
 								className={barClass}
 								isError={isFailed}
-								isModeratorTurn={moderator}
+								isModeratorTurn={isModerator}
 								key={turn.id}
 								onClick={() => handleScrollToTurn(turn.id)}
 								participant={participant}

@@ -2,7 +2,7 @@
 
 import { cn } from "@briom/libs/utils";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 import { INSERT_MENTION_COMMAND } from "../extensions/mention.extension";
@@ -43,28 +43,55 @@ export function MentionPopup({ entities }: MentionPopupProps) {
 		[editor],
 	);
 
+	const filteredRef = useRef(filtered);
+	filteredRef.current = filtered;
+
+	const selectedIndexRef = useRef(selectedIndex);
+	selectedIndexRef.current = selectedIndex;
+
+	const storeRef = useRef(store);
+	storeRef.current = store;
+
+	const insertRef = useRef(insert);
+	insertRef.current = insert;
+
 	useEffect(() => {
 		if (!visible) return;
+
 		const handler = (e: KeyboardEvent) => {
+			const activeElement = document.activeElement;
+			const editorRoot = editor.getRootElement();
+			const isEditorFocused = editorRoot?.contains(activeElement) ?? false;
+
+			if (!isEditorFocused && activeElement !== editorRoot) {
+				storeRef.current.visible.value = false;
+				return;
+			}
+
 			if (e.key === "ArrowDown") {
 				e.preventDefault();
-				store.selectedIndex.value = (selectedIndex + 1) % filtered.length;
+				const items = filteredRef.current;
+				const nextIndex = (selectedIndexRef.current + 1) % items.length;
+				storeRef.current.selectedIndex.value = nextIndex;
 			} else if (e.key === "ArrowUp") {
 				e.preventDefault();
-				store.selectedIndex.value =
-					(selectedIndex - 1 + filtered.length) % filtered.length;
+				const items = filteredRef.current;
+				const prevIndex =
+					(selectedIndexRef.current - 1 + items.length) % items.length;
+				storeRef.current.selectedIndex.value = prevIndex;
 			} else if (e.key === "Enter") {
 				e.preventDefault();
 				e.stopPropagation();
-				const item = filtered[selectedIndex];
-				if (item) insert(item);
+				const item = filteredRef.current[selectedIndexRef.current];
+				if (item) insertRef.current(item);
 			} else if (e.key === "Escape") {
-				store.visible.value = false;
+				storeRef.current.visible.value = false;
 			}
 		};
+
 		window.addEventListener("keydown", handler, true);
 		return () => window.removeEventListener("keydown", handler, true);
-	}, [visible, filtered, selectedIndex, store, insert]);
+	}, [visible, editor]);
 
 	if (!visible || filtered.length === 0) return null;
 

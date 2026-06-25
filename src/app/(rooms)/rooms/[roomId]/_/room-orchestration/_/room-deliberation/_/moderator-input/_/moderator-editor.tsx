@@ -11,8 +11,15 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { EditorRefPlugin } from "@lexical/react/LexicalEditorRefPlugin";
 import { LexicalExtensionComposer } from "@lexical/react/LexicalExtensionComposer";
-import { defineExtension, type LexicalEditor } from "lexical";
-import { useEffect, useMemo } from "react";
+import {
+	defineExtension,
+	type ExtensionConfigBase,
+	type LexicalEditor,
+	type LexicalExtension,
+} from "lexical";
+import { useEffect, useMemo, useRef } from "react";
+
+// ─── Bridges ─────────────────────────────────────────────────────────
 
 function EmptyStateBridge({
 	onEmptyChange,
@@ -23,7 +30,6 @@ function EmptyStateBridge({
 	useEffect(() => {
 		onEmptyChange?.(isEmpty);
 	}, [isEmpty, onEmptyChange]);
-
 	return null;
 }
 
@@ -40,9 +46,49 @@ function SubmitBridge({ onSend }: { onSend?: () => void }) {
 			0,
 		);
 	}, [editor, onSend]);
-
 	return null;
 }
+
+// ─── Draft Extension Factory ─────────────────────────────────────────
+
+function useModeratorEditorExtension(
+	draftKey: string | undefined,
+	clearDraftRef?: React.RefObject<(() => void) | null>,
+) {
+	const draftKeyRef = useRef(draftKey);
+	draftKeyRef.current = draftKey;
+
+	const clearDraftRefStable = useRef(clearDraftRef);
+	clearDraftRefStable.current = clearDraftRef;
+
+	// biome-ignore lint/correctness/useExhaustiveDependencies: Stable — never recreate extension definition
+	return useMemo(() => {
+		const deps: LexicalExtension<
+			ExtensionConfigBase,
+			"@briom/lexical/ChatEditor" | "@briom/lexical/Drafting",
+			unknown,
+			unknown
+		>[] = [ChatEditorExtension];
+
+		if (draftKey) {
+			deps.push(
+				createDraftingExtension({
+					draftKey,
+					onClearRef: clearDraftRef?.current
+						? { current: clearDraftRef.current }
+						: undefined,
+				}),
+			);
+		}
+
+		return defineExtension({
+			name: "@briom/lexical/ModeratorEditor",
+			dependencies: deps,
+		});
+	}, []);
+}
+
+// ─── Main Component ──────────────────────────────────────────────────
 
 interface ModeratorEditorProps {
 	clearDraftRef?: React.RefObject<(() => void) | null>;
@@ -63,24 +109,9 @@ export function ModeratorEditor({
 	onSend,
 	placeholder = "Enter something",
 }: ModeratorEditorProps) {
-	const extension = useMemo(() => {
-		if (!draftKey) return ChatEditorExtension;
-
-		return defineExtension({
-			name: "@briom/lexical/ModeratorEditor",
-			dependencies: [
-				ChatEditorExtension,
-				createDraftingExtension({ draftKey, onClearRef: clearDraftRef }),
-			],
-		});
-	}, [draftKey, clearDraftRef]);
-
+	const extension = useModeratorEditorExtension(draftKey, clearDraftRef);
 	return (
-		<LexicalExtensionComposer
-			contentEditable={null}
-			extension={extension}
-			key={draftKey}
-		>
+		<LexicalExtensionComposer contentEditable={null} extension={extension}>
 			<ContentEditable
 				aria-placeholder={placeholder}
 				className={cn(
