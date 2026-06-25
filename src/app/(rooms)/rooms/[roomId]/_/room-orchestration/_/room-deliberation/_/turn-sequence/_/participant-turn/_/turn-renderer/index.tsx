@@ -1,3 +1,15 @@
+/**
+ * @file turn-renderer/index.tsx
+ * @path src/app/(rooms)/rooms/[roomId]/_/room-orchestration/_/room-deliberation/_/turn-sequence/_/participant-turn/_/turn-renderer/index.tsx
+ *
+ * ## Streaming Optimization
+ *
+ * Accepts `content`, `isFailed`, `isPending`, `isStreaming` as explicit props
+ * instead of deriving them from `turn.status` / `turn.content`. This allows
+ * the parent `ParticipantTurn` to inject live values from the Zustand stream
+ * store without this component needing to know where data comes from.
+ */
+
 "use client";
 
 import type { RoomDeliberationTurnDTO } from "@briom/app";
@@ -9,25 +21,29 @@ import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective
 import { FailedTurn } from "./_/failed-turn";
 
 interface TurnRendererProps {
-	canAbort?: boolean;
+	/** Live content from stream store (or settled content from query cache) */
+	content: string;
+	isFailed: boolean;
 	isLastTurn?: boolean;
+	isPending: boolean;
+	isStreaming: boolean;
 	showAbort?: boolean;
+	/** Original turn object — used only for error details and retry ID */
 	turn: RoomDeliberationTurnDTO;
 }
 
 export function TurnRenderer({
+	content,
+	isFailed,
 	isLastTurn,
+	isPending,
+	isStreaming,
 	showAbort,
 	turn,
 }: TurnRendererProps) {
 	const retryMutation = useRetryTurnMutation();
 
-	const content = turn.content;
 	const hasContent = content.trim().length > 0;
-
-	const isFailed = turn.status === "failed";
-	const isPending = turn.status === "pending";
-	const isStreaming = turn.status === "streaming";
 	const isRetrying = retryMutation.isPending || isPending || isStreaming;
 
 	if (!hasContent) {
@@ -64,7 +80,6 @@ export function TurnRenderer({
 					error={turn.error?.message ?? "Unknown error"}
 					isRetrying={isRetrying}
 					onRetried={() => retryMutation.mutate({ turnId: turn.id })}
-					showAbort={showAbort}
 					title="Perspective was not fully generated"
 				/>
 			</TurnPerspectiveExpander>

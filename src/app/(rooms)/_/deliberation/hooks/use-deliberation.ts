@@ -1,3 +1,26 @@
+/**
+ * @file use-deliberation.ts
+ * @path src/app/(rooms)/_/deliberation/hooks/use-deliberation.ts
+ *
+ * ## Streaming Optimization
+ *
+ * `isParticipantActive` is now derived from `useTurnStreamStore` instead of
+ * scanning `turns.some((t) => actives.includes(t.status))` from the query cache.
+ *
+ * **Why this matters:**
+ * In the old architecture, every token caused a `setQueryData` which updated
+ * the turn's `status` in the cache. `useDeliberation` subscribed to the full
+ * query, so it re-rendered on every token — and everything downstream that
+ * read from it (RoomDeliberation, ModeratorInput, etc.) also re-rendered.
+ *
+ * Now, `isParticipantActive` is derived from `streamingTurnId !== null` in the
+ * Zustand store. The query cache is only updated on `turn:settled` (once per
+ * turn), so `useRoom` no longer fires during streaming at all.
+ *
+ * `isSendingModerator` remains a local flag (unchanged) — it covers the brief
+ * gap between submitting a moderator turn and receiving `turn:initiated` SSE.
+ */
+
 import type {
 	InitiateModeratorTurnInput,
 	InitiateTopicTurnInput,
@@ -9,6 +32,10 @@ import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useRoom } from "../../room/hooks/use-room";
+import {
+	useIsAnyTurnStreaming,
+	useStreamingTurnId,
+} from "../../turn/hooks/use-streaming-turn";
 import { useTurnProposals } from "../../turn/hooks/use-turn-proposals";
 import { useAbortTurnMutation } from "../../turn/mutations/use-abort-turn.mutation";
 import { useInitiateModeratorTurnMutation } from "../../turn/mutations/use-initiate-moderator-turn.mutation";
@@ -16,8 +43,6 @@ import { useInitiateParticipantTurnMutation } from "../../turn/mutations/use-ini
 import { useInitiateTopicTurnMutation } from "../../turn/mutations/use-initiate-topic-turn.mutation";
 
 import type { Mentionee } from "../editor/helpers/mention-extractor";
-
-const actives = ["pending", "streaming"];
 
 // ─── Derived State Hook ──────────────────────────────────────────────
 
@@ -30,19 +55,20 @@ function useDeliberationState(roomId: string) {
 	const [hasAccepted, setHasAccepted] = useState(false);
 
 	const isConcluded = room.status === "concluded";
-	const isParticipantActive = turns.some((t) => actives.includes(t.status));
+
+	// OPTIMIZATION: Read streaming status from Zustand store, not query cache.
+	// The store is updated synchronously on every SSE event.
+	// The query cache is only updated on turn:settled (once per turn).
+	const isParticipantActive = useIsAnyTurnStreaming();
+
+	// streamingTurnId for abort — also from store (avoids scan over turns array)
+	const streamingTurnId = useStreamingTurnId();
+
 	const isSequencing = isSendingModerator || isParticipantActive;
 
 	useEffect(() => {
 		if (!isSequencing) setHasAccepted(false);
 	}, [isSequencing]);
-
-	const streamingTurnId = useMemo(() => {
-		return (
-			turns.findLast((t) => t.status === "streaming" || t.status === "pending")
-				?.id ?? null
-		);
-	}, [turns]);
 
 	return {
 		fresh,
