@@ -2,15 +2,20 @@
 
 import { useRoomSSE } from "@briom/rooms/_/room/hooks/use-room-sse";
 import { useRoomScroller } from "@briom/rooms/_/room/scroller/use-room-scroller";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";
-import { RoomDeliberation } from "./_/room-deliberation";
+
 import { RoomLoader } from "./_/room-loader";
 import { RoomScroller } from "./_/room-scroller";
 
+const RoomDeliberation = dynamic(
+	async () => (await import("./_/room-deliberation")).RoomDeliberation,
+	{ loading: RoomLoader, ssr: false },
+);
+
 export function RoomOrchestration() {
 	const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
-	const [isLoaded, setIsLoaded] = useState(false);
 
 	const {
 		isNearBottomRef,
@@ -23,7 +28,6 @@ export function RoomOrchestration() {
 	useRoomSSE({ roomId });
 
 	const handleLoaded = useCallback(() => {
-		setIsLoaded(true);
 		scrollToBottom("instant");
 	}, [scrollToBottom]);
 
@@ -41,7 +45,6 @@ export function RoomOrchestration() {
 
 	return (
 		<div className="relative min-w-0 min-h-0 h-full flex-1 flex flex-col overflow-hidden">
-			{!isLoaded && <RoomLoader />}
 			<RoomDeliberation
 				isNearBottomRef={isNearBottomRef}
 				onLoaded={handleLoaded}
