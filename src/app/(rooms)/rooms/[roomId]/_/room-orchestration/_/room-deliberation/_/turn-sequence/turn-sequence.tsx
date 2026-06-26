@@ -6,7 +6,7 @@ import { useParams } from "next/navigation";
 import { memo, useMemo } from "react";
 
 import { ModeratorTurn } from "./_/moderator-turn";
-import { ParticipantTurn } from "./_/participant-turn";
+import { ParticipantTurn } from "./_/participant-turn/participant-turn";
 import { TurnProposals } from "./_/turn-proposals";
 
 interface TurnSequenceProps {

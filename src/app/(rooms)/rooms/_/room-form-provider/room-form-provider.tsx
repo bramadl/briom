@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 
-import { RoomForm } from "./_/room-form";
+import { RoomForm } from "./_/room-form/room-form";
 import { RoomFormDialog } from "./_/room-form-dialog";
 
 export function RoomFormProvider() {

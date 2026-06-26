@@ -13,7 +13,7 @@ import { Fragment, memo } from "react";
 
 import { ParticipantInfo } from "./_/turn-info";
 import { TurnPending } from "./_/turn-pending";
-import { TurnRenderer } from "./_/turn-renderer";
+import { TurnRenderer } from "./_/turn-renderer/turn-renderer";
 
 interface ParticipantTurnProps {
 	isLastTurn?: boolean;

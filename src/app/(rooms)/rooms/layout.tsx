@@ -5,11 +5,11 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { prefetchModels } from "../_/participant/queries/services/prefetch-models";
 import { prefetchRooms } from "../_/room/queries/services/prefetch-rooms";
 
-import { ModeratorMenu } from "./_/moderator-menu";
+import { ModeratorMenu } from "./_/moderator-menu/moderator-menu";
 import { RoomCollapsibleSidebar } from "./_/room-collapsible-sidebar";
-import { RoomFormProvider } from "./_/room-form-provider";
-import { RoomList } from "./_/room-list";
-import { RoomSidebar } from "./_/room-sidebar";
+import { RoomFormProvider } from "./_/room-form-provider/room-form-provider";
+import { RoomList } from "./_/room-list/room-list";
+import { RoomSidebar } from "./_/room-sidebar/room-sidebar";
 import { RoomWorkspace } from "./_/room-workspace";
 
 const user = getUser();

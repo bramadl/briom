@@ -5,8 +5,8 @@ import {
 	HoverCardTrigger,
 } from "@briom/components/ui/hover-card";
 
-import { RoomDetails } from "./_/room-details";
-import { RoomInformation } from "./_/room-information";
+import { RoomDetails } from "./_/room-details/room-details";
+import { RoomInformation } from "./_/room-information/room-information";
 
 export interface RoomHoverCardProps {
 	isActive?: boolean;

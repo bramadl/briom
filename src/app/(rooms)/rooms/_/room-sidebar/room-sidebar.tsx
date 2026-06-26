@@ -7,7 +7,7 @@ import {
 	SidebarHeader,
 } from "@briom/components/ui/sidebar";
 
-import { RoomList } from "../room-list";
+import { RoomList } from "../room-list/room-list";
 
 import { SidebarExpander } from "./_/sidebar-expander";
 import { SidebarQuickActions } from "./_/sidebar-quick-actions";

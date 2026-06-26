@@ -5,8 +5,8 @@ import { useTurnStreamStore } from "@briom/rooms/_/deliberation/hooks/use-turn-s
 import { useEffect, useRef } from "react";
 
 import { EmptySequence } from "./_/empty-sequence";
-import { ModeratorInput } from "./_/moderator-input";
-import { TurnSequence } from "./_/turn-sequence";
+import { ModeratorInput } from "./_/moderator-input/moderator-input";
+import { TurnSequence } from "./_/turn-sequence/turn-sequence";
 
 interface RoomDeliberationProps extends React.PropsWithChildren {
 	isNearBottomRef: React.RefObject<boolean>;

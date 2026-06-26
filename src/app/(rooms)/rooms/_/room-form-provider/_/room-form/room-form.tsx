@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { RoomFormActions } from "./_/room-form-actions";
-import { RoomFormParticipants } from "./_/room-form-participants";
+import { RoomFormParticipants } from "./_/room-form-participants/room-form-participants";
 import { RoomTitleField } from "./_/room-title-field";
 
 interface RoomFormProps {

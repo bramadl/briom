@@ -17,9 +17,9 @@ import { useParams } from "next/navigation";
 import { Fragment, useState } from "react";
 
 import { RoomDetails } from "./_/room-details";
-import { RoomParticipants } from "./_/room-participants";
+import { RoomParticipants } from "./_/room-participants/room-participants";
 import { RoomSynthesis } from "./_/room-synthesis";
-import { RoomTimeline } from "./_/room-timeline";
+import { RoomTimeline } from "./_/room-timeline/room-timeline";
 import { RoomTopic } from "./_/room-topic";
 
 export function RoomInformationMobile() {

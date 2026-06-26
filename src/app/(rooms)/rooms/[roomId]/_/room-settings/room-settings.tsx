@@ -15,12 +15,12 @@ import { EllipsisVertical } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Fragment } from "react/jsx-runtime";
 
-import { ArchiveRoom } from "./_/archive-room";
-import { CloseRoom } from "./_/close-room";
-import { ConcludeRoom } from "./_/conclude-room";
-import { InviteParticipant } from "./_/invite-participant";
-import { ShareRoom } from "./_/share-room";
-import { SynthesizeRoom } from "./_/synthesize-room";
+import { ArchiveRoom } from "./_/archive-room-action";
+import { CloseRoom } from "./_/close-room-action";
+import { ConcludeRoom } from "./_/conclude-room-action";
+import { InviteParticipant } from "./_/invite-participant-action";
+import { ShareRoom } from "./_/share-room-action";
+import { SynthesizeRoom } from "./_/synthesize-room-action";
 
 export function RoomSettings() {
 	const { roomId } = useParams<{ roomId: string }>();

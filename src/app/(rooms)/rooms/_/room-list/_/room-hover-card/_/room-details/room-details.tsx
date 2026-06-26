@@ -3,7 +3,7 @@ import { Separator } from "@briom/components/ui/separator";
 
 import { RoomCreationDate } from "./_/room-creation-date";
 import { RoomIdHash } from "./_/room-id-hash";
-import { RoomParticipants } from "./_/room-participants";
+import { RoomParticipants } from "./_/room-participants/room-participants";
 
 interface RoomDetailsProps {
 	room: RoomOverviewDTO;

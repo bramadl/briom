@@ -10,7 +10,8 @@ import { RoomLoader } from "./_/room-loader";
 import { RoomScroller } from "./_/room-scroller";
 
 const RoomDeliberation = dynamic(
-	async () => (await import("./_/room-deliberation")).RoomDeliberation,
+	async () =>
+		(await import("./_/room-deliberation/room-deliberation")).RoomDeliberation,
 	{ loading: RoomLoader, ssr: false },
 );
 

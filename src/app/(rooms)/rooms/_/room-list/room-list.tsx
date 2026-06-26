@@ -4,7 +4,7 @@ import { useRooms } from "@briom/rooms/_/room/hooks/use-rooms";
 import { useParams } from "next/navigation";
 
 import { RoomEmpty } from "./_/room-empty";
-import { RoomHoverCard } from "./_/room-hover-card";
+import { RoomHoverCard } from "./_/room-hover-card/room-hover-card";
 
 export function RoomList() {
 	const { roomId } = useParams<{ roomId: string }>();

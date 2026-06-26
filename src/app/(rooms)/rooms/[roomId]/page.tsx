@@ -3,12 +3,12 @@ import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
 import { prefetchRoom } from "@briom/rooms/_/room/queries/services/prefetch-room";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
-import { RoomInformation } from "./_/room-information";
-import { RoomInformationMobile } from "./_/room-information/mobile";
-import { RoomOrchestration } from "./_/room-orchestration";
-import { RoomSettings } from "./_/room-settings";
+import { RoomInformation } from "./_/room-information/room-information";
+import { RoomInformationMobile } from "./_/room-information/room-information-mobile";
+import { RoomOrchestration } from "./_/room-orchestration/room-orchestration";
+import { RoomSettings } from "./_/room-settings/room-settings";
 import { RoomTitle } from "./_/room-title";
-import { SynthesisSheetProvider } from "./_/synthesis-sheet-provider";
+import { SynthesisSheetProvider } from "./_/synthesis-sheet-provider/synthesis-sheet-provider";
 
 export default async function RoomPage({
 	params,
