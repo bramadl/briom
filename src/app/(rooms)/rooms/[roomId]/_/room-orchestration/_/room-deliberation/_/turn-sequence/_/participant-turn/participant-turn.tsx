@@ -9,10 +9,9 @@ import { useStreamingTurn } from "@briom/rooms/_/deliberation/hooks/use-streamin
 import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
 import { TurnPerspectiveActions } from "@briom/rooms/_/turn/ui/turn-perspective-actions";
 import { format, parseISO } from "date-fns";
-import { Fragment, memo } from "react";
+import { memo } from "react";
 
 import { ParticipantInfo } from "./_/turn-info";
-import { TurnPending } from "./_/turn-pending";
 import { TurnRenderer } from "./_/turn-renderer/turn-renderer";
 
 interface ParticipantTurnProps {
@@ -60,33 +59,23 @@ function ParticipantTurnComponent({
 			id={turn.id}
 		>
 			<div className={cn("relative pl-4 border-l-2", theme.border)}>
-				{isPending ? (
-					<TurnPending
-						className={theme.text}
-						displayName={participant.name}
-						qualifiedModel={participant.model}
-					/>
-				) : (
-					<Fragment>
-						<ParticipantInfo
-							isFailed={isFailed}
-							isStreaming={isStreaming}
-							participant={participant}
-							showIntent={showIntent}
-							turn={turn}
-						/>
-						<TurnRenderer
-							content={liveContent}
-							isFailed={isFailed}
-							isLastTurn={isLastTurn}
-							isPending={isPending}
-							isRetryable={isRetryable}
-							isStreaming={isStreaming}
-							showAbort={showAbort}
-							turn={turn}
-						/>
-					</Fragment>
-				)}
+				<ParticipantInfo
+					isFailed={isFailed}
+					isStreaming={isStreaming}
+					participant={participant}
+					showIntent={showIntent}
+					turn={turn}
+				/>
+				<TurnRenderer
+					content={liveContent}
+					isFailed={isFailed}
+					isLastTurn={isLastTurn}
+					isPending={isPending}
+					isRetryable={isRetryable}
+					isStreaming={isStreaming}
+					showAbort={showAbort}
+					turn={turn}
+				/>
 			</div>
 			{isSettled && (
 				<TurnPerspectiveActions content={liveContent} time={timeSent} />

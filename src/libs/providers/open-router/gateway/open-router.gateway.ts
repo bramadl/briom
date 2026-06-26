@@ -12,15 +12,17 @@ import { isOpenRouterSDKError } from "../errors";
  * @description
  * `OpenRouterLlmGateway` — Infrastructure Adapter
  *
- * (See original file for full description.)
+ * Bridges the OpenRouter SDK to Briom's domain `LlmGateway` port.
  *
- * **Abort support**
- * The `signal` field from `GenerateInput` is forwarded to the OpenRouter
- * `chat.send()` call. When the moderator aborts a turn, `TurnStreamingService`
- * calls `controller.abort()`, which propagates through the signal into the SDK's
- * HTTP layer. The SDK's async-iterable stops yielding chunks and throws an
- * `AbortError`. The streaming service's read loop catches this and transitions
- * the turn to FAILED with `StreamError.aborted()`.
+ * **Abort & Anti-Hang Strategy**
+ * The OpenRouter SDK returns an async iterable that can silently stall
+ * (TCP freeze, no data, no error, no EOF). A plain `for await` loop
+ * would hang indefinitely.
+ *
+ * Fix: Use `Promise.race([iterator.next(), abortPromise])` so that:
+ * - Manual abort (moderator) breaks the loop immediately
+ * - Timeout abort (from `TurnLifecycleOrchestrator`) breaks the loop
+ * - The iterator is properly closed via `iterator.return()` on abort
  */
 export class OpenRouterLlmGateway implements LlmGateway {
 	public constructor(private readonly client: OpenRouter) {}
@@ -44,7 +46,6 @@ export class OpenRouterLlmGateway implements LlmGateway {
 						messages: fullMessages,
 					},
 				},
-
 				signal ? { fetchOptions: { signal } } : undefined,
 			);
 
@@ -53,26 +54,76 @@ export class OpenRouterLlmGateway implements LlmGateway {
 					let sawReasoningOnly = false;
 					let sawAnyContent = false;
 
-					try {
-						for await (const chunk of response as unknown as AsyncIterable<{
-							choices?: Array<{
-								delta?: {
-									content?: string;
-									reasoning?: string;
-									reasoning_details?: unknown[];
-								};
-							}>;
-						}>) {
-							if (signal?.aborted) {
-								controller.error(
-									new DOMException("Aborted by moderator", "AbortError"),
+					const abortPromise = new Promise<never>((_, reject) => {
+						if (signal?.aborted) {
+							const exception = new DOMException(
+								signal.reason ?? "Aborted",
+								"AbortError",
+							);
+
+							reject(exception);
+							return;
+						}
+
+						signal?.addEventListener(
+							"abort",
+							() => {
+								const exception = new DOMException(
+									signal.reason ?? "Aborted",
+									"AbortError",
 								);
-								response.cancel();
+
+								reject(exception);
+							},
+							{ once: true },
+						);
+					});
+
+					const iterable = response as unknown as AsyncIterable<{
+						choices?: Array<{
+							delta?: {
+								content?: string;
+								reasoning?: string;
+								reasoning_details?: unknown[];
+							};
+						}>;
+					}>;
+
+					const iterator = iterable[Symbol.asyncIterator]();
+					try {
+						while (true) {
+							const result = await Promise.race([
+								iterator.next(),
+								abortPromise,
+							]);
+
+							if (result.done) {
+								if (sawReasoningOnly && !sawAnyContent) {
+									console.warn(
+										`[OpenRouterLlmGateway] Model "${qualifiedModel}" streamed reasoning but no content — turn will fail as empty.`,
+									);
+								}
+
+								controller.close();
 								return;
 							}
 
+							const chunk = result.value;
 							const delta = chunk.choices?.[0]?.delta;
 							if (!delta) continue;
+
+							if (signal?.aborted) {
+								try {
+									await iterator.return?.();
+								} catch {}
+								const exception = new DOMException(
+									signal.reason ?? "Aborted",
+									"AbortError",
+								);
+
+								controller.error(exception);
+								return;
+							}
 
 							if (delta.content) {
 								sawAnyContent = true;
@@ -81,23 +132,20 @@ export class OpenRouterLlmGateway implements LlmGateway {
 								sawReasoningOnly = true;
 							}
 						}
-
-						if (sawReasoningOnly && !sawAnyContent) {
-							console.warn(
-								`[OpenRouterLlmGateway] Model "${qualifiedModel}" streamed reasoning but no content — turn will fail as empty.`,
-							);
-						}
-
-						controller.close();
 					} catch (error) {
+						try {
+							await iterator.return?.();
+						} catch {}
+
 						if (error instanceof DOMException && error.name === "AbortError") {
 							controller.error(error);
 							return;
 						}
 
-						const message = (error as Error).message;
+						const message =
+							error instanceof Error ? error.message : "Stream failed";
+
 						controller.error(StreamError.streamFailure(message));
-						response.cancel(error);
 					}
 				},
 			});

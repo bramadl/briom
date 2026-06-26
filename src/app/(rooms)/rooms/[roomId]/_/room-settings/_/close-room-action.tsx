@@ -11,20 +11,23 @@ import {
 	DialogTrigger,
 } from "@briom/components/ui/dialog";
 import { DropdownMenuItem } from "@briom/components/ui/dropdown-menu";
+import { useSidebar } from "@briom/components/ui/sidebar";
 import { isServerError } from "@briom/libs/server-action";
 import { useCloseRoomMutation } from "@briom/rooms/_/room/mutations/use-close-room.mutation";
 import { Loader2Icon, MessageCircleOffIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
 export function CloseRoom() {
 	const [open, setOpen] = useState(false);
 	const { roomId } = useParams<{ roomId: string }>();
+
+	const sidebar = useSidebar();
 	const router = useRouter();
 	const mutation = useCloseRoomMutation();
 
-	const handleConfirm = async () => {
+	const handleConfirm = useCallback(async () => {
 		const result = await mutation.mutateAsync({ roomId });
 
 		if (isServerError(result)) {
@@ -34,12 +37,20 @@ export function CloseRoom() {
 			return;
 		}
 
+		setOpen(false);
 		toast.success("Room closed", {
 			description: "The room has been permanently closed.",
 		});
-		setOpen(false);
+
+		if (sidebar.open) sidebar.setOpen(false);
 		router.push("/rooms");
-	};
+	}, [
+		mutation.mutateAsync,
+		roomId,
+		router.push,
+		sidebar.open,
+		sidebar.setOpen,
+	]);
 
 	return (
 		<Dialog onOpenChange={setOpen} open={open}>

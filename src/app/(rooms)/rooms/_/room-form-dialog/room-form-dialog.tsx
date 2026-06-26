@@ -11,11 +11,9 @@ import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
 import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form.store";
 import { useHotkey } from "@tanstack/react-hotkeys";
 
-interface RoomFormDialogProps extends React.PropsWithChildren {
-	dialogRef: React.RefObject<HTMLDivElement | null>;
-}
+interface RoomFormDialogProps extends React.PropsWithChildren {}
 
-export function RoomFormDialog({ children, dialogRef }: RoomFormDialogProps) {
+export function RoomFormDialog({ children }: RoomFormDialogProps) {
 	const shown = useRoomFormStore((state) => state.shown);
 	const setShown = useRoomFormStore((state) => state.setShown);
 
@@ -25,11 +23,10 @@ export function RoomFormDialog({ children, dialogRef }: RoomFormDialogProps) {
 	return (
 		<Dialog onOpenChange={setShown} open={shown}>
 			<DialogContent
-				className="gap-0 lg:max-w-xl"
-				ref={dialogRef}
+				className="gap-0 sm:max-w-[calc(80%-2rem)] h-full max-h-[80%] flex flex-col p-0 overflow-hidden"
 				showCloseButton={false}
 			>
-				<DialogHeader>
+				<DialogHeader className="p-4">
 					<DialogTitle>Form a Room</DialogTitle>
 					<DialogDescription>
 						Create a dedicated space for collaborative thinking. Invite

@@ -20,8 +20,13 @@ export function RoomFormActions({
 	onCancel,
 }: RoomFormActionsProps) {
 	return (
-		<div className="flex items-center justify-end gap-4">
-			<Button disabled={isSubmitting} onClick={onCancel} variant="outline">
+		<div className="flex items-center justify-end gap-4 p-4">
+			<Button
+				disabled={isSubmitting}
+				onClick={onCancel}
+				type="button"
+				variant="outline"
+			>
 				Cancel
 			</Button>
 			<Button disabled={isSubmitting} form={formId} type="submit">

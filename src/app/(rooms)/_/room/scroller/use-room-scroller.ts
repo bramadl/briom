@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const NEAR_BOTTOM_THRESHOLD = 200;
+const NEAR_BOTTOM_THRESHOLD = 96;
 
 interface UseRoomScrollerOptions {
 	scroller: HTMLDivElement | null;

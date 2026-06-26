@@ -19,8 +19,6 @@ import {
 } from "lexical";
 import { useEffect, useMemo, useRef } from "react";
 
-// ─── Bridges ─────────────────────────────────────────────────────────
-
 function EmptyStateBridge({
 	onEmptyChange,
 }: {
@@ -49,8 +47,6 @@ function SubmitBridge({ onSend }: { onSend?: () => void }) {
 	return null;
 }
 
-// ─── Draft Extension Factory ─────────────────────────────────────────
-
 function useModeratorEditorExtension(
 	draftKey: string | undefined,
 	clearDraftRef?: React.RefObject<(() => void) | null>,
@@ -61,7 +57,7 @@ function useModeratorEditorExtension(
 	const clearDraftRefStable = useRef(clearDraftRef);
 	clearDraftRefStable.current = clearDraftRef;
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: Stable — never recreate extension definition
+	// biome-ignore lint/correctness/useExhaustiveDependencies: stable-ref
 	return useMemo(() => {
 		const deps: LexicalExtension<
 			ExtensionConfigBase,
@@ -87,8 +83,6 @@ function useModeratorEditorExtension(
 		});
 	}, []);
 }
-
-// ─── Main Component ──────────────────────────────────────────────────
 
 interface ModeratorEditorProps {
 	clearDraftRef?: React.RefObject<(() => void) | null>;

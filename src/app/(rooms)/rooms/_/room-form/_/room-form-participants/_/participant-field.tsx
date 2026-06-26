@@ -44,7 +44,6 @@ export function ParticipantField({
 		<div className="space-y-2">
 			{showRemove && (
 				<div className="flex items-center gap-4">
-					<Separator className="flex-1" />
 					<Button
 						onClick={uninvite}
 						size="xs"
@@ -53,6 +52,7 @@ export function ParticipantField({
 					>
 						Uninvite
 					</Button>
+					<Separator className="flex-1" />
 				</div>
 			)}
 			<FormischField of={form} path={["participants", index, "displayName"]}>
@@ -83,10 +83,7 @@ export function ParticipantField({
 								</FieldContent>
 							</Field>
 							<p className="flex items-center text-xs font-mono text-muted-foreground">
-								<span className="shrink-0">
-									{participant.model?.split("/")[0]}
-								</span>
-								<span className="mx-1">/</span>
+								<span className="shrink-0">{participant.provider}</span>/
 								<span className="min-w-0 flex-1 line-clamp-1">
 									{participant.model}
 								</span>

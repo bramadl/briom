@@ -29,38 +29,57 @@ export function useRoomSSE({ onTurnInitiated, roomId }: UseRoomSSEOptions) {
 	invalidateRoomRef.current = invalidateRoom;
 
 	useEffect(() => {
-		const channel = supabaseClient.channel(`room:${roomId}`);
+		let channel = supabaseClient.channel(`room:${roomId}`);
+		let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+		let destroyed = false;
 
-		for (const eventName of ROOM_EVENT_NAMES) {
-			channel.on("broadcast", { event: eventName }, ({ payload }) => {
-				const handler = ROOM_EVENT_HANDLERS[eventName];
-				if (!handler) {
-					console.warn(`[SSE] Unhandled event: ${eventName}`);
-					return;
+		function subscribe() {
+			for (const eventName of ROOM_EVENT_NAMES) {
+				channel.on("broadcast", { event: eventName }, ({ payload }) => {
+					const handler = ROOM_EVENT_HANDLERS[eventName];
+					if (!handler) {
+						console.warn(`[SSE] Unhandled event: ${eventName}`);
+						return;
+					}
+
+					handler({ data: payload, queryClient, roomId });
+					switch (eventName) {
+						case "turn:initiated":
+							onTurnInitiatedRef.current?.();
+							break;
+						case "turn:settled":
+							invalidateRoomsRef.current();
+							invalidateRoomRef.current(roomId);
+							break;
+					}
+				});
+			}
+
+			channel.subscribe((status) => {
+				if (status === "SUBSCRIBED") {
+					console.log(`[SSE] Connected: ${roomId}`);
 				}
 
-				handler({ data: payload, queryClient, roomId });
+				if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+					console.warn(`[SSE] ${status}, reconnecting...`);
+					if (destroyed) return;
 
-				switch (eventName) {
-					case "turn:initiated":
-						onTurnInitiatedRef.current?.();
-						break;
-					case "turn:settled":
-						invalidateRoomsRef.current();
-						invalidateRoomRef.current(roomId);
-						break;
+					supabaseClient.removeChannel(channel);
+
+					retryTimeout = setTimeout(() => {
+						if (destroyed) return;
+						channel = supabaseClient.channel(`room:${roomId}`);
+						subscribe();
+					}, 3000);
 				}
 			});
 		}
 
-		channel.subscribe((status) => {
-			if (status === "SUBSCRIBED") console.log(`[SSE] Connected: ${roomId}`);
-			if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-				console.error(`[SSE] Connection issue: ${status}`);
-			}
-		});
+		subscribe();
 
 		return () => {
+			destroyed = true;
+			if (retryTimeout) clearTimeout(retryTimeout);
 			useTurnStreamStore.getState().clearRoom(roomId);
 			supabaseClient.removeChannel(channel);
 		};

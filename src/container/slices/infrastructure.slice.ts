@@ -7,6 +7,7 @@ import {
 import type { ContainerBuilder } from "@briom/drimion";
 import { db } from "@briom/drizzle/client";
 import {
+	BriomAbortRegistry,
 	BriomEventBus,
 	BriomScheduler,
 	SupabaseSseForwarder,
@@ -30,6 +31,7 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 		.add("Client:OpenRouter", () => openRouter)
 		.add("Adapter:EventBus", () => new BriomEventBus())
 		.add("Adapter:Scheduler", () => new BriomScheduler())
+		.add("Adapter:AbortRegistry", () => new BriomAbortRegistry())
 		.add("Adapter:SseForwarder", () => new SupabaseSseForwarder())
 		.add(
 			"Adapter:LlmGateway",
@@ -59,6 +61,7 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 				r["Repository:Turn"],
 				r["Adapter:Scheduler"],
 				r["Policy:TurnTimeout"],
+				r["Adapter:AbortRegistry"],
 			);
 		})
 		.add("Service:TurnStreaming", (r) => {
@@ -66,6 +69,7 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 				r["Orchestrator:TurnLifecycle"],
 				r["Adapter:LlmGateway"],
 				r["Adapter:SseForwarder"],
+				r["Adapter:AbortRegistry"],
 			);
 		});
 };

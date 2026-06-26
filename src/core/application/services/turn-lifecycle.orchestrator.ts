@@ -17,6 +17,7 @@ import {
 	Result,
 } from "@briom/libs/drimion";
 
+import type { IAbortRegistry } from "../ports";
 import type { IScheduler } from "../ports/scheduler";
 
 /**
@@ -62,6 +63,7 @@ export class TurnLifecycleOrchestrator {
 		private readonly repository: TurnRepository,
 		private readonly scheduler: IScheduler,
 		private readonly timeout: TurnTimeoutPolicy,
+		private readonly abortRegistry: IAbortRegistry,
 	) {}
 
 	/**
@@ -293,10 +295,10 @@ export class TurnLifecycleOrchestrator {
 
 	/**
 	 * @description
-	 * Handles `timeout` expiration for a turn.
+	 * Handles timeout expiration for a turn.
 	 *
-	 * Called by the scheduler when a turn has exceeded its threshold.
-	 * If the turn is still `PENDING` or `STREAMING`, fails it with timeout error.
+	 * **Critical**: After failing the turn, signals the abort registry to
+	 * break any hanging `for await` loop in `OpenRouterLlmGateway`.
 	 */
 	public async handleTimeout(
 		turnId: TurnId,
@@ -317,6 +319,11 @@ export class TurnLifecycleOrchestrator {
 		if (result.isSuccess()) {
 			await this.repository.persist(turn);
 			await this.publishEvents(turn);
+
+			this.abortRegistry.abort(
+				turnId.value(),
+				`Turn timed out after ${this.timeout.THRESHOLD.ms}ms`,
+			);
 		}
 
 		return result;

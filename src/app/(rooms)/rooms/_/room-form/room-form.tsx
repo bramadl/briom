@@ -14,10 +14,9 @@ import { RoomTitleField } from "./_/room-title-field";
 
 interface RoomFormProps {
 	className?: string;
-	dialogRef: React.RefObject<HTMLDivElement | null>;
 }
 
-export function RoomForm({ className, dialogRef }: RoomFormProps) {
+export function RoomForm({ className }: RoomFormProps) {
 	const router = useRouter();
 	const hide = useRoomFormStore((s) => s.hide);
 
@@ -35,19 +34,17 @@ export function RoomForm({ className, dialogRef }: RoomFormProps) {
 
 	return (
 		<Form
-			className={cn("space-y-4", className)}
+			className={cn("h-full min-h-0 flex flex-col overflow-hidden", className)}
 			id={form.id}
 			of={form.form}
 			onSubmit={form.submit}
 		>
-			<FieldGroup className="max-h-96 overflow-y-auto">
+			<FieldGroup className="h-full min-h-0 flex flex-col px-4 overflow-hidden">
 				<RoomTitleField disabled={form.disabled} form={form.form} />
 				<RoomFormParticipants
-					dialogRef={dialogRef}
 					disabled={form.disabled}
 					form={form.form}
 					maxParticipants={form.maxParticipants}
-					participants={form.participants}
 				/>
 			</FieldGroup>
 			<RoomFormActions

@@ -2,8 +2,7 @@ import { Logo } from "@briom/components/logo";
 import { Button } from "@briom/components/ui/button";
 import { SidebarTrigger } from "@briom/components/ui/sidebar";
 
-import { AutoOpenSidebar } from "./_/auto-open-sidebar";
-import { RoomFormDialogToggler } from "./_/room-form-provider/_/room-form-dialog-toggler";
+import { RoomFormDialogToggler } from "./_/room-form-dialog/room-form-dialog-toggler";
 
 export default function RoomsPage() {
 	return (
@@ -31,7 +30,6 @@ export default function RoomsPage() {
 				</div>
 				<RoomFormDialogToggler />
 			</div>
-			<AutoOpenSidebar />
 		</main>
 	);
 }

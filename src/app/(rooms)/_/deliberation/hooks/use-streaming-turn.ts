@@ -16,7 +16,13 @@ export function useStreamingTurn(turnId: string): StreamingTurn | null {
 }
 
 export function useIsAnyTurnStreaming(): boolean {
-	return useTurnStreamStore((state) => state.streamingTurnId !== null);
+	return useTurnStreamStore((state) => {
+		if (state.streamingTurnId !== null) return true;
+		for (const turn of state.turns.values()) {
+			if (turn.status === "pending") return true;
+		}
+		return false;
+	});
 }
 
 export function useStreamingTurnId(): string | null {

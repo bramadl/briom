@@ -39,7 +39,8 @@ function TurnSequenceComponent({
 					(t) =>
 						t.status === "settled" ||
 						t.status === "streaming" ||
-						t.status === "pending",
+						t.status === "pending" ||
+						t.status === "failed",
 				);
 
 			return {
@@ -61,6 +62,7 @@ function TurnSequenceComponent({
 				}
 
 				const isRetryable =
+					room.status === "deliberating" &&
 					turn.status === "failed" &&
 					(lastProgressedTurnId === null || lastProgressedTurnId === turn.id);
 

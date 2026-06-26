@@ -55,7 +55,7 @@ export function TurnRenderer({
 			<div className="mt-4 flex items-center gap-4">
 				<Logo animate />
 				<span className="text-sm italic text-muted-foreground shimmer-text">
-					shaping perspective...
+					{isPending ? "thinking for a moment..." : "shaping perspective..."}
 				</span>
 			</div>
 		);

@@ -1,7 +1,13 @@
 "use client";
 
+import {
+	Alert,
+	AlertAction,
+	AlertDescription,
+	AlertTitle,
+} from "@briom/components/ui/alert";
 import { Button } from "@briom/components/ui/button";
-import { Loader2Icon, RefreshCwIcon, XCircleIcon } from "lucide-react";
+import { AlertCircleIcon, Loader2Icon, RefreshCwIcon } from "lucide-react";
 
 interface FailedTurnProps {
 	error: string;
@@ -18,32 +24,28 @@ export function FailedTurn({
 	title,
 }: FailedTurnProps) {
 	return (
-		<div className="mt-3 flex flex-col gap-2">
-			<div className="flex items-start gap-2 text-destructive/80">
-				<XCircleIcon className="size-4 mt-0.5 shrink-0" />
-				<div className="flex flex-col gap-0.5">
-					<span className="text-xs font-medium">{title}</span>
-					<span className="text-[11px] text-destructive/60 font-mono">
-						{error}
-					</span>
-				</div>
-			</div>
+		<Alert className="mt-3" variant="destructive">
+			<AlertCircleIcon />
+			<AlertTitle>{title}</AlertTitle>
+			<AlertDescription>{error}</AlertDescription>
 			{onRetried && (
-				<Button
-					className="self-start h-7 text-xs"
-					disabled={isRetrying}
-					onClick={onRetried}
-					size="sm"
-					variant="outline"
-				>
-					{isRetrying ? (
-						<Loader2Icon className="animate-spin size-3" />
-					) : (
-						<RefreshCwIcon className="size-3" />
-					)}
-					{isRetrying ? "Retrying..." : "Retry"}
-				</Button>
+				<AlertAction>
+					<Button
+						className="self-start h-7 text-xs"
+						disabled={isRetrying}
+						onClick={onRetried}
+						size="sm"
+						variant="outline"
+					>
+						{isRetrying ? (
+							<Loader2Icon className="animate-spin size-3" />
+						) : (
+							<RefreshCwIcon className="size-3" />
+						)}
+						{isRetrying ? "Retrying..." : "Retry"}
+					</Button>
+				</AlertAction>
 			)}
-		</div>
+		</Alert>
 	);
 }

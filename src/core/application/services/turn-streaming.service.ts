@@ -2,6 +2,7 @@ import type { LlmGateway, RoomId, TurnId } from "@briom/domain";
 import { StreamError } from "@briom/domain";
 import { DomainError, type IResult, Result } from "@briom/libs/drimion";
 
+import type { IAbortRegistry } from "../ports";
 import type { ISseForwarder } from "../ports/sse-forwarder";
 
 import type { TurnLifecycleOrchestrator } from "./turn-lifecycle.orchestrator";
@@ -21,63 +22,39 @@ export interface StreamTurnInput {
  * @description
  * `TurnStreamingService` — Application Service
  *
- * (See original file for full description.)
+ * Manages the LLM streaming lifecycle for a single turn: connection,
+ * token accumulation, broadcast, persistence, and settlement.
  *
- * **Abort support**
- * Each call to `streamAndSettle()` registers an `AbortController` in an
- * in-memory map keyed by `turnId`. The `abort(turnId)` method signals that
- * controller, causing the OpenRouter SDK's async-iterable to throw an
- * `AbortError` on the next iteration. The read-loop catch block detects this
- * and fails the turn with `StreamError.aborted()`. The controller is always
- * cleaned up (registered → removed) regardless of outcome.
+ * **Abort Support**
+ * Each `streamAndSettle()` call registers its `AbortController` with the
+ * injected `IAbortRegistry`. External callers (timeout handler, moderator
+ * abort command) signal abortion via the registry. The streaming loop
+ * detects `AbortError` and fails the turn gracefully.
  *
- * **Why in-memory and not DB-persisted?**
- * AbortControllers are runtime signals — they don't survive process restarts.
- * That's fine: if the server restarts mid-stream the turn will time out via
- * `TurnTimeoutPolicy` and fail that way. The abort feature is a UX shortcut
- * for a healthy, running stream.
+ * **Cleanup Guarantee**
+ * `unregister()` is called in a `finally` block — regardless of success,
+ * failure, or abortion — preventing memory leaks.
  */
 export class TurnStreamingService {
-	/**
-	 * @description
-	 * Live registry of AbortControllers, one per actively streaming turn.
-	 * Keyed by raw turnId string. Cleaned up immediately after stream ends.
-	 */
-	private readonly abortControllers = new Map<string, AbortController>();
-
 	public constructor(
 		private readonly orchestrator: TurnLifecycleOrchestrator,
 		private readonly llmGateway: LlmGateway,
 		private readonly sse: ISseForwarder,
+		private readonly abortRegistry: IAbortRegistry,
 	) {}
 
 	/**
 	 * @description
-	 * Signals the AbortController for a streaming turn, interrupting the LLM
-	 * read loop. The streaming loop detects the AbortError and fails the turn
-	 * with `StreamError.aborted()`.
-	 *
-	 * No-op if the turn is not currently streaming (controller already cleaned up).
-	 *
-	 * @param turnId - The turn to abort
+	 * Signals abortion for a streaming turn via the registry.
+	 * No-op if turn is not currently streaming.
 	 */
 	public abort(turnId: TurnId): void {
-		const controller = this.abortControllers.get(turnId.value());
-		if (controller) {
-			controller.abort();
-		}
+		this.abortRegistry.abort(turnId.value(), "Aborted by moderator");
 	}
 
 	/**
 	 * @description
-	 * Streams an LLM response into the given turn, with abort support.
-	 *
-	 * Registers an AbortController for the turn's lifetime. If `abort()` is
-	 * called externally, the LLM stream is cancelled and the turn fails with
-	 * `StreamError.aborted()`.
-	 *
-	 * @param input - Turn ID, room ID, prompt/messages, and target model
-	 * @returns The full settled content, or the domain error that failed the turn
+	 * Streams an LLM response into the given turn with full abort support.
 	 */
 	public async streamAndSettle(
 		input: StreamTurnInput,
@@ -85,10 +62,10 @@ export class TurnStreamingService {
 		const { turnId, roomId, messages, qualifiedModel, systemPrompt } = input;
 
 		const controller = new AbortController();
-		this.abortControllers.set(turnId.value(), controller);
+		this.abortRegistry.register(turnId.value(), controller);
 
 		const cleanup = (): void => {
-			this.abortControllers.delete(turnId.value());
+			this.abortRegistry.unregister(turnId.value());
 		};
 
 		const streamResult = await this.llmGateway.stream({
@@ -136,6 +113,7 @@ export class TurnStreamingService {
 					data: { turnId: turnId.value(), token: chunk },
 				});
 			} catch {
+				// Non-fatal: SSE failures should not break streaming
 			} finally {
 				broadcasting = false;
 			}
@@ -174,10 +152,15 @@ export class TurnStreamingService {
 
 		try {
 			const reader = stream.getReader();
+
 			while (true) {
+				// Early-exit if already aborted (prevents hanging on reader.read())
 				if (controller.signal.aborted) {
-					reader.cancel();
-					throw new DOMException("Aborted by moderator", "AbortError");
+					reader.cancel(controller.signal.reason);
+					throw new DOMException(
+						controller.signal.reason ?? "Aborted",
+						"AbortError",
+					);
 				}
 
 				const { done, value } = await reader.read();
@@ -198,7 +181,11 @@ export class TurnStreamingService {
 				streamError.name === "AbortError";
 
 			const domainError = isAbort
-				? StreamError.aborted()
+				? StreamError.aborted(
+						typeof controller.signal.reason === "string"
+							? controller.signal.reason
+							: undefined,
+					)
 				: StreamError.streamFailure(
 						streamError instanceof Error
 							? streamError.message

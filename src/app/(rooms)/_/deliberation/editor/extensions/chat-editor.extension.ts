@@ -1,4 +1,7 @@
-import { AutoFocusExtension } from "@lexical/extension";
+import {
+	AutoFocusExtension,
+	HorizontalRuleExtension,
+} from "@lexical/extension";
 import { HistoryExtension } from "@lexical/history";
 import { LinkExtension } from "@lexical/link";
 import { ListExtension } from "@lexical/list";
@@ -78,6 +81,7 @@ export const ChatEditorExtension = defineExtension({
 		HistoryExtension,
 		ListExtension,
 		LinkExtension,
+		HorizontalRuleExtension,
 		configExtension(ReactExtension, { contentEditable: null }),
 		SendExtension,
 		AutoFormatExtension,
