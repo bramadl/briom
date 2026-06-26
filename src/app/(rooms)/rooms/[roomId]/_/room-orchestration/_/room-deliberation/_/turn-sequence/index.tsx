@@ -22,22 +22,32 @@ function TurnSequenceComponent({
 }: TurnSequenceProps) {
 	const { roomId } = useParams<{ roomId: string }>();
 	const { multiDeliberation, room, turns } = useRoom(roomId);
+	const { participantByName, lastParticipantTurn, lastProgressedTurnId } =
+		useMemo(() => {
+			const byName = new Map<string, (typeof room.participants)[0]>();
+			for (const p of room.participants) {
+				byName.set(p.name, p);
+			}
 
-	const { participantByName, lastParticipantTurn } = useMemo(() => {
-		const byName = new Map<string, (typeof room.participants)[0]>();
-		for (const p of room.participants) {
-			byName.set(p.name, p);
-		}
+			const lastParticipant = [...turns]
+				.reverse()
+				.find((t) => t.author.type === "participant");
 
-		const lastParticipant = [...turns]
-			.reverse()
-			.find((t) => t.author.type === "participant");
+			const lastProgressed = [...turns]
+				.reverse()
+				.find(
+					(t) =>
+						t.status === "settled" ||
+						t.status === "streaming" ||
+						t.status === "pending",
+				);
 
-		return {
-			participantByName: byName,
-			lastParticipantTurn: lastParticipant,
-		};
-	}, [room.participants, turns]);
+			return {
+				participantByName: byName,
+				lastParticipantTurn: lastParticipant,
+				lastProgressedTurnId: lastProgressed?.id ?? null,
+			};
+		}, [room.participants, turns]);
 
 	return (
 		<div className="w-full max-w-3xl mx-auto px-8 flex flex-col gap-12 lg:gap-16 min-w-0">
@@ -46,11 +56,18 @@ function TurnSequenceComponent({
 					participantByName.get(turn.author.profile?.displayName ?? "") ??
 					room.participants[0];
 
-				return turn.author.type === "moderator" ? (
-					<ModeratorTurn key={turn.id} turn={turn} />
-				) : (
+				if (turn.author.type === "moderator") {
+					return <ModeratorTurn key={turn.id} turn={turn} />;
+				}
+
+				const isRetryable =
+					turn.status === "failed" &&
+					(lastProgressedTurnId === null || lastProgressedTurnId === turn.id);
+
+				return (
 					<ParticipantTurn
 						isLastTurn={lastParticipantTurn?.id === turn.id}
+						isRetryable={isRetryable}
 						key={turn.id}
 						participant={participant}
 						showAbort={room.status === "deliberating"}

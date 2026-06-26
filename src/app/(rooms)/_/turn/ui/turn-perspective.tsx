@@ -11,8 +11,6 @@ import "katex/dist/katex.min.css";
 
 import { MarkdownComponents } from "./markdown-components";
 
-// ─── Module-level constants — never recreate on render ───────────────
-
 const sanitizeSchema = {
 	...defaultSchema,
 	attributes: {
@@ -31,8 +29,6 @@ const REHYPE_PLUGINS: PluggableList = [
 ];
 
 const REMARK_PLUGINS: PluggableList = [remarkGfm, remarkMath];
-
-// ─── Component ─────────────────────────────────────────────────────────
 
 interface TurnPerspectiveProps {
 	content: string;

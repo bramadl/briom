@@ -1,15 +1,3 @@
-/**
- * @file turn-renderer/index.tsx
- * @path src/app/(rooms)/rooms/[roomId]/_/room-orchestration/_/room-deliberation/_/turn-sequence/_/participant-turn/_/turn-renderer/index.tsx
- *
- * ## Streaming Optimization
- *
- * Accepts `content`, `isFailed`, `isPending`, `isStreaming` as explicit props
- * instead of deriving them from `turn.status` / `turn.content`. This allows
- * the parent `ParticipantTurn` to inject live values from the Zustand stream
- * store without this component needing to know where data comes from.
- */
-
 "use client";
 
 import type { RoomDeliberationTurnDTO } from "@briom/app";
@@ -21,14 +9,13 @@ import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective
 import { FailedTurn } from "./_/failed-turn";
 
 interface TurnRendererProps {
-	/** Live content from stream store (or settled content from query cache) */
 	content: string;
 	isFailed: boolean;
 	isLastTurn?: boolean;
 	isPending: boolean;
+	isRetryable?: boolean;
 	isStreaming: boolean;
 	showAbort?: boolean;
-	/** Original turn object — used only for error details and retry ID */
 	turn: RoomDeliberationTurnDTO;
 }
 
@@ -37,6 +24,7 @@ export function TurnRenderer({
 	isFailed,
 	isLastTurn,
 	isPending,
+	isRetryable = false,
 	isStreaming,
 	showAbort,
 	turn,
@@ -46,13 +34,17 @@ export function TurnRenderer({
 	const hasContent = content.trim().length > 0;
 	const isRetrying = retryMutation.isPending || isPending || isStreaming;
 
+	const retriedHandler = isRetryable
+		? () => retryMutation.mutate({ turnId: turn.id })
+		: undefined;
+
 	if (!hasContent) {
 		if (isFailed) {
 			return (
 				<FailedTurn
 					error={turn.error?.message ?? "Unknown error"}
 					isRetrying={isRetrying}
-					onRetried={() => retryMutation.mutate({ turnId: turn.id })}
+					onRetried={retriedHandler}
 					showAbort={showAbort}
 					title="Perspective was not generated"
 				/>
@@ -62,7 +54,7 @@ export function TurnRenderer({
 		return (
 			<div className="mt-4 flex items-center gap-4">
 				<Logo animate />
-				<span className="text-sm italic text-muted-foreground text-shimmer">
+				<span className="text-sm italic text-muted-foreground shimmer-text">
 					shaping perspective...
 				</span>
 			</div>
@@ -79,7 +71,7 @@ export function TurnRenderer({
 				<FailedTurn
 					error={turn.error?.message ?? "Unknown error"}
 					isRetrying={isRetrying}
-					onRetried={() => retryMutation.mutate({ turnId: turn.id })}
+					onRetried={retriedHandler}
 					title="Perspective was not fully generated"
 				/>
 			</TurnPerspectiveExpander>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useDeliberation } from "@briom/rooms/_/deliberation/hooks/use-deliberation";
-import { useEffect, useMemo } from "react";
+import { useTurnStreamStore } from "@briom/rooms/_/deliberation/hooks/use-turn-stream.store";
+import { useEffect, useRef } from "react";
 
 import { EmptySequence } from "./_/empty-sequence";
 import { ModeratorInput } from "./_/moderator-input";
@@ -12,16 +13,17 @@ interface RoomDeliberationProps extends React.PropsWithChildren {
 	onLoaded?: () => void;
 	onScrollerLoaded?: (el: HTMLDivElement | null) => void;
 	onStreaming?: () => void;
+	onTurnPending?: () => void;
 	onTurnRegistered?: () => void;
 }
 
 export function RoomDeliberation({
 	children,
-	isNearBottomRef,
 	onLoaded,
 	onStreaming,
 	onScrollerLoaded,
 	onTurnRegistered,
+	onTurnPending,
 }: RoomDeliberationProps) {
 	const {
 		abortStreaming,
@@ -36,28 +38,36 @@ export function RoomDeliberation({
 		participants,
 		proposals,
 		sequenceTurns,
-		turns,
 	} = useDeliberation();
 
-	const lastTurnContentLength = useMemo(
-		() => turns.at(-1)?.content.length ?? 0,
-		[turns],
-	);
+	const onStreamingRef = useRef(onStreaming);
+	onStreamingRef.current = onStreaming;
+
+	const onTurnPendingRef = useRef(onTurnPending);
+	onTurnPendingRef.current = onTurnPending;
 
 	useEffect(() => {
-		if (
-			isNearBottomRef.current &&
-			isParticipantActive &&
-			lastTurnContentLength > 0
-		) {
-			onStreaming?.();
-		}
-	}, [
-		isNearBottomRef,
-		isParticipantActive,
-		lastTurnContentLength,
-		onStreaming,
-	]);
+		return useTurnStreamStore.subscribe(
+			(state) => state.turns,
+			() => {
+				const streamingTurnId = useTurnStreamStore.getState().streamingTurnId;
+				if (streamingTurnId !== null) onStreamingRef.current?.();
+			},
+		);
+	}, []);
+
+	useEffect(() => {
+		let prev: string | null = null;
+		return useTurnStreamStore.subscribe(
+			(state) => state.streamingTurnId,
+			(current) => {
+				if (prev === null && current !== null) {
+					onTurnPendingRef.current?.();
+				}
+				prev = current;
+			},
+		);
+	}, []);
 
 	useEffect(() => {
 		onLoaded?.();

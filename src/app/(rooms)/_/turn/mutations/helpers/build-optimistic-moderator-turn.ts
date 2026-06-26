@@ -16,5 +16,8 @@ export function buildOptimisticModeratorTurn({
 		id: `optimistic-${clientTurnId}`,
 		intent: null,
 		status: "settled",
+		createdAt: new Date().toISOString(),
+		failedAt: null,
+		settledAt: null,
 	};
 }

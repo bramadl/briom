@@ -1,42 +1,60 @@
 "use client";
 
-import { useRoomScroller } from "@briom/rooms/_/room/hooks/use-room-scroller";
 import { useRoomSSE } from "@briom/rooms/_/room/hooks/use-room-sse";
-import dynamic from "next/dynamic";
+import { useRoomScroller } from "@briom/rooms/_/room/scroller/use-room-scroller";
 import { useParams } from "next/navigation";
-import { useState } from "react";
-
+import { useCallback, useState } from "react";
+import { RoomDeliberation } from "./_/room-deliberation";
 import { RoomLoader } from "./_/room-loader";
 import { RoomScroller } from "./_/room-scroller";
 
-const RoomDeliberation = dynamic(
-	async () => (await import("./_/room-deliberation")).RoomDeliberation,
-	{ loading: RoomLoader, ssr: false },
-);
-
 export function RoomOrchestration() {
 	const [scroller, setScroller] = useState<HTMLDivElement | null>(null);
-	const { isNearBottomRef, scrollToBottom, showScrollButton } = useRoomScroller(
-		{ scroller },
-	);
+	const [isLoaded, setIsLoaded] = useState(false);
 
-	const scrollInstantly = () => scrollToBottom("instant");
-	const scrollSmoothly = () => scrollToBottom("smooth");
+	const {
+		isNearBottomRef,
+		scrollIfNearBottom,
+		scrollToBottom,
+		showScrollButton,
+	} = useRoomScroller({ scroller });
 
 	const { roomId } = useParams<{ roomId: string }>();
-	useRoomSSE({ onTurnInitiated: scrollSmoothly, roomId });
+	useRoomSSE({ roomId });
+
+	const handleLoaded = useCallback(() => {
+		setIsLoaded(true);
+		scrollToBottom("instant");
+	}, [scrollToBottom]);
+
+	const handleTurnRegistered = useCallback(() => {
+		scrollToBottom("smooth");
+	}, [scrollToBottom]);
+
+	const handleTurnPending = useCallback(() => {
+		scrollToBottom("smooth");
+	}, [scrollToBottom]);
+
+	const handleStreaming = useCallback(() => {
+		scrollIfNearBottom();
+	}, [scrollIfNearBottom]);
 
 	return (
-		<section className="relative min-w-0 min-h-0 h-full flex-1 flex flex-col overflow-hidden">
+		<div className="relative min-w-0 min-h-0 h-full flex-1 flex flex-col overflow-hidden">
+			{!isLoaded && <RoomLoader />}
 			<RoomDeliberation
 				isNearBottomRef={isNearBottomRef}
-				onLoaded={scrollInstantly}
-				onScrollerLoaded={(el) => setScroller(el)}
-				onStreaming={scrollInstantly}
-				onTurnRegistered={scrollSmoothly}
+				onLoaded={handleLoaded}
+				onScrollerLoaded={setScroller}
+				onStreaming={handleStreaming}
+				onTurnPending={handleTurnPending}
+				onTurnRegistered={handleTurnRegistered}
 			>
-				<RoomScroller onClicked={scrollSmoothly} show={showScrollButton} />
+				<RoomScroller
+					onScrollToBottom={() => scrollToBottom("smooth")}
+					show={showScrollButton}
+				/>
 			</RoomDeliberation>
-		</section>
+		</div>
 	);
 }

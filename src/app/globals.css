@@ -337,28 +337,6 @@
 }
 
 @layer components {
-  .ProseMirror.is-editor-empty::before {
-    content: attr(data-placeholder);
-    float: left;
-    color: var(--color-muted-foreground);
-    opacity: 0.30;
-    pointer-events: none;
-    height: 0;
-  }
-
-  .tiptap pre {
-    margin: 0;
-    padding: 0;
-    background: transparent;
-  }
-
-  .tiptap pre code {
-    padding: 0;
-    background: transparent;
-  }
-}
-
-@layer components {
   .prose-sm pre,
   .prose-sm :where(pre):not(:where([class~="not-prose"], [class~="not-prose"] *)) {
     margin: 0 !important;

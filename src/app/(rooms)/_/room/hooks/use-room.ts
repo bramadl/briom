@@ -14,7 +14,6 @@ export function useRoom(roomId: string) {
 
 	const fresh = room.status === "forming";
 	const multiDeliberation = room.participants.length > 1;
-	const streaming = room.turns.some((t) => t.status === "streaming");
 
 	const invalidate = () => {
 		invalidateRoom(roomId);
@@ -23,7 +22,6 @@ export function useRoom(roomId: string) {
 	return {
 		fresh,
 		multiDeliberation,
-		streaming,
 		invalidate,
 		room,
 		roomId,

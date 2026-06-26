@@ -15,6 +15,7 @@ import { ParticipantBadge } from "@briom/rooms/_/participant/ui/participant-badg
 import { useSynthesizeRoom } from "@briom/rooms/_/room/hooks/use-synthesize-room";
 import { Loader2Icon, SparklesIcon } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface SynthesizeRoomProps {
 	participants: RoomDeliberationDTO["participants"];
@@ -33,6 +34,12 @@ export function SynthesizeRoom({ roomId, participants }: SynthesizeRoomProps) {
 	const handleSynthesize = async () => {
 		if (!selectedParticipantId) return;
 		setOpen(false);
+
+		toast.info("Synthesis in progress!", {
+			description:
+				"Please, do not close the tab. This will take just a couple of minutes.",
+		});
+
 		await synthesize(selectedParticipantId);
 	};
 
@@ -109,8 +116,7 @@ export function SynthesizeRoom({ roomId, participants }: SynthesizeRoomProps) {
 							disabled={!selectedParticipantId || isLoading}
 							onClick={handleSynthesize}
 						>
-							{isLoading && <Loader2Icon className="animate-spin size-4" />}
-							{isLoading ? "Synthesizing..." : "Synthesize"}
+							Synthesize
 						</Button>
 					</div>
 				</div>
