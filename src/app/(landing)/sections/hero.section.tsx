@@ -1,20 +1,20 @@
 "use client";
 
+import { useAuthModal } from "@briom/auth/modal/auth-modal-provider";
 import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";
 import { gsap, registerGsap } from "@briom/libs/next/gsap/register";
 import { useGSAP } from "@gsap/react";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
 import { useRef } from "react";
 
 export function HeroSection() {
-	const rootRef = useRef<HTMLDivElement>(null);
+	const { openAuth } = useAuthModal();
 
+	const rootRef = useRef<HTMLDivElement>(null);
 	useGSAP(
 		() => {
 			registerGsap();
-
 			gsap
 				.timeline({ defaults: { ease: "power3.out" } })
 				.to("[data-hero-reveal]", {
@@ -23,14 +23,7 @@ export function HeroSection() {
 					stagger: 0.12,
 					y: 0,
 				})
-				.to(
-					"[data-hero-fade]",
-					{
-						duration: 0.8,
-						opacity: 1,
-					},
-					"-=0.4",
-				);
+				.to("[data-hero-fade]", { duration: 0.8, opacity: 1 }, "-=0.4");
 		},
 		{ scope: rootRef },
 	);
@@ -76,11 +69,9 @@ export function HeroSection() {
 					className="mt-10 flex flex-col sm:flex-row items-start gap-4 opacity-0"
 					data-hero-fade
 				>
-					<Button asChild className="group" size="lg">
-						<Link href="/rooms">
-							Open a room
-							<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
-						</Link>
+					<Button className="group" onClick={openAuth} size="lg">
+						Open a room
+						<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
 					</Button>
 					<p className="text-sm text-muted-foreground self-center">
 						No setup. Bring your own question.

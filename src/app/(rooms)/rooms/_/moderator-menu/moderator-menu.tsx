@@ -20,7 +20,7 @@ import { MenuTrigger } from "./_/menu-trigger";
 
 interface ModeratorMenuProps {
 	user: {
-		avatar?: string;
+		avatar?: string | null;
 		email: string;
 		name: string;
 	};
@@ -39,7 +39,7 @@ export function ModeratorMenu({ user }: ModeratorMenuProps) {
 							size="lg"
 						>
 							<MenuTrigger
-								avatar={user.avatar}
+								avatar={user.avatar ?? undefined}
 								email={user.email}
 								name={user.name}
 							/>

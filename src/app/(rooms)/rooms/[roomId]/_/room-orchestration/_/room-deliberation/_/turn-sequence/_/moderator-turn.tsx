@@ -17,7 +17,7 @@ function ModeratorTurnComponent({ turn }: ModeratorTurnProps) {
 
 	return (
 		<div
-			className="relative group space-y-2 w-full max-w-lg min-w-0 ml-auto rounded-lg"
+			className="relative group space-y-2 max-w-lg min-w-0 ml-auto rounded-lg"
 			id={turn.id}
 		>
 			<div className="relative bg-muted/50 p-4 rounded-lg">

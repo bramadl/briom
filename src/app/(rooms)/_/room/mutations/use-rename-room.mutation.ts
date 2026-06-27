@@ -7,12 +7,12 @@ import { roomQueries } from "../queries/registry";
 
 export function useRenameRoomMutation() {
 	const queryClient = useQueryClient();
-	const roomsKey = roomQueries.getRoomsOverview({}).queryKey;
+	const roomsKey = roomQueries.getRoomsOverview().queryKey;
 
 	return useMutation({
 		mutationFn: renameRoom,
 
-		onMutate: async ({ roomId, newTitle }) => {
+		onMutate: async ({ roomId, newTitle: title }) => {
 			await queryClient.cancelQueries({ queryKey: roomQueryKeys.all });
 
 			const roomKey = roomQueries.getRoomDeliberation({ roomId }).queryKey;
@@ -23,21 +23,14 @@ export function useRenameRoomMutation() {
 				queryClient.setQueryData(roomsKey, (old) => ({
 					...old,
 					rooms:
-						old?.rooms?.map((r) =>
-							r.id === roomId ? { ...r, title: newTitle } : r,
-						) ?? [],
+						old?.rooms?.map((r) => (r.id === roomId ? { ...r, title } : r)) ??
+						[],
 				}));
 			}
 
 			if (previousRoom) {
 				queryClient.setQueryData(roomKey, (old) => {
-					if (old?.room) {
-						return {
-							...old,
-							room: { ...old.room, title: newTitle },
-						};
-					}
-
+					if (old?.room) return { ...old, room: { ...old.room, title } };
 					return old;
 				});
 			}
@@ -46,11 +39,11 @@ export function useRenameRoomMutation() {
 		},
 
 		onError: (error, _, context) => {
+			toast.error("Rename failed", { description: error.message });
 			if (context) {
 				queryClient.setQueryData(roomsKey, context.previousRooms);
 				queryClient.setQueryData(context.roomKey, context.previousRoom);
 			}
-			toast.error("Rename failed", { description: error.message });
 		},
 
 		onSettled: () => {

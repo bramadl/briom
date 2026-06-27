@@ -1,9 +1,4 @@
-import type {
-	InitiateModeratorTurnInput,
-	InitiateTopicTurnInput,
-	TurnProposalDTO,
-} from "@briom/app";
-import { getModeratorId } from "@briom/libs/faker";
+import type { TurnProposalDTO } from "@briom/app";
 import { isServerError } from "@briom/libs/server-action";
 import { useCallback, useMemo, useRef } from "react";
 
@@ -64,9 +59,8 @@ export function useTurnSequencing(
 		const lastTurn = turns.at(-1);
 		if (lastTurn?.author.type === "participant") {
 			return (
-				room.participants.find(
-					(p) => p.name === lastTurn.author.profile?.displayName,
-				)?.id ?? null
+				room.participants.find((p) => p.id === lastTurn.author.profile?.id)
+					?.id ?? null
 			);
 		}
 		return null;
@@ -77,15 +71,8 @@ export function useTurnSequencing(
 			setIsSendingModerator(true);
 
 			const firstParticipant = room.participants[0];
-			const moderatorId = getModeratorId();
 			const clientTurnId = crypto.randomUUID();
-
-			const turnPayload: InitiateTopicTurnInput | InitiateModeratorTurnInput = {
-				clientTurnId,
-				content,
-				moderatorId,
-				roomId,
-			};
+			const turnPayload = { clientTurnId, content, roomId };
 
 			const handleError = () => {
 				setIsSendingModerator(false);
@@ -115,7 +102,7 @@ export function useTurnSequencing(
 				if (isServerError(result) || !firstParticipant) return handleError();
 
 				return initiateParticipant(
-					{ roomId, participantId: firstParticipant.id, intent: "direct" },
+					{ roomId, participantId: firstParticipant.id, intent: "respond" },
 					{ onSettled: releaseModeratorFlag },
 				);
 			}

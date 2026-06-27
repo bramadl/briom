@@ -1,8 +1,7 @@
+import { UnauthorizedError } from "@briom/supabase/utils/error";
+
 export interface ServerError {
-	error: {
-		kind: string;
-		message: string;
-	};
+	error: { kind: string; message: string };
 	success: false;
 }
 
@@ -28,21 +27,27 @@ export function isServerResponse<T>(
 export function parseError(error: Error): ServerError {
 	return {
 		success: false,
-		error: {
-			kind: error.constructor.name,
-			message: error.message,
-		},
+		error: { kind: error.constructor.name, message: error.message },
 	};
 }
 
 export function parseResponse<T>(data: T): ServerResponse<T> {
+	return { success: true, data };
+}
+
+export function unauthorizedError(): ServerError {
 	return {
-		success: true,
-		data,
+		success: false,
+		error: { kind: "UnauthorizedError", message: "Unauthorized" },
 	};
 }
 
 export function internalServerError(error: unknown): ServerError {
 	console.error(error);
 	return parseError(new Error("Internal server error"));
+}
+
+export function handleActionError(error: unknown): ServerError {
+	if (error instanceof UnauthorizedError) return unauthorizedError();
+	return internalServerError(error);
 }

@@ -24,6 +24,9 @@
 			"@briom/components/*": ["./src/components/*"],
 			"@briom/ui/*": ["./src/components/ui/*"],
 			"@briom/hooks/*": ["./src/hooks/*"],
+
+			// Submodule FE
+			"@briom/auth/*": ["./src/app/(auth)/*"],
 			"@briom/rooms/*": ["./src/app/(rooms)/*"],
 
 			// Client

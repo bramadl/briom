@@ -1,3 +1,6 @@
+"use client";
+
+import { supabaseClient } from "@briom/supabase/client";
 import {
 	DropdownMenuGroup,
 	DropdownMenuItem,
@@ -7,12 +10,23 @@ import {
 	BadgeCheckIcon,
 	BellIcon,
 	CreditCardIcon,
+	Loader2Icon,
 	LogOutIcon,
 	SparklesIcon,
 } from "lucide-react";
-import { Fragment } from "react/jsx-runtime";
+import { useRouter } from "next/navigation";
+import { Fragment, useCallback, useState } from "react";
 
 export function MenuOptions() {
+	const router = useRouter();
+	const [isSigningOut, setIsSigningOut] = useState(false);
+
+	const handleSignOut = useCallback(async () => {
+		setIsSigningOut(true);
+		await supabaseClient.auth.signOut();
+		router.push("/");
+	}, [router]);
+
 	return (
 		<Fragment>
 			<DropdownMenuGroup>
@@ -37,9 +51,13 @@ export function MenuOptions() {
 				</DropdownMenuItem>
 			</DropdownMenuGroup>
 			<DropdownMenuSeparator />
-			<DropdownMenuItem>
-				<LogOutIcon />
-				Log out
+			<DropdownMenuItem disabled={isSigningOut} onClick={handleSignOut}>
+				{isSigningOut ? (
+					<Loader2Icon className="animate-spin" />
+				) : (
+					<LogOutIcon />
+				)}
+				{isSigningOut ? "Signing out..." : "Log out"}
 			</DropdownMenuItem>
 		</Fragment>
 	);

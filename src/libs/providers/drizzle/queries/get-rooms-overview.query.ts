@@ -14,32 +14,27 @@ import { desc, eq } from "drizzle-orm";
  * `DrizzleGetRoomsOverviewQuery` — Infrastructure Query
  *
  * PostgreSQL implementation of `GetRoomsOverviewQuery`.
- * Returns a lightweight overview of all rooms in a single JOIN query —
- * no N+1, no turn data loaded.
+ * Returns a lightweight overview of rooms owned by the given moderator
+ * in a single query per room — no N+1 on turns, no synthesis data loaded.
  *
  * **Query strategy**
- * 1. `SELECT` all rooms ordered newest-first
- * 2. For each room, load its participants in a second parallel query
- *    (two separate queries is simpler and equally fast as a JOIN given
- *    Drizzle's row-per-join expansion — revisit with a raw JOIN if rooms
- *    scale significantly)
+ * 1. `SELECT` rooms filtered by `moderator_id`, ordered newest-first
+ * 2. For each room, load its participants in a parallel query
  *
  * **vs. `DrizzleGetRoomsQuery`**
  * - Does NOT load turn IDs (sidebar never needs them)
  * - Does NOT load synthesis fields (sidebar never needs them)
  * - Computes `shortId` and `participantCount` at the query layer
- * - Fixes the `qualifiedModel` bug present in `DrizzleGetRoomsQuery`
- *   (`${provider}/${model}` not `${provider}/${name}`)
+ * - Scoped to the requesting moderator (Phase 7 auth hardening)
  */
 export class DrizzleGetRoomsOverviewQuery implements GetRoomsOverviewQuery {
 	constructor(private readonly db: Database) {}
 
-	async execute(
-		_input: GetRoomsOverviewInput,
-	): Promise<GetRoomsOverviewOutput> {
+	async execute(input: GetRoomsOverviewInput): Promise<GetRoomsOverviewOutput> {
 		const rooms = await this.db
 			.select()
 			.from(roomsTable)
+			.where(eq(roomsTable.moderatorId, input.moderatorId))
 			.orderBy(desc(roomsTable.createdAt));
 
 		const overviews: RoomOverviewDTO[] = await Promise.all(

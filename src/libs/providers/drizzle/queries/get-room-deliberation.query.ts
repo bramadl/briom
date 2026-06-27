@@ -19,7 +19,7 @@ import {
 	roomsTable,
 	turnsTable,
 } from "@briom/drizzle/schema";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 /**
  * @description
@@ -60,7 +60,10 @@ export class DrizzleGetRoomDeliberationQuery
 		input: GetRoomDeliberationInput,
 	): Promise<GetRoomDeliberationOutput> {
 		const room = await this.db.query.roomsTable.findFirst({
-			where: eq(roomsTable.id, input.roomId),
+			where: and(
+				eq(roomsTable.id, input.roomId),
+				eq(roomsTable.moderatorId, input.moderatorId),
+			),
 		});
 
 		if (!room) return { room: null };

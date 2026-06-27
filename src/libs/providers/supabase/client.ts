@@ -1,25 +1,26 @@
 "use client";
 
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseClientEnvs } from "@briom/libs/get-env";
+import { createBrowserClient } from "@supabase/ssr";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabasePublishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-if (!supabaseUrl) throw new Error("NEXT_PUBLIC_SUPABASE_URL is required");
-if (!supabasePublishableKey) {
-	throw new Error("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY is required");
-}
+const { supabasePublishableKey, supabaseUrl } = getSupabaseClientEnvs();
 
 /**
  * @description
  * Browser-side Supabase client using the publishable key.
  *
- * Used exclusively for subscribing to Realtime Broadcast channels.
+ * Upgraded from `createClient` to `createBrowserClient` (@supabase/ssr) to
+ * support cookie-based session management required by Supabase Auth.
  *
- * **Security note (MVP scope):** room channels are currently PUBLIC —
- * anyone who knows a roomId can subscribe to its broadcast events. This
- * is acceptable for the single-user MVP (no Supabase Auth yet). Once
- * multi-user auth lands, switch to private channels + RLS policies on
- * `realtime.messages` scoped by room ownership.
+ * **Dual purpose**
+ * - Auth: session is automatically persisted/refreshed via cookies
+ * - Realtime: still used for subscribing to Broadcast channels (use-room-sse.ts)
+ *
+ * **Channel security (MVP scope):** room channels are public by roomId UUID.
+ * Private channels require Pro plan ("Allow public access" toggle) +
+ * `realtime.messages` RLS policy. Defer until pre-launch hardening.
  */
-export const supabaseClient = createClient(supabaseUrl, supabasePublishableKey);
+export const supabaseClient = createBrowserClient(
+	supabaseUrl,
+	supabasePublishableKey,
+);

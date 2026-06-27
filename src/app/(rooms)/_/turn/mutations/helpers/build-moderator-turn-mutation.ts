@@ -1,5 +1,3 @@
-"use client";
-
 import type {
 	InitiateModeratorTurnInput,
 	InitiateTopicTurnInput,
@@ -12,13 +10,15 @@ import { toast } from "sonner";
 
 import { buildOptimisticModeratorTurn } from "./build-optimistic-moderator-turn";
 
+type ModeratorTurnInput =
+	| Omit<InitiateTopicTurnInput, "moderatorId">
+	| Omit<InitiateModeratorTurnInput, "moderatorId">;
+
 interface BuildModeratorTurnMutation<
 	TOutput extends ServerActionResult<unknown>,
 > {
 	errorMessage: string;
-	mutationFn: (
-		variables: InitiateTopicTurnInput | InitiateModeratorTurnInput,
-	) => Promise<TOutput>;
+	mutationFn: (variables: ModeratorTurnInput) => Promise<TOutput>;
 }
 
 export function buildModeratorTurnMutation<
@@ -38,7 +38,6 @@ export function buildModeratorTurnMutation<
 				await queryClient.cancelQueries({ queryKey: roomQueryKeys.all });
 
 				const previousDeliberation = queryClient.getQueryData(deliberationKey);
-
 				if (previousDeliberation) {
 					queryClient.setQueryData(deliberationKey, (old) => {
 						if (!old?.room) return old;

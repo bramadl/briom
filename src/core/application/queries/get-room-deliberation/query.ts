@@ -7,6 +7,12 @@ import type { RoomDeliberationDTO } from "@briom/app/contracts";
 export interface GetRoomDeliberationInput {
 	/**
 	 * @description
+	 * The requesting moderator's ID. Used to verify room ownership —
+	 * returns null if the room exists but belongs to a different moderator.
+	 */
+	moderatorId: string;
+	/**
+	 * @description
 	 * The room ID to retrieve the full deliberation view for.
 	 */
 	roomId: string;
@@ -19,7 +25,8 @@ export interface GetRoomDeliberationInput {
 export interface GetRoomDeliberationOutput {
 	/**
 	 * @description
-	 * Full deliberation view, or null if the room does not exist.
+	 * Full deliberation view, or null if the room does not exist or is
+	 * not owned by the requesting moderator.
 	 */
 	room: RoomDeliberationDTO | null;
 }

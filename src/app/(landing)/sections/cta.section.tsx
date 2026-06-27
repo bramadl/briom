@@ -1,28 +1,25 @@
 "use client";
 
+import { useAuthModal } from "@briom/auth/modal/auth-modal-provider";
 import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";
 import { gsap, registerGsap } from "@briom/libs/next/gsap/register";
 import { useGSAP } from "@gsap/react";
 import { ArrowRight } from "lucide-react";
-import Link from "next/link";
 import { useRef } from "react";
 
 export function CtaSection() {
-	const rootRef = useRef<HTMLDivElement>(null);
+	const { openAuth } = useAuthModal();
 
+	const rootRef = useRef<HTMLDivElement>(null);
 	useGSAP(
 		() => {
 			registerGsap();
-
 			gsap.to("[data-cta-reveal]", {
 				duration: 0.8,
 				ease: "power3.out",
 				opacity: 1,
-				scrollTrigger: {
-					start: "top 70%",
-					trigger: rootRef.current,
-				},
+				scrollTrigger: { start: "top 70%", trigger: rootRef.current },
 				stagger: 0.1,
 				y: 0,
 			});
@@ -70,11 +67,9 @@ export function CtaSection() {
 					thinking through.
 				</p>
 				<div className="opacity-0 translate-y-5" data-cta-reveal>
-					<Button asChild className="group" size="lg">
-						<Link href="/rooms">
-							Open a room
-							<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
-						</Link>
+					<Button className="group" onClick={openAuth} size="lg">
+						Open a room
+						<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
 					</Button>
 				</div>
 			</Container>

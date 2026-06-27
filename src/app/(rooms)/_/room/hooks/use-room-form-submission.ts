@@ -1,4 +1,3 @@
-import { getModeratorId } from "@briom/libs/faker";
 import { isServerError } from "@briom/libs/server-action";
 import type { SubmitHandler } from "@formisch/react";
 import { toast } from "sonner";
@@ -28,7 +27,6 @@ export function useRoomFormSubmission({
 	const handleSubmit: SubmitHandler<typeof RoomFormSchema> = async (output) => {
 		const roomResult = await formRoomMutation.mutateAsync({
 			title: output.title,
-			moderatorId: getModeratorId(),
 		});
 
 		if (isServerError(roomResult)) {
