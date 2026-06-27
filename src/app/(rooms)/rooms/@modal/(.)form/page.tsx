@@ -1,38 +1,20 @@
-"use client";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useRouter } from "@bprogress/next/app";
-import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogHeader,
-	DialogTitle,
-} from "@briom/components/ui/dialog";
-import { RoomForm } from "@briom/rooms/rooms/_/room-form/room-form";
+import { FormRoomModal } from "./_/form-room-modal";
 
-export default function NewRoomModal() {
-	const router = useRouter();
+function isMobileUA(ua: string): boolean {
+	return /android|iphone|ipad|ipod|mobile/i.test(ua);
+}
 
-	return (
-		<Dialog
-			defaultOpen
-			onOpenChange={(open) => {
-				if (!open) router.back();
-			}}
-		>
-			<DialogContent
-				className="gap-0 sm:max-w-[calc(80%-2rem)] h-full max-h-[80%] flex flex-col p-0 overflow-hidden"
-				showCloseButton={false}
-			>
-				<DialogHeader className="p-4">
-					<DialogTitle>Form a Room</DialogTitle>
-					<DialogDescription>
-						Create a dedicated space for collaborative thinking. Invite
-						perspectives, then guide the deliberation.
-					</DialogDescription>
-				</DialogHeader>
-				<RoomForm className="mt-4" />
-			</DialogContent>
-		</Dialog>
-	);
+export default async function FormRoomModalPage() {
+	const headersList = await headers();
+	const ua = headersList.get("user-agent") ?? "";
+	const isMobileHint = headersList.get("sec-ch-ua-mobile") === "?1";
+
+	if (isMobileUA(ua) || isMobileHint) {
+		redirect("/rooms/form");
+	}
+
+	return <FormRoomModal />;
 }

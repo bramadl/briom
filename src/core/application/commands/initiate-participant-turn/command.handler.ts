@@ -17,6 +17,7 @@ import {
 	type IResult,
 	Result,
 } from "@briom/libs/drimion";
+import { after } from "next/server";
 
 import type { TurnLifecycleOrchestrator } from "../../services/turn-lifecycle.orchestrator";
 import type { TurnStreamingService } from "../../services/turn-streaming.service";
@@ -126,13 +127,15 @@ export class InitiateParticipantTurnHandler
 
 		const messages = this.transcriptor.render({ participants, turns });
 
-		void this.streaming.streamAndSettle({
-			turnId: turn.id,
-			roomId: RoomId(roomId),
-			messages,
-			qualifiedModel: participant.qualifiedModel,
-			systemPrompt,
-		});
+		after(() =>
+			this.streaming.streamAndSettle({
+				turnId: turn.id,
+				roomId: RoomId(roomId),
+				messages,
+				qualifiedModel: participant.qualifiedModel,
+				systemPrompt,
+			}),
+		);
 
 		return Result.success({ turnId: turn.id.value() });
 	}
