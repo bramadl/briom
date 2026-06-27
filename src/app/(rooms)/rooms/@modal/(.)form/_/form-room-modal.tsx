@@ -31,7 +31,9 @@ export function FormRoomModal() {
 						perspectives, then guide the deliberation.
 					</DialogDescription>
 				</DialogHeader>
-				<RoomForm className="mt-4" />
+				<div className="flex-1 flex flex-col overflow-hidden">
+					<RoomForm />
+				</div>
 			</DialogContent>
 		</Dialog>
 	);

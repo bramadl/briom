@@ -9,7 +9,6 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 } from "@briom/components/ui/input-group";
-import { cn } from "@briom/libs/utils";
 import { useParticipantModels } from "@briom/rooms/_/participant/hooks/use-participant-models";
 import type { RoomFormSchema } from "@briom/rooms/_/room/form/schema";
 import {
@@ -27,14 +26,12 @@ interface RoomFormParticipantsProps {
 	disabled?: boolean;
 	form: FormStore<typeof RoomFormSchema>;
 	maxParticipants: number;
-	scrollable?: boolean;
 }
 
 export function RoomFormParticipants({
 	disabled,
 	form,
 	maxParticipants,
-	scrollable = false,
 }: RoomFormParticipantsProps) {
 	const { flatModels, useFreeModels } = useParticipantModels();
 	const [inputValue, setInputValue] = useState<string>("");
@@ -101,49 +98,40 @@ export function RoomFormParticipants({
 	return (
 		<FieldArray of={form} path={["participants"]}>
 			{(fieldArray) => (
-				<FieldSet
-					className={cn(
-						"flex flex-col gap-4 -mx-2 px-2",
-						scrollable ? "" : "h-full min-h-0 overflow-hidden",
-					)}
-				>
-					<FieldLegend variant="label">Invite Participants</FieldLegend>
-					<FieldDescription>
+				<FieldSet className="overflow-hidden">
+					<FieldLegend className="px-4" variant="label">
+						Invite Participants
+					</FieldLegend>
+					<FieldDescription className="px-4">
 						{maxReached
 							? "All good, you can start forming the room now."
 							: `Select up to ${maxParticipants - currentParticipantsLength} AI perspectives for this deliberation.`}
 					</FieldDescription>
-					<div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-						{fieldArray.items.map((item, index) => (
-							<ParticipantField
-								disabled={disabled}
-								form={form}
-								index={index}
-								key={item}
-								showRemove={fieldArray.items.length > 1}
-							/>
-						))}
-					</div>
-					<div
-						className={cn(
-							"flex flex-col gap-4 -mx-2 px-2 -mt-1 pt-1",
-							scrollable ? "" : "h-full min-h-0 overflow-hidden",
+					<div className="flex-1 flex flex-col pt-1 -mt-1 overflow-hidden">
+						{fieldArray.items.length > 0 && (
+							<div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 shrink-0 mb-4 px-4">
+								{fieldArray.items.map((item, index) => (
+									<ParticipantField
+										disabled={disabled}
+										form={form}
+										index={index}
+										key={item}
+										showRemove={fieldArray.items.length > 1}
+									/>
+								))}
+							</div>
 						)}
-					>
-						<InputGroup className="shrink-0">
-							<InputGroupInput
-								onChange={(e) => setInputValue(e.currentTarget.value)}
-								placeholder="@free anthropic, gpt, google"
-								value={inputValue}
-							/>
-							<InputGroupAddon align={"inline-end"} />
-						</InputGroup>
-						<div
-							className={cn(
-								"grid md:grid-cols-2 lg:grid-cols-4 content-start gap-4 pr-1",
-								scrollable ? "" : "flex-1 overflow-y-auto",
-							)}
-						>
+						<div className="px-4">
+							<InputGroup className="shrink-0">
+								<InputGroupInput
+									onChange={(e) => setInputValue(e.currentTarget.value)}
+									placeholder="@free anthropic, gpt, google"
+									value={inputValue}
+								/>
+								<InputGroupAddon align={"inline-end"} />
+							</InputGroup>
+						</div>
+						<div className="flex-1 grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 content-start gap-4 px-4 py-6 overflow-y-auto">
 							{filteredModels.length > 0 ? (
 								filteredModels.map((model) => (
 									<ParticipantSelector

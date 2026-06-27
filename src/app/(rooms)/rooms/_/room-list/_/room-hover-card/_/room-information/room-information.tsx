@@ -1,6 +1,7 @@
 import type { RoomOverviewDTO } from "@briom/app";
 import { AnchorLink } from "@briom/components/ui/anchor-link";
 import { Separator } from "@briom/components/ui/separator";
+import { useSidebar } from "@briom/components/ui/sidebar";
 import { cn } from "@briom/libs/utils";
 import { RoomStatus } from "@briom/rooms/_/room/ui/room-status";
 
@@ -18,6 +19,8 @@ export function RoomInformation({
 	room,
 	...props
 }: RoomInformationProps) {
+	const { open } = useSidebar();
+
 	return (
 		<div
 			className={cn(
@@ -29,6 +32,7 @@ export function RoomInformation({
 			<AnchorLink
 				href={`/rooms/${room.id}`}
 				label={`Open ${room.title} room`}
+				tabIndex={open ? 1 : -1}
 			/>
 
 			<RoomTitle roomTitle={room.title} />

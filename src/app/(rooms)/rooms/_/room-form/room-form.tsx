@@ -2,7 +2,6 @@
 
 import { useRouter } from "@bprogress/next/app";
 import { FieldGroup } from "@briom/components/ui/field";
-import { cn } from "@briom/libs/utils";
 import { useRoomForm } from "@briom/rooms/_/room/hooks/use-room-form";
 import { Form } from "@formisch/react";
 import { useCallback } from "react";
@@ -11,12 +10,7 @@ import { RoomFormActions } from "./_/room-form-actions";
 import { RoomFormParticipants } from "./_/room-form-participants/room-form-participants";
 import { RoomTitleField } from "./_/room-title-field";
 
-interface RoomFormProps {
-	className?: string;
-	scrollable?: boolean;
-}
-
-export function RoomForm({ className, scrollable = false }: RoomFormProps) {
+export function RoomForm() {
 	const router = useRouter();
 
 	const form = useRoomForm({
@@ -33,28 +27,17 @@ export function RoomForm({ className, scrollable = false }: RoomFormProps) {
 
 	return (
 		<Form
-			className={cn(
-				scrollable
-					? "flex flex-col"
-					: "h-full min-h-0 flex flex-col overflow-hidden",
-				className,
-			)}
+			className="flex-1 flex flex-col overflow-hidden"
 			id={form.id}
 			of={form.form}
 			onSubmit={form.submit}
 		>
-			<FieldGroup
-				className={cn(
-					"flex flex-col px-4",
-					scrollable ? "" : "h-full min-h-0 overflow-hidden",
-				)}
-			>
+			<FieldGroup className="flex-1 overflow-hidden">
 				<RoomTitleField disabled={form.disabled} form={form.form} />
 				<RoomFormParticipants
 					disabled={form.disabled}
 					form={form.form}
 					maxParticipants={form.maxParticipants}
-					scrollable={scrollable}
 				/>
 			</FieldGroup>
 			<RoomFormActions

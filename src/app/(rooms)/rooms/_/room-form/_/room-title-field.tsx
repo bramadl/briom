@@ -12,7 +12,7 @@ export function RoomTitleField({ disabled, form }: RoomTitleFieldProps) {
 	return (
 		<FormischField of={form} path={["title"]}>
 			{({ errors, props, input }) => (
-				<Field data-invalid={errors !== null}>
+				<Field className="px-4" data-invalid={errors !== null}>
 					<FieldLabel htmlFor="room-form-title">Room Title</FieldLabel>
 					<Input
 						{...props}

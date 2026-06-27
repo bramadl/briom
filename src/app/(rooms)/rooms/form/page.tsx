@@ -12,16 +12,16 @@ export default async function NewRoomPage() {
 
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
-			<main className="h-dvh overflow-y-auto">
-				<div className="flex flex-col w-full px-4 py-8 gap-6">
-					<div className="flex flex-col gap-1">
-						<h1 className="font-serif text-2xl">Form a Room</h1>
-						<p className="text-sm text-muted-foreground">
-							Create a dedicated space for collaborative thinking. Invite
-							perspectives, then guide the deliberation.
-						</p>
-					</div>
-					<RoomForm scrollable />
+			<main className="h-dvh flex flex-col overflow-hidden">
+				<div className="flex flex-col gap-1 shrink-0 p-4 sm:p-8">
+					<h1 className="font-serif text-2xl">Form a Room</h1>
+					<p className="text-sm text-muted-foreground">
+						Create a dedicated space for collaborative thinking. Invite
+						perspectives, then guide the deliberation.
+					</p>
+				</div>
+				<div className="flex-1 flex flex-col px-2 sm:px-4 overflow-hidden">
+					<RoomForm />
 				</div>
 			</main>
 		</HydrationBoundary>
