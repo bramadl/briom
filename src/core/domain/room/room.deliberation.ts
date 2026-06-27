@@ -2,6 +2,7 @@ import { type IResult, Result } from "@briom/libs/drimion";
 
 import {
 	INTENT_OPTION,
+	type IntentOption,
 	InvalidIntentForContextError,
 	type Turn,
 	TurnIntent,
@@ -147,30 +148,48 @@ export class RoomDeliberation {
 		const { room, turns, participants } = context;
 		if (!room.isDeliberating) return [];
 
-		const proposals: TurnProposal[] = [];
-		const lastTurn = turns[turns.length - 1];
-		const lastParticipantId = lastTurn?.participantId;
+		const lastSpeakerId = turns.findLast(
+			(t) => t.isFromParticipant,
+		)?.participantId;
 
-		for (const participant of participants) {
-			if (lastParticipantId && participant.id.isEqual(lastParticipantId)) {
-				continue;
-			}
+		const eligible = participants.filter(
+			(p) => !lastSpeakerId || !p.id.isEqual(lastSpeakerId),
+		);
 
-			const intents = this.suggestIntentsForParticipant(
-				context,
-				participant.id,
-			);
+		const settledCount = turns.filter((t) => t.isSettled).length;
+		const hasHistory = turns.some((t) => t.isFromParticipant && t.isSettled);
 
-			const intent = intents[0];
-			proposals.push({
+		const intentPool: IntentOption[] = [
+			INTENT_OPTION.RESPOND,
+			INTENT_OPTION.EXPAND,
+			...(hasHistory ? [INTENT_OPTION.CRITIQUE, INTENT_OPTION.CHALLENGE] : []),
+			...(settledCount >= 2 ? [INTENT_OPTION.SUMMARIZE] : []),
+		];
+
+		return eligible.map((participant) => {
+			const intentOption =
+				intentPool[Math.floor(Math.random() * intentPool.length)];
+			const intent = TurnIntent.from(intentOption);
+
+			const mood = selectMood({
+				turnCount: turns.length,
+				hasFailedTurn: turns.some((t) => t.isFailed),
+				lastIntent: turns.at(-1)?.get("intent") ?? undefined,
+				participantCount: participants.length,
+			});
+
+			return {
 				participantId: participant.id,
 				intent,
-				rationale: this.generateRationale(context, participant.id, intent),
-				confidence: this.calculateConfidence(context, participant.id, intent),
-			});
-		}
-
-		return proposals.sort((a, b) => b.confidence - a.confidence);
+				rationale: this.generateRationale(
+					context,
+					participant.id,
+					intent,
+					mood,
+				),
+				confidence: parseFloat((0.5 + Math.random() * 0.5).toFixed(2)),
+			};
+		});
 	}
 
 	/**
@@ -218,20 +237,13 @@ export class RoomDeliberation {
 		context: DeliberationContext,
 		participantId: ParticipantId,
 		intent: TurnIntent,
+		mood: ReturnType<typeof selectMood>,
 	): string {
 		const participant = context.participants.find((p) =>
 			p.id.isEqual(participantId),
 		);
 
 		const name = participant?.get("displayName") || "AI";
-		const mood = selectMood({
-			turnCount: context.turns.length,
-			hasFailedTurn: context.turns.some((t) => t.isFailed),
-			lastIntent:
-				context.turns[context.turns.length - 1]?.get("intent") || undefined,
-			participantCount: context.participants.length,
-		});
-
 		return selectProposalLabel(intent.get("value"), name, mood);
 	}
 
