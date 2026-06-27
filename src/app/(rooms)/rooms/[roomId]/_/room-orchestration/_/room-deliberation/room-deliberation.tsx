@@ -38,6 +38,7 @@ export function RoomDeliberation({
 		participants,
 		proposals,
 		sequenceTurns,
+		turns,
 	} = useDeliberation();
 
 	const onStreamingRef = useRef(onStreaming);
@@ -79,7 +80,7 @@ export function RoomDeliberation({
 				className="flex-1 flex flex-col gap-8 p-8 lg:py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar overflow-x-hidden"
 				ref={onScrollerLoaded}
 			>
-				{isFreshRoom ? (
+				{isFreshRoom && turns.length === 0 ? (
 					<EmptySequence participants={participants} />
 				) : (
 					<TurnSequence
