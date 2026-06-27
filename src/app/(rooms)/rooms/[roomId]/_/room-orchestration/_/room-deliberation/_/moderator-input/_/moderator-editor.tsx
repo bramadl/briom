@@ -110,7 +110,7 @@ export function ModeratorEditor({
 				aria-placeholder={placeholder}
 				className={cn(
 					"min-h-20 lg:min-h-16 max-h-[36rem] w-full bg-transparent",
-					"px-4 pt-3 pb-1 text-sm leading-relaxed",
+					"px-4 pt-3 pb-1 text-base md:text-sm leading-relaxed",
 					"overflow-y-auto focus:outline-none",
 				)}
 				placeholder={

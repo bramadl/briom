@@ -51,7 +51,7 @@ function TurnSequenceComponent({
 		}, [room.participants, turns]);
 
 	return (
-		<div className="w-full max-w-3xl mx-auto px-8 flex flex-col gap-12 lg:gap-16 min-w-0">
+		<div className="w-full max-w-3xl mx-auto md:px-8 flex flex-col gap-12 lg:gap-16 min-w-0">
 			{turns.map((turn) => {
 				const participant =
 					participantByName.get(turn.author.profile?.displayName ?? "") ??
