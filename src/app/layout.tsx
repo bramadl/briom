@@ -1,4 +1,5 @@
 import { AppProviders } from "@briom/components/app-providers";
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata } from "next";
 import { Fraunces, Geist, Space_Mono } from "next/font/google";
 
@@ -42,6 +43,7 @@ export default function RootLayout({
 			</head>
 			<body>
 				<AppProviders>{children}</AppProviders>
+				<Analytics />
 			</body>
 		</html>
 	);
