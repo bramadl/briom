@@ -13,7 +13,9 @@ import { RoomTitleField } from "./_/room-title-field";
 export function RoomForm() {
 	const router = useRouter();
 	const form = useRoomForm({
-		onRoomFormed: (roomId: string) => router.push(`/rooms/${roomId}`),
+		onRoomFormed: (roomId: string) => {
+			router.push(`/rooms/${roomId}`);
+		},
 	});
 
 	const cancelForm = useCallback(() => {
