@@ -15,6 +15,7 @@ export const roomQueries = {
 				if (isServerError(result)) throw result.error;
 				return result.data;
 			},
+			staleTime: Infinity,
 		});
 	},
 	getRoomsOverview() {

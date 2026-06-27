@@ -8,6 +8,7 @@ export function ProgressProvider({ children }: React.PropsWithChildren) {
 			color="var(--primary)"
 			height="4px"
 			options={{ showSpinner: false }}
+			shallowRouting
 		>
 			{children}
 		</BProgressProvider>

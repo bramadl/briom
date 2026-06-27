@@ -3,7 +3,6 @@
 import { FieldGroup } from "@briom/components/ui/field";
 import { cn } from "@briom/libs/utils";
 import { useRoomForm } from "@briom/rooms/_/room/hooks/use-room-form";
-import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form.store";
 import { Form } from "@formisch/react";
 import { useRouter } from "next/navigation";
 import { useCallback } from "react";
@@ -18,7 +17,6 @@ interface RoomFormProps {
 
 export function RoomForm({ className }: RoomFormProps) {
 	const router = useRouter();
-	const hide = useRoomFormStore((s) => s.hide);
 
 	const form = useRoomForm({
 		onRoomFormed: (roomId: string) => {
@@ -28,9 +26,9 @@ export function RoomForm({ className }: RoomFormProps) {
 	});
 
 	const cancelForm = useCallback(() => {
-		hide();
 		form.reset();
-	}, [hide, form.reset]);
+		router.back();
+	}, [form.reset, router]);
 
 	return (
 		<Form

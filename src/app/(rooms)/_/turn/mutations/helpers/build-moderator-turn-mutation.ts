@@ -3,7 +3,6 @@ import type {
 	InitiateTopicTurnInput,
 } from "@briom/app";
 import type { ServerActionResult } from "@briom/libs/server-action";
-import { roomQueryKeys } from "@briom/rooms/_/room/queries/keys";
 import { roomQueries } from "@briom/rooms/_/room/queries/registry";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -34,8 +33,6 @@ export function buildModeratorTurnMutation<
 				const deliberationKey = roomQueries.getRoomDeliberation({
 					roomId,
 				}).queryKey;
-
-				await queryClient.cancelQueries({ queryKey: roomQueryKeys.all });
 
 				const previousDeliberation = queryClient.getQueryData(deliberationKey);
 				if (previousDeliberation) {

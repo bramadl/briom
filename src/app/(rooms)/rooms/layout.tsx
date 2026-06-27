@@ -8,15 +8,14 @@ import { prefetchRooms } from "../_/room/queries/services/prefetch-rooms";
 
 import { ModeratorMenu } from "./_/moderator-menu/moderator-menu";
 import { RoomCollapsibleSidebar } from "./_/room-collapsible-sidebar";
-import { RoomForm } from "./_/room-form/room-form";
-import { RoomFormDialog } from "./_/room-form-dialog/room-form-dialog";
 import { RoomList } from "./_/room-list/room-list";
 import { RoomSidebar } from "./_/room-sidebar/room-sidebar";
 import { RoomWorkspace } from "./_/room-workspace";
 
 export default async function RoomsLayout({
 	children,
-}: React.PropsWithChildren) {
+	modal,
+}: React.PropsWithChildren<{ modal: React.ReactNode }>) {
 	const moderator = await getModerator();
 
 	const queryClient = getQueryClient();
@@ -36,9 +35,7 @@ export default async function RoomsLayout({
 				>
 					{children}
 				</RoomWorkspace>
-				<RoomFormDialog>
-					<RoomForm className="mt-4" />
-				</RoomFormDialog>
+				{modal}
 			</ModeratorProvider>
 		</HydrationBoundary>
 	);
