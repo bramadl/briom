@@ -1,6 +1,6 @@
 "use client";
 
-import { ProgressProvider as BProgressProvider } from "@bprogress/next/pages";
+import { ProgressProvider as BProgressProvider } from "@bprogress/next/app";
 
 export function ProgressProvider({ children }: React.PropsWithChildren) {
 	return (
