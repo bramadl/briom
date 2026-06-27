@@ -13,9 +13,10 @@ import { RoomTitleField } from "./_/room-title-field";
 
 interface RoomFormProps {
 	className?: string;
+	variant?: "modal" | "page"; // default "modal"
 }
 
-export function RoomForm({ className }: RoomFormProps) {
+export function RoomForm({ className, variant = "modal" }: RoomFormProps) {
 	const router = useRouter();
 
 	const form = useRoomForm({
@@ -32,12 +33,22 @@ export function RoomForm({ className }: RoomFormProps) {
 
 	return (
 		<Form
-			className={cn("h-full min-h-0 flex flex-col overflow-hidden", className)}
+			className={cn(
+				variant === "modal"
+					? "h-full min-h-0 flex flex-col overflow-hidden"
+					: "flex flex-col",
+				className,
+			)}
 			id={form.id}
 			of={form.form}
 			onSubmit={form.submit}
 		>
-			<FieldGroup className="h-full min-h-0 flex flex-col px-4 overflow-hidden">
+			<FieldGroup
+				className={cn(
+					"flex flex-col px-4",
+					variant === "modal" ? "h-full min-h-0 overflow-hidden" : "",
+				)}
+			>
 				<RoomTitleField disabled={form.disabled} form={form.form} />
 				<RoomFormParticipants
 					disabled={form.disabled}

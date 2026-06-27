@@ -13,7 +13,7 @@ export default async function NewRoomPage() {
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
 			<main className="min-h-dvh flex flex-col">
-				<div className="flex-1 flex flex-col max-w-xl w-full mx-auto px-4 py-8 gap-6">
+				<div className="flex flex-col max-w-xl w-full mx-auto px-4 py-8 gap-6">
 					<div className="flex flex-col gap-1">
 						<h1 className="font-serif text-2xl">Form a Room</h1>
 						<p className="text-sm text-muted-foreground">
@@ -21,7 +21,7 @@ export default async function NewRoomPage() {
 							perspectives, then guide the deliberation.
 						</p>
 					</div>
-					<RoomForm className="flex-1" />
+					<RoomForm variant="page" />
 				</div>
 			</main>
 		</HydrationBoundary>
