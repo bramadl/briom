@@ -43,7 +43,7 @@ export function CloseRoom() {
 			description: "The room has been permanently closed.",
 		});
 
-		if (sidebar.open) sidebar.setOpen(false);
+		if (!sidebar.open) sidebar.setOpen(true);
 		router.push("/rooms");
 	}, [
 		mutation.mutateAsync,
