@@ -1,8 +1,7 @@
 import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
 import { prefetchModels } from "@briom/rooms/_/participant/queries/services/prefetch-models";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
-
-import { RoomForm } from "../_/room-form/room-form";
+import { RoomFormPage } from "./_/room-form-page";
 
 export const metadata = { title: "Form a Room – Briom" };
 
@@ -21,7 +20,7 @@ export default async function NewRoomPage() {
 					</p>
 				</div>
 				<div className="flex-1 flex flex-col px-2 sm:px-4 overflow-hidden">
-					<RoomForm />
+					<RoomFormPage />
 				</div>
 			</main>
 		</HydrationBoundary>

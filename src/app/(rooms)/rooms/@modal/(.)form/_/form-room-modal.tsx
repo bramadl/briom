@@ -15,18 +15,22 @@ export function FormRoomModal() {
 	const router = useRouter();
 	const [open, setOpen] = useState(true);
 
-	const handleClose = useCallback(() => {
+	const closeModal = useCallback(() => {
 		setOpen(false);
-		setTimeout(() => {
-			router.back();
-		}, 200);
+		setTimeout(() => router.back(), 200);
 	}, [router]);
+
+	const handleSuccess = useCallback(
+		(roomId: string) => {
+			setOpen(false);
+			setTimeout(() => router.replace(`/rooms/${roomId}`), 200);
+		},
+		[router],
+	);
 
 	return (
 		<Dialog
-			onOpenChange={(isOpen) => {
-				if (!isOpen) handleClose();
-			}}
+			onOpenChange={(isOpen) => (!isOpen ? closeModal() : undefined)}
 			open={open}
 		>
 			<DialogContent
@@ -41,7 +45,7 @@ export function FormRoomModal() {
 					</DialogDescription>
 				</DialogHeader>
 				<div className="flex-1 flex flex-col overflow-hidden">
-					<RoomForm />
+					<RoomForm onCancel={closeModal} onSuccess={handleSuccess} />
 				</div>
 			</DialogContent>
 		</Dialog>

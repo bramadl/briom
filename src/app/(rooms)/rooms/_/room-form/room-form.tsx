@@ -1,28 +1,25 @@
 "use client";
 
-import { useRouter } from "@bprogress/next/app";
 import { FieldGroup } from "@briom/components/ui/field";
 import { useRoomForm } from "@briom/rooms/_/room/hooks/use-room-form";
 import { Form } from "@formisch/react";
-import { useCallback } from "react";
 
 import { RoomFormActions } from "./_/room-form-actions";
 import { RoomFormParticipants } from "./_/room-form-participants/room-form-participants";
 import { RoomTitleField } from "./_/room-title-field";
 
-export function RoomForm() {
-	const router = useRouter();
+interface RoomFormProps {
+	onCancel: () => void;
+	onSuccess: (roomId: string) => void;
+}
+
+export function RoomForm({ onSuccess, onCancel }: RoomFormProps) {
 	const form = useRoomForm({
 		onRoomFormed: (roomId: string) => {
-			cancelForm();
-			router.push(`/rooms/${roomId}`);
+			form.reset();
+			onSuccess(roomId);
 		},
 	});
-
-	const cancelForm = useCallback(() => {
-		form.reset();
-		router.back();
-	}, [form.reset, router]);
 
 	return (
 		<Form
@@ -44,7 +41,7 @@ export function RoomForm() {
 				isForming={form.forming}
 				isInviting={form.inviting}
 				isSubmitting={form.submitting}
-				onCancel={cancelForm}
+				onCancel={onCancel}
 			/>
 		</Form>
 	);
