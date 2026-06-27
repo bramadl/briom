@@ -46,7 +46,7 @@ export class OpenRouterLlmGateway implements LlmGateway {
 						messages: fullMessages,
 					},
 				},
-				signal ? { fetchOptions: { signal } } : undefined,
+				signal ? { signal } : undefined,
 			);
 
 			const readable = new ReadableStream<string>({
@@ -54,30 +54,12 @@ export class OpenRouterLlmGateway implements LlmGateway {
 					let sawReasoningOnly = false;
 					let sawAnyContent = false;
 
-					const abortPromise = new Promise<never>((_, reject) => {
-						if (signal?.aborted) {
-							const exception = new DOMException(
-								signal.reason ?? "Aborted",
-								"AbortError",
-							);
-
-							reject(exception);
-							return;
-						}
-
-						signal?.addEventListener(
-							"abort",
-							() => {
-								const exception = new DOMException(
-									signal.reason ?? "Aborted",
-									"AbortError",
-								);
-
-								reject(exception);
-							},
-							{ once: true },
+					if (signal?.aborted) {
+						controller.error(
+							new DOMException(signal.reason ?? "Aborted", "AbortError"),
 						);
-					});
+						return;
+					}
 
 					const iterable = response as unknown as AsyncIterable<{
 						choices?: Array<{
@@ -90,14 +72,33 @@ export class OpenRouterLlmGateway implements LlmGateway {
 					}>;
 
 					const iterator = iterable[Symbol.asyncIterator]();
+
+					const onAbort = async () => {
+						try {
+							await iterator.return?.();
+						} catch {}
+						controller.error(
+							new DOMException(signal?.reason ?? "Aborted", "AbortError"),
+						);
+					};
+
+					signal?.addEventListener("abort", onAbort, { once: true });
+
 					try {
 						while (true) {
-							const result = await Promise.race([
-								iterator.next(),
-								abortPromise,
-							]);
+							if (signal?.aborted) {
+								try {
+									await iterator.return?.();
+								} catch {}
+								controller.error(
+									new DOMException(signal.reason ?? "Aborted", "AbortError"),
+								);
+								return;
+							}
 
-							if (result.done) {
+							const { done, value: chunk } = await iterator.next();
+
+							if (done) {
 								if (sawReasoningOnly && !sawAnyContent) {
 									console.warn(
 										`[OpenRouterLlmGateway] Model "${qualifiedModel}" streamed reasoning but no content — turn will fail as empty.`,
@@ -108,22 +109,8 @@ export class OpenRouterLlmGateway implements LlmGateway {
 								return;
 							}
 
-							const chunk = result.value;
 							const delta = chunk.choices?.[0]?.delta;
 							if (!delta) continue;
-
-							if (signal?.aborted) {
-								try {
-									await iterator.return?.();
-								} catch {}
-								const exception = new DOMException(
-									signal.reason ?? "Aborted",
-									"AbortError",
-								);
-
-								controller.error(exception);
-								return;
-							}
 
 							if (delta.content) {
 								sawAnyContent = true;
@@ -146,6 +133,8 @@ export class OpenRouterLlmGateway implements LlmGateway {
 							error instanceof Error ? error.message : "Stream failed";
 
 						controller.error(StreamError.streamFailure(message));
+					} finally {
+						signal?.removeEventListener("abort", onAbort);
 					}
 				},
 			});

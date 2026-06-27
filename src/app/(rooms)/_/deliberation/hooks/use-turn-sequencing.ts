@@ -1,7 +1,9 @@
 import type { TurnProposalDTO } from "@briom/app";
 import { isServerError } from "@briom/libs/server-action";
+import { roomQueries } from "@briom/rooms/_/room/queries/registry";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef } from "react";
-
+import { buildOptimisticParticipantTurn } from "../../turn/mutations/helpers/build-optimistic-participant-turn";
 import { useInitiateModeratorTurnMutation } from "../../turn/mutations/use-initiate-moderator-turn.mutation";
 import { useInitiateParticipantTurnMutation } from "../../turn/mutations/use-initiate-participant-turn.mutation";
 import { useInitiateTopicTurnMutation } from "../../turn/mutations/use-initiate-topic-turn.mutation";
@@ -24,6 +26,8 @@ export function useTurnSequencing(
 		turns,
 	} = state;
 
+	const queryClient = useQueryClient();
+
 	const { mutateAsync: initiateTopic } = useInitiateTopicTurnMutation();
 	const { mutateAsync: initiateModerator } = useInitiateModeratorTurnMutation();
 	const { mutate: initiateParticipant } = useInitiateParticipantTurnMutation();
@@ -35,6 +39,40 @@ export function useTurnSequencing(
 		setIsSendingModerator(false);
 		invalidateRef.current(roomId);
 	}, [setIsSendingModerator, roomId]);
+
+	const injectOptimisticParticipant = useCallback(
+		(participantId: string) => {
+			const participant = room.participants.find((p) => p.id === participantId);
+			if (!participant) return;
+
+			const deliberationKey = roomQueries.getRoomDeliberation({
+				roomId,
+			}).queryKey;
+
+			queryClient.setQueryData(deliberationKey, (old) => {
+				if (!old?.room) return old;
+
+				const alreadyExists = old.room.turns.some(
+					(t) =>
+						t.author.type === "participant" &&
+						t.author.profile?.id === participantId &&
+						(t.status === "pending" || t.status === "streaming"),
+				);
+
+				if (alreadyExists) return old;
+				return {
+					room: {
+						...old.room,
+						turns: [
+							...old.room.turns,
+							buildOptimisticParticipantTurn({ participant }),
+						],
+					},
+				};
+			});
+		},
+		[queryClient, roomId, room.participants],
+	);
 
 	const acceptProposal = useCallback(
 		({ participantId, intent }: TurnProposalDTO) => {
@@ -80,12 +118,17 @@ export function useTurnSequencing(
 			};
 
 			if (fresh) {
-				const result = await initiateTopic(turnPayload);
-				if (isServerError(result) || !firstParticipant) return handleError();
-
 				const nextToRespond = multiDeliberation
 					? (mentionedParticipants.find((m) => m.isPrimary) ?? firstParticipant)
 					: firstParticipant;
+
+				if (nextToRespond) injectOptimisticParticipant(nextToRespond.id);
+
+				const result = await initiateTopic(turnPayload);
+				if (isServerError(result) || !firstParticipant) {
+					invalidateRef.current(roomId);
+					return handleError();
+				}
 
 				return initiateParticipant(
 					{
@@ -98,8 +141,13 @@ export function useTurnSequencing(
 			}
 
 			if (!multiDeliberation) {
+				if (firstParticipant) injectOptimisticParticipant(firstParticipant.id);
+
 				const result = await initiateModerator(turnPayload);
-				if (isServerError(result) || !firstParticipant) return handleError();
+				if (isServerError(result) || !firstParticipant) {
+					invalidateRef.current(roomId);
+					return handleError();
+				}
 
 				return initiateParticipant(
 					{ roomId, participantId: firstParticipant.id, intent: "respond" },
@@ -107,17 +155,7 @@ export function useTurnSequencing(
 				);
 			}
 
-			const result = await initiateModerator(turnPayload);
-			if (isServerError(result)) return handleError();
-
 			const primaryMention = mentionedParticipants.find((m) => m.isPrimary);
-			if (primaryMention) {
-				return initiateParticipant(
-					{ roomId, participantId: primaryMention.id, intent: "direct" },
-					{ onSettled: releaseModeratorFlag },
-				);
-			}
-
 			const candidates = room.participants.filter(
 				(p) => p.id !== lastActiveParticipantId,
 			);
@@ -125,14 +163,24 @@ export function useTurnSequencing(
 			const pool = candidates.length > 0 ? candidates : room.participants;
 			const randomParticipant = pool[Math.floor(Math.random() * pool.length)];
 
-			if (randomParticipant) {
-				return initiateParticipant(
-					{ roomId, participantId: randomParticipant.id, intent: "respond" },
-					{ onSettled: releaseModeratorFlag },
-				);
-			} else {
-				handleError();
+			const nextResponder = primaryMention ?? randomParticipant ?? null;
+			if (nextResponder) injectOptimisticParticipant(nextResponder.id);
+
+			const result = await initiateModerator(turnPayload);
+			if (isServerError(result)) {
+				invalidateRef.current(roomId);
+				return handleError();
 			}
+
+			if (!nextResponder) return handleError();
+			return initiateParticipant(
+				{
+					roomId,
+					participantId: nextResponder.id,
+					intent: primaryMention ? "direct" : "respond",
+				},
+				{ onSettled: releaseModeratorFlag },
+			);
 		},
 		[
 			fresh,
@@ -140,6 +188,7 @@ export function useTurnSequencing(
 			room.participants,
 			roomId,
 			lastActiveParticipantId,
+			injectOptimisticParticipant,
 			initiateModerator,
 			initiateParticipant,
 			initiateTopic,
