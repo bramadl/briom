@@ -9,6 +9,7 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 } from "@briom/components/ui/input-group";
+import { cn } from "@briom/libs/utils";
 import { useParticipantModels } from "@briom/rooms/_/participant/hooks/use-participant-models";
 import type { RoomFormSchema } from "@briom/rooms/_/room/form/schema";
 import {
@@ -19,7 +20,6 @@ import {
 	useField,
 } from "@formisch/react";
 import { useCallback, useMemo, useState } from "react";
-
 import { ParticipantField } from "./_/participant-field";
 import { ParticipantSelector } from "./_/participant-selector";
 
@@ -27,12 +27,14 @@ interface RoomFormParticipantsProps {
 	disabled?: boolean;
 	form: FormStore<typeof RoomFormSchema>;
 	maxParticipants: number;
+	scrollable?: boolean;
 }
 
 export function RoomFormParticipants({
 	disabled,
 	form,
 	maxParticipants,
+	scrollable = false,
 }: RoomFormParticipantsProps) {
 	const { flatModels, useFreeModels } = useParticipantModels();
 	const [inputValue, setInputValue] = useState<string>("");
@@ -99,7 +101,12 @@ export function RoomFormParticipants({
 	return (
 		<FieldArray of={form} path={["participants"]}>
 			{(fieldArray) => (
-				<FieldSet className="h-full min-h-0 flex flex-col gap-4 -mx-2 px-2 overflow-hidden">
+				<FieldSet
+					className={cn(
+						"flex flex-col gap-4 -mx-2 px-2",
+						scrollable ? "" : "h-full min-h-0 overflow-hidden",
+					)}
+				>
 					<FieldLegend variant="label">Invite Participants</FieldLegend>
 					<FieldDescription>
 						{maxReached
@@ -117,7 +124,12 @@ export function RoomFormParticipants({
 							/>
 						))}
 					</div>
-					<div className="h-full min-h-0 flex flex-col gap-4 -mx-2 px-2 -mt-1 pt-1 overflow-hidden">
+					<div
+						className={cn(
+							"flex flex-col gap-4 -mx-2 px-2 -mt-1 pt-1",
+							scrollable ? "" : "h-full min-h-0 overflow-hidden",
+						)}
+					>
 						<InputGroup className="shrink-0">
 							<InputGroupInput
 								onChange={(e) => setInputValue(e.currentTarget.value)}
@@ -126,7 +138,12 @@ export function RoomFormParticipants({
 							/>
 							<InputGroupAddon align={"inline-end"} />
 						</InputGroup>
-						<div className="flex-1 grid md:grid-cols-2 lg:grid-cols-4 content-start gap-4 overflow-y-auto pr-1">
+						<div
+							className={cn(
+								"grid md:grid-cols-2 lg:grid-cols-4 content-start gap-4 pr-1",
+								scrollable ? "" : "flex-1 overflow-y-auto",
+							)}
+						>
 							{filteredModels.length > 0 ? (
 								filteredModels.map((model) => (
 									<ParticipantSelector

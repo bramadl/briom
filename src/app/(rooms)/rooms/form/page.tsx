@@ -21,7 +21,7 @@ export default async function NewRoomPage() {
 							perspectives, then guide the deliberation.
 						</p>
 					</div>
-					<RoomForm variant="page" />
+					<RoomForm scrollable />
 				</div>
 			</main>
 		</HydrationBoundary>
