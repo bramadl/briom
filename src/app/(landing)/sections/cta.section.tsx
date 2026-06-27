@@ -51,7 +51,7 @@ export function CtaSection() {
 					className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground opacity-0 translate-y-5"
 					data-cta-reveal
 				>
-					Think Together
+					Open a room
 				</p>
 				<h2
 					className="font-serif text-3xl sm:text-5xl leading-tight max-w-xl opacity-0 translate-y-5"
@@ -63,12 +63,12 @@ export function CtaSection() {
 					className="text-muted-foreground text-sm sm:text-base max-w-md opacity-0 translate-y-5"
 					data-cta-reveal
 				>
-					Open a room, invite a few perspectives, and bring in whatever you're
-					thinking through.
+					Invite a few minds into the room. Introduce your question. Let the
+					deliberation begin.
 				</p>
 				<div className="opacity-0 translate-y-5" data-cta-reveal>
 					<Button className="group" onClick={openAuth} size="lg">
-						Open a room
+						Start deliberating
 						<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
 					</Button>
 				</div>

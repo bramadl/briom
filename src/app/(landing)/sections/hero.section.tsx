@@ -38,12 +38,12 @@ export function HeroSection() {
 					className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground mb-6 opacity-0 translate-y-6"
 					data-hero-reveal
 				>
-					Think Together
+					Collaborative AI Deliberation
 				</p>
 
 				<h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl leading-[1.1] max-w-3xl">
 					<span className="block opacity-0 translate-y-6" data-hero-reveal>
-						Stop relaying ideas
+						Stop bridging ideas
 					</span>
 					<span className="block opacity-0 translate-y-6" data-hero-reveal>
 						between AI models.
@@ -52,17 +52,18 @@ export function HeroSection() {
 						className="block text-primary opacity-0 translate-y-6"
 						data-hero-reveal
 					>
-						Start a discussion.
+						That ends here.
 					</span>
 				</h1>
 
 				<p
-					className="mt-8 max-w-md text-base sm:text-lg text-muted-foreground leading-relaxed opacity-0"
+					className="mt-8 max-w-lg text-base sm:text-lg text-muted-foreground leading-relaxed opacity-0"
 					data-hero-fade
 				>
-					Briom is a room where multiple AI participants share the same
-					conversation. You bring the question. They respond, critique, and
-					build on each other — while you decide what happens next.
+					Briom is a deliberation room where multiple AI participants share the
+					same context, build on each other's reasoning, and surface
+					perspectives you wouldn't reach alone — while you stay in control of
+					every turn.
 				</p>
 
 				<div
@@ -73,8 +74,8 @@ export function HeroSection() {
 						Open a room
 						<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
 					</Button>
-					<p className="text-sm text-muted-foreground self-center">
-						No setup. Bring your own question.
+					<p className="text-sm text-muted-foreground sm:self-center">
+						Free to start. Bring a question.
 					</p>
 				</div>
 			</Container>

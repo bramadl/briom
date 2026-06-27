@@ -55,6 +55,10 @@ export class FormRoomHandler
 			title,
 			moderatorId: ModeratorId(moderatorId),
 			createdAt: new Date(),
+			synthesis: null,
+			synthesisCreatedAt: null,
+			synthesisCreatedBy: null,
+			synthesisStatus: "idle",
 		});
 
 		if (result.isError()) return Result.error(result.error());

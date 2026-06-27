@@ -7,16 +7,20 @@ import { useRef } from "react";
 
 const PRINCIPLES = [
 	{
-		desc: "Briom doesn't run autonomous AI debates. You decide who speaks, when, and what happens next — always.",
-		label: "Human-led",
+		desc: "Briom doesn't run autonomous AI debates. You decide who speaks, when, and what happens next — at every step. The room moves when you move it.",
+		label: "Human-led, always",
 	},
 	{
-		desc: "Every participant reads the same conversation. No copying answers between tabs, no repeating context.",
+		desc: "All participants read the same conversation. No copying answers between tabs. No re-explaining context. The room itself becomes shared cognitive space.",
 		label: "Shared context",
 	},
 	{
-		desc: "One response at a time, building on what came before. A discussion you can follow — not a wall of parallel answers.",
+		desc: "One turn at a time, each building on what came before. A discussion you can follow and steer — not a wall of simultaneous answers demanding to be compared.",
 		label: "Sequential, not chaotic",
+	},
+	{
+		desc: "The goal isn't a faster answer. It's a sharper understanding. Briom is built for questions where perspective creates depth that a single voice can't reach.",
+		label: "Discussion over generation",
 	},
 ] as const;
 
@@ -54,7 +58,7 @@ export function PrinciplesSection() {
 					</h2>
 				</div>
 
-				<div className="grid sm:grid-cols-3 gap-8 sm:gap-6">
+				<div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-6">
 					{PRINCIPLES.map(({ label, desc }) => (
 						<div className="opacity-0 translate-y-5" data-principle key={label}>
 							<div className="h-px w-10 bg-primary mb-5" />

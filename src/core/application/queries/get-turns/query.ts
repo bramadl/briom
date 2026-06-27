@@ -1,4 +1,4 @@
-import type { TurnDTO } from "../get-turn/query";
+import type { TurnDTO } from "@briom/app/contracts";
 
 /**
  * @description

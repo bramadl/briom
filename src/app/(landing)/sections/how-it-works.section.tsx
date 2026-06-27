@@ -7,24 +7,24 @@ import { useRef } from "react";
 
 const STEPS = [
 	{
-		desc: "Bring a question, a dilemma, or an idea you're still working through. This becomes the shared context for everyone in the room.",
+		desc: "Name your thinking space. Bring a question you're still working through, a dilemma with no clean answer, or a decision with real stakes. This becomes the shared context for everyone in the room.",
 		step: "01",
 		title: "Open a room",
 	},
 	{
-		desc: "Invite the AI participants you want — GPT, Claude, Gemini, or others. Each one sees the same conversation, from the start.",
+		desc: "Invite the models you want — Claude, GPT, Gemini, or others available through OpenRouter. Every participant sees the same conversation from the first turn. No repeated prompting, no context loss.",
 		step: "02",
 		title: "Invite participants",
 	},
 	{
-		desc: '"Claude, respond." "GPT, critique that." "Gemini, summarize where we landed." Choose who speaks next — one voice at a time, on your call.',
+		desc: 'You decide who speaks next and why. "Claude, respond." "GPT, push back on that." "Gemini, find the synthesis." One voice at a time, building on what came before.',
 		step: "03",
-		title: "Guide the discussion",
+		title: "Moderate the discussion",
 	},
 	{
-		desc: "Perspectives build on each other instead of repeating themselves. Disagreements surface. The thinking gets sharper — and it's still yours.",
+		desc: "Perspectives accumulate instead of repeating themselves. Disagreements surface. Assumptions break. The conversation reaches places a single model — or a single person — wouldn't have reached alone.",
 		step: "04",
-		title: "Watch ideas evolve",
+		title: "Watch thinking evolve",
 	},
 ] as const;
 
