@@ -41,15 +41,17 @@ export function buildModeratorTurnMutation<
 				if (previousDeliberation) {
 					queryClient.setQueryData(deliberationKey, (old) => {
 						if (!old?.room) return old;
+						const alreadyExists = old.room.turns.some(
+							(t) => t.id === `optimistic-${clientTurnId}`,
+						);
+
+						if (alreadyExists) return old;
 						return {
 							room: {
 								...old.room,
 								turns: [
 									...old.room.turns,
-									buildOptimisticModeratorTurn({
-										clientTurnId,
-										content,
-									}),
+									buildOptimisticModeratorTurn({ clientTurnId, content }),
 								],
 							},
 						};
