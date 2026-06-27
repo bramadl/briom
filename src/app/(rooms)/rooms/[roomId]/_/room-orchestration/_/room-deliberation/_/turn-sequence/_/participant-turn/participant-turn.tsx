@@ -5,12 +5,13 @@ import type {
 	RoomDeliberationTurnDTO,
 } from "@briom/app";
 import { cn } from "@briom/libs/utils";
+import { useDeliberation } from "@briom/rooms/_/deliberation/hooks/use-deliberation";
 import { useStreamingTurn } from "@briom/rooms/_/deliberation/hooks/use-streaming-turn";
 import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
+import { useRetryTurnMutation } from "@briom/rooms/_/turn/mutations/use-retry-turn.mutation";
 import { TurnPerspectiveActions } from "@briom/rooms/_/turn/ui/turn-perspective-actions";
 import { format, parseISO } from "date-fns";
 import { memo } from "react";
-
 import { ParticipantInfo } from "./_/turn-info";
 import { TurnRenderer } from "./_/turn-renderer/turn-renderer";
 
@@ -31,6 +32,18 @@ function ParticipantTurnComponent({
 	showIntent,
 	turn,
 }: ParticipantTurnProps) {
+	const { isRetrying, setIsRetrying } = useDeliberation();
+	const retryMutation = useRetryTurnMutation();
+	const handleRetry = isRetryable
+		? () => {
+				setIsRetrying(true);
+				retryMutation.mutate(
+					{ turnId: turn.id },
+					{ onSettled: () => setIsRetrying(false) },
+				);
+			}
+		: undefined;
+
 	const theme = getParticipantTheme(participant.id);
 	const streamingTurn = useStreamingTurn(turn.id);
 
@@ -53,6 +66,9 @@ function ParticipantTurnComponent({
 	const time = turn.settledAt || turn.failedAt || turn.createdAt || null;
 	const timeSent = time ? format(parseISO(time), "HH:mm") : "––:––";
 
+	const resolvedIsRetrying =
+		isRetrying || retryMutation.isPending || isPending || isStreaming;
+
 	return (
 		<div
 			className="relative group space-y-2 w-full min-w-0 rounded-lg"
@@ -72,7 +88,9 @@ function ParticipantTurnComponent({
 					isLastTurn={isLastTurn}
 					isPending={isPending}
 					isRetryable={isRetryable}
+					isRetrying={resolvedIsRetrying}
 					isStreaming={isStreaming}
+					onRetried={handleRetry}
 					showAbort={showAbort}
 					turn={turn}
 				/>

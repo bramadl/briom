@@ -2,7 +2,6 @@
 
 import type { RoomDeliberationTurnDTO } from "@briom/app";
 import { Logo } from "@briom/components/logo";
-import { useRetryTurnMutation } from "@briom/rooms/_/turn/mutations/use-retry-turn.mutation";
 import { TurnPerspective } from "@briom/rooms/_/turn/ui/turn-perspective";
 import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective-expander";
 
@@ -14,7 +13,9 @@ interface TurnRendererProps {
 	isLastTurn?: boolean;
 	isPending: boolean;
 	isRetryable?: boolean;
+	isRetrying?: boolean;
 	isStreaming: boolean;
+	onRetried?: () => void;
 	showAbort?: boolean;
 	turn: RoomDeliberationTurnDTO;
 }
@@ -25,18 +26,13 @@ export function TurnRenderer({
 	isLastTurn,
 	isPending,
 	isRetryable = false,
+	isRetrying = false,
 	isStreaming,
+	onRetried,
 	showAbort,
 	turn,
 }: TurnRendererProps) {
-	const retryMutation = useRetryTurnMutation();
-
 	const hasContent = content.trim().length > 0;
-	const isRetrying = retryMutation.isPending || isPending || isStreaming;
-
-	const retriedHandler = isRetryable
-		? () => retryMutation.mutate({ turnId: turn.id })
-		: undefined;
 
 	if (!hasContent) {
 		if (isFailed) {
@@ -44,7 +40,7 @@ export function TurnRenderer({
 				<FailedTurn
 					error={turn.error?.message ?? "Unknown error"}
 					isRetrying={isRetrying}
-					onRetried={retriedHandler}
+					onRetried={isRetryable ? onRetried : undefined}
 					showAbort={showAbort}
 					title="Perspective was not generated"
 				/>
@@ -71,7 +67,7 @@ export function TurnRenderer({
 				<FailedTurn
 					error={turn.error?.message ?? "Unknown error"}
 					isRetrying={isRetrying}
-					onRetried={retriedHandler}
+					onRetried={isRetryable ? onRetried : undefined}
 					title="Perspective was not fully generated"
 				/>
 			</TurnPerspectiveExpander>

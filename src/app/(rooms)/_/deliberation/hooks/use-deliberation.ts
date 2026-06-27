@@ -14,6 +14,7 @@ export function useDeliberation() {
 	const canAcceptProposal =
 		!state.isConcluded &&
 		!state.isSequencing &&
+		!state.isRetrying &&
 		state.proposals.length > 0 &&
 		!state.hasAccepted;
 
@@ -25,6 +26,7 @@ export function useDeliberation() {
 		fresh: state.fresh,
 		isConcluded: state.isConcluded,
 		isParticipantActive: state.isParticipantActive,
+		isRetrying: state.isRetrying,
 		isSendingModerator: state.isSendingModerator,
 		isSequencing: state.isSequencing,
 		multiDeliberation: state.multiDeliberation,
@@ -32,6 +34,7 @@ export function useDeliberation() {
 		proposals: state.proposals,
 		room: state.room,
 		sequenceTurns,
+		setIsRetrying: state.setIsRetrying,
 		turns: state.turns,
 	};
 }

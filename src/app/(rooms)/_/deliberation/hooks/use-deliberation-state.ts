@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { useRoom } from "../../room/hooks/use-room";
 import { useTurnProposals } from "../../turn/hooks/use-turn-proposals";
+
 import {
 	useIsAnyTurnStreaming,
 	useStreamingTurnId,
@@ -14,6 +15,7 @@ export function useDeliberationState(roomId: string) {
 
 	const [isSendingModerator, setIsSendingModerator] = useState(false);
 	const [hasAccepted, setHasAccepted] = useState(false);
+	const [isRetrying, setIsRetrying] = useState(false);
 
 	const isConcluded = room.status === "concluded";
 	const isParticipantActive = useIsAnyTurnStreaming();
@@ -31,6 +33,7 @@ export function useDeliberationState(roomId: string) {
 		invalidateTurnProposals,
 		isConcluded,
 		isParticipantActive,
+		isRetrying,
 		isSendingModerator,
 		isSequencing,
 		multiDeliberation,
@@ -38,6 +41,7 @@ export function useDeliberationState(roomId: string) {
 		room,
 		roomId,
 		setHasAccepted,
+		setIsRetrying,
 		setIsSendingModerator,
 		streamingTurnId,
 		turns,
