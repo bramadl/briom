@@ -75,12 +75,11 @@ export function HowItWorksSection() {
 				</div>
 
 				<div className="relative max-w-2xl" data-steps>
-					{/* connector line track */}
 					<div
 						aria-hidden
 						className="absolute left-[19px] top-2 bottom-2 w-px bg-border"
 					/>
-					{/* connector line fill */}
+
 					<div
 						aria-hidden
 						className="absolute left-[19px] top-2 bottom-2 w-px bg-primary origin-top scale-y-0"

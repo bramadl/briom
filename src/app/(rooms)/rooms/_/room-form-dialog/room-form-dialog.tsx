@@ -8,17 +8,22 @@ import {
 	DialogTitle,
 } from "@briom/components/ui/dialog";
 import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
+import { useRooms } from "@briom/rooms/_/room/hooks/use-rooms";
 import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form.store";
 import { useHotkey } from "@tanstack/react-hotkeys";
 
 interface RoomFormDialogProps extends React.PropsWithChildren {}
 
 export function RoomFormDialog({ children }: RoomFormDialogProps) {
+	const { isMaxReached } = useRooms();
+
 	const shown = useRoomFormStore((state) => state.shown);
 	const setShown = useRoomFormStore((state) => state.setShown);
 
 	const toggle = useRoomFormStore((state) => state.toggle);
-	useHotkey(ROOM_SETTING.SHORTCUTS.create.key, toggle);
+	useHotkey(ROOM_SETTING.SHORTCUTS.create.key, toggle, {
+		enabled: !isMaxReached,
+	});
 
 	return (
 		<Dialog onOpenChange={setShown} open={shown}>

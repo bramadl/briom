@@ -17,8 +17,7 @@ interface RoomCollapsibleSidebarProps {
 export function RoomCollapsibleSidebar({
 	children,
 }: RoomCollapsibleSidebarProps) {
-	const { rooms } = useRooms();
-
+	const { isMaxReached, rooms } = useRooms();
 	return (
 		<Sidebar className="hidden flex-1 md:flex" collapsible="none">
 			<SidebarHeader className="h-14 border-b border-sidebar-border justify-center px-4">
@@ -26,7 +25,7 @@ export function RoomCollapsibleSidebar({
 					<h2 className="text-muted-foreground text-sm whitespace-nowrap">
 						Rooms
 					</h2>
-					<Badge>{rooms.length}</Badge>
+					<Badge>{isMaxReached ? "Maxed" : rooms.length}</Badge>
 				</div>
 			</SidebarHeader>
 			<SidebarContent>

@@ -1,5 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 
+import { ROOM_SETTING } from "../config/setting";
 import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
 import { roomQueries } from "../queries/registry";
 
@@ -10,5 +11,7 @@ export function useRooms() {
 	} = useSuspenseQuery(roomQueries.getRoomsOverview());
 
 	const isEmpty = rooms.length === 0;
-	return { invalidate, isEmpty, rooms };
+	const isMaxReached = rooms.length >= ROOM_SETTING.MAXIMUM_ROOMS;
+
+	return { invalidate, isEmpty, isMaxReached, rooms };
 }

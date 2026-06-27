@@ -8,6 +8,7 @@ type Shortcut = Record<
 
 export const ROOM_SETTING = {
 	MAXIMUM_PARTICIPANT: 4,
+	MAXIMUM_ROOMS: 5,
 	SHORTCUTS: {
 		create: {
 			key: "Mod+.",

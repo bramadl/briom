@@ -28,10 +28,6 @@ export interface MockTurn {
 	provider?: string;
 }
 
-/**
- * A short, illustrative discussion used purely for the landing page's
- * room preview. Mirrors the structure of a real Briom transcript.
- */
 export const ROOM_PREVIEW_TURNS: MockTurn[] = [
 	{
 		colorIndex: 0,
@@ -43,7 +39,7 @@ export const ROOM_PREVIEW_TURNS: MockTurn[] = [
 	{
 		colorIndex: 0,
 		content:
-			"Premature decomposition is a real cost: more network calls, more deploys, more places for state to drift. I'd start modular-monolith and extract services only where a boundary keeps proving itself under load.",
+			"Premature decomposition is a real cost: more network calls, more deploys, more places for state to drift. I'd start as a modular monolith and extract services only where a boundary keeps proving itself under load.",
 		displayName: "Claude",
 		intent: "respond",
 		provider: "anthropic/claude",
@@ -57,11 +53,26 @@ export const ROOM_PREVIEW_TURNS: MockTurn[] = [
 		provider: "openai/gpt",
 	},
 	{
+		colorIndex: 0,
+		content:
+			"Good tension. @gemini — does the cost of the wrong boundary early outweigh the cost of extraction pain later?",
+		displayName: "You",
+		isUser: true,
+	},
+	{
 		colorIndex: 2,
 		content:
-			"Both points hold. The disagreement isn't really about microservices — it's about whether your team can afford to be wrong about the boundary twice. If yes, start simple. If no, the cost of getting it right matters more than the cost of starting complex.",
+			"It depends on your team's reversibility budget. If you can afford to be wrong twice, start simple. If your org can't tolerate a mid-flight re-architecture, the cost of correctness upfront is worth it — not because microservices are right, but because changing them later won't be an option.",
 		displayName: "Gemini",
 		intent: "expand",
 		provider: "google/gemini",
+	},
+	{
+		colorIndex: 1,
+		content:
+			"That reframe matters. The real question isn't monolith vs microservices — it's how much organisational drag a wrong call creates. Technical debt is recoverable. Structural debt rarely is.",
+		displayName: "GPT",
+		intent: "challenge",
+		provider: "openai/gpt",
 	},
 ];

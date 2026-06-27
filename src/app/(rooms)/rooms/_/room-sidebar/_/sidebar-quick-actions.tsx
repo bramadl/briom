@@ -7,10 +7,12 @@ import {
 	SidebarMenuItem,
 } from "@briom/components/ui/sidebar";
 import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
+import { useRooms } from "@briom/rooms/_/room/hooks/use-rooms";
 import { useRoomFormStore } from "@briom/rooms/_/room/store/use-room-form.store";
 import { PlusIcon } from "lucide-react";
 
 export function SidebarQuickActions() {
+	const { isMaxReached } = useRooms();
 	const showForm = useRoomFormStore((s) => s.show);
 
 	const menu = [
@@ -40,6 +42,7 @@ export function SidebarQuickActions() {
 				<SidebarMenuItem key={menu.label}>
 					<SidebarMenuButton
 						className="px-2.5 md:px-2"
+						disabled={isMaxReached}
 						isActive={true}
 						onClick={menu.action}
 						tooltip={menu.tooltip}

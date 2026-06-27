@@ -8,6 +8,8 @@ import { useRef } from "react";
 import { ROOM_PREVIEW_TURNS } from "../_/data/room-preview.data";
 import { RoomMessageCard } from "../_/ui/room-message-card";
 
+const THINKING_DURATIONS = [0.7, 1.0, 0.55, 0.85, 0.65];
+
 export function RoomPreviewSection() {
 	const rootRef = useRef<HTMLDivElement>(null);
 
@@ -17,7 +19,15 @@ export function RoomPreviewSection() {
 
 			const wrappers = gsap.utils.toArray<HTMLElement>("[data-turn-wrapper]");
 
-			wrappers.forEach((wrapper) => {
+			const master = gsap.timeline({
+				scrollTrigger: {
+					trigger: rootRef.current,
+					start: "top 72%",
+					toggleActions: "play none none none",
+				},
+			});
+
+			wrappers.forEach((wrapper, i) => {
 				const indicator = wrapper.querySelector<HTMLElement>(
 					"[data-room-indicator]",
 				);
@@ -29,55 +39,73 @@ export function RoomPreviewSection() {
 
 				if (!card) return;
 
-				const tl = gsap.timeline({
-					scrollTrigger: {
-						trigger: wrapper,
-						start: "top 80%",
-						toggleActions: "play none none none",
-					},
-				});
+				const interTurnGap = i === 0 ? 0 : 0.18;
 
 				if (isUser) {
-					// User: simple slide-in from right
-					gsap.set(card, { opacity: 0, x: 20 });
-					tl.to(card, { opacity: 1, x: 0, duration: 0.55, ease: "power3.out" });
-				} else {
-					// AI: indicator → shimmer → card
-					if (indicator) gsap.set(indicator, { opacity: 0 });
-					if (shimmer) gsap.set(shimmer, { opacity: 0 });
-					gsap.set(card, { opacity: 0, x: -12 });
+					gsap.set(card, { opacity: 0, x: 16, y: 4 });
 
-					// ① indicator blinks in
-					if (indicator) {
-						tl.to(indicator, {
+					master.to(
+						card,
+						{
 							opacity: 1,
-							duration: 0.25,
-							ease: "power2.out",
+							x: 0,
+							y: 0,
+							duration: 0.5,
+							ease: "power3.out",
+						},
+						`+=${interTurnGap}`,
+					);
+				} else {
+					const thinkDuration =
+						THINKING_DURATIONS[i % THINKING_DURATIONS.length] ?? 0.7;
+
+					if (indicator) gsap.set(indicator, { opacity: 0, y: -4 });
+					if (shimmer) gsap.set(shimmer, { opacity: 0 });
+					gsap.set(card, { opacity: 0, x: -10, y: 4 });
+
+					if (indicator) {
+						master.to(
+							indicator,
+							{ opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
+							`+=${interTurnGap}`,
+						);
+					}
+
+					if (shimmer) {
+						master.to(
+							shimmer,
+							{ opacity: 1, duration: 0.25, ease: "power2.out" },
+							"<+0.12",
+						);
+					}
+
+					master.to({}, { duration: thinkDuration });
+
+					if (shimmer) {
+						master.to(shimmer, {
+							opacity: 0,
+							duration: 0.2,
+							ease: "power2.in",
 						});
 					}
-					// ② shimmer bars appear right after
-					if (shimmer) {
-						tl.to(
-							shimmer,
-							{ opacity: 1, duration: 0.2, ease: "power2.out" },
-							"<+0.1",
-						);
-					}
-					// ③ hold — gives the "thinking" impression
-					tl.to({}, { duration: 0.55 });
-					// ④ shimmer + indicator fade out, card slides in
-					if (shimmer)
-						tl.to(shimmer, { opacity: 0, duration: 0.18, ease: "power2.in" });
-					if (indicator)
-						tl.to(
+					if (indicator) {
+						master.to(
 							indicator,
-							{ opacity: 0, duration: 0.18, ease: "power2.in" },
+							{ opacity: 0, y: -4, duration: 0.2, ease: "power2.in" },
 							"<",
 						);
-					tl.to(
+					}
+
+					master.to(
 						card,
-						{ opacity: 1, x: 0, duration: 0.5, ease: "power3.out" },
-						"<+0.05",
+						{
+							opacity: 1,
+							x: 0,
+							y: 0,
+							duration: 0.55,
+							ease: "power3.out",
+						},
+						"<+0.06",
 					);
 				}
 			});
@@ -108,7 +136,6 @@ export function RoomPreviewSection() {
 								data-turn-wrapper
 								key={`${turn.displayName}-${i.toString()}`}
 							>
-								{/* "is thinking" indicator — AI turns only */}
 								{!isUser && (
 									<div
 										className="flex items-center gap-2 mb-3 font-mono text-[11px] uppercase tracking-widest text-muted-foreground"
@@ -122,7 +149,6 @@ export function RoomPreviewSection() {
 									</div>
 								)}
 
-								{/* Shimmer skeleton — absolute so it doesn't shift layout */}
 								{!isUser && (
 									<div
 										className="absolute left-4 right-0 space-y-2 pointer-events-none"
@@ -135,7 +161,6 @@ export function RoomPreviewSection() {
 									</div>
 								)}
 
-								{/* Real card — initial state set by GSAP */}
 								<div data-room-card>
 									<RoomMessageCard turn={turn} />
 								</div>
