@@ -24,8 +24,6 @@ import {
 } from "@briom/libs/server-action";
 import { getAuthenticatedModerator } from "@briom/supabase/utils/get-authenticated-moderator";
 
-export const maxDuration = 300;
-
 export async function getTurns(
 	input: GetTurnsInput,
 ): Promise<ServerActionResult<GetTurnsOutput>> {

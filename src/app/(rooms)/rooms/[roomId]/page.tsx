@@ -10,6 +10,8 @@ import { RoomSettings } from "./_/room-settings/room-settings";
 import { RoomTitle } from "./_/room-title";
 import { SynthesisSheetProvider } from "./_/synthesis-sheet-provider/synthesis-sheet-provider";
 
+export const maxDuration = 300;
+
 export default async function RoomPage({
 	params,
 }: PageProps<"/rooms/[roomId]">) {
