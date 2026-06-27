@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "@bprogress/next";
+import { useRouter } from "@bprogress/next/app";
 import { supabaseClient } from "@briom/supabase/client";
 import {
 	DropdownMenuGroup,

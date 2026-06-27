@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "@bprogress/next";
+import { useRouter } from "@bprogress/next/app";
 import { Kbd, KbdGroup } from "@briom/components/ui/kbd";
 import {
 	SidebarMenu,

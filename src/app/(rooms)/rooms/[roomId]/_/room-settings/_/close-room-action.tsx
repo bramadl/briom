@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "@bprogress/next/app";
 import { Button } from "@briom/components/ui/button";
 import {
 	Dialog,
@@ -15,7 +16,7 @@ import { useSidebar } from "@briom/components/ui/sidebar";
 import { isServerError } from "@briom/libs/server-action";
 import { useCloseRoomMutation } from "@briom/rooms/_/room/mutations/use-close-room.mutation";
 import { Loader2Icon, MessageCircleOffIcon } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
