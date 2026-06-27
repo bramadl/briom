@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "@bprogress/next";
 import { supabaseClient } from "@briom/supabase/client";
 import {
 	DropdownMenuGroup,
@@ -14,7 +15,6 @@ import {
 	LogOutIcon,
 	SparklesIcon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { Fragment, useCallback, useState } from "react";
 
 export function MenuOptions() {

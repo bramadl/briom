@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "@bprogress/next";
 import { Kbd, KbdGroup } from "@briom/components/ui/kbd";
 import {
 	SidebarMenu,
@@ -9,7 +10,6 @@ import {
 import { ROOM_SETTING } from "@briom/rooms/_/room/config/setting";
 import { useRooms } from "@briom/rooms/_/room/hooks/use-rooms";
 import { PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 export function SidebarQuickActions() {
 	const router = useRouter();

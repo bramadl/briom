@@ -1,10 +1,10 @@
 "use client";
 
+import { useRouter } from "@bprogress/next";
 import { FieldGroup } from "@briom/components/ui/field";
 import { cn } from "@briom/libs/utils";
 import { useRoomForm } from "@briom/rooms/_/room/hooks/use-room-form";
 import { Form } from "@formisch/react";
-import { useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 import { RoomFormActions } from "./_/room-form-actions";

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "@bprogress/next";
 import {
 	Dialog,
 	DialogContent,
@@ -8,7 +9,6 @@ import {
 	DialogTitle,
 } from "@briom/components/ui/dialog";
 import { RoomForm } from "@briom/rooms/rooms/_/room-form/room-form";
-import { useRouter } from "next/navigation";
 
 export default function NewRoomModal() {
 	const router = useRouter();
