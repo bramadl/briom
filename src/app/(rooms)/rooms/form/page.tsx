@@ -12,8 +12,8 @@ export default async function NewRoomPage() {
 
 	return (
 		<HydrationBoundary state={dehydrate(queryClient)}>
-			<main className="min-h-dvh flex flex-col">
-				<div className="flex flex-col max-w-xl w-full mx-auto px-4 py-8 gap-6">
+			<main className="h-dvh overflow-y-auto">
+				<div className="flex flex-col w-full px-4 py-8 gap-6">
 					<div className="flex flex-col gap-1">
 						<h1 className="font-serif text-2xl">Form a Room</h1>
 						<p className="text-sm text-muted-foreground">
