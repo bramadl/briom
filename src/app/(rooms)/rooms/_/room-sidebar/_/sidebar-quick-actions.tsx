@@ -17,7 +17,7 @@ export function SidebarQuickActions() {
 	const { isMaxReached } = useRooms();
 	const menu = [
 		{
-			action: () => router.push("/rooms/new"),
+			action: () => router.push("/rooms/form"),
 			icon: PlusIcon,
 			label: "Open Room",
 			tooltip: {
