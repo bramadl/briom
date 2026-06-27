@@ -2,7 +2,7 @@ import { Logo } from "@briom/components/logo";
 import { Button } from "@briom/components/ui/button";
 import { SidebarTrigger } from "@briom/components/ui/sidebar";
 
-import { RoomFormDialogToggler } from "./_/room-form-dialog/room-form-dialog-toggler";
+import { FormRoomButton } from "./_/form-room-button";
 
 export default function RoomsPage() {
 	return (
@@ -28,7 +28,7 @@ export default function RoomsPage() {
 						few AI participants to think it through with you.
 					</p>
 				</div>
-				<RoomFormDialogToggler />
+				<FormRoomButton />
 			</div>
 		</main>
 	);

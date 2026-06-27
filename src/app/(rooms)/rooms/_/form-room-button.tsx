@@ -5,7 +5,7 @@ import { useRooms } from "@briom/rooms/_/room/hooks/use-rooms";
 import { PlusIcon } from "lucide-react";
 import Link from "next/link";
 
-export function RoomFormDialogToggler() {
+export function FormRoomButton() {
 	const { isMaxReached } = useRooms();
 
 	return (

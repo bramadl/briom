@@ -8,6 +8,7 @@ import { prefetchRooms } from "../_/room/queries/services/prefetch-rooms";
 
 import { ModeratorMenu } from "./_/moderator-menu/moderator-menu";
 import { RoomCollapsibleSidebar } from "./_/room-collapsible-sidebar";
+import { RoomFormHotkey } from "./_/room-form-hotkey";
 import { RoomList } from "./_/room-list/room-list";
 import { RoomSidebar } from "./_/room-sidebar/room-sidebar";
 import { RoomWorkspace } from "./_/room-workspace";
@@ -35,6 +36,7 @@ export default async function RoomsLayout({
 				>
 					{children}
 				</RoomWorkspace>
+				<RoomFormHotkey />
 				{modal}
 			</ModeratorProvider>
 		</HydrationBoundary>
