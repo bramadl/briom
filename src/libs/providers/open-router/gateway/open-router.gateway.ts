@@ -3,8 +3,13 @@ import type {
 	GenerateInput,
 	LlmGateway,
 } from "@briom/domain/ports/llm.gateway";
+import type {
+	ContentBlock,
+	Message,
+} from "@briom/domain/turn/transcriptor/message";
 import { type IResult, Result } from "@briom/libs/drimion";
 import type { OpenRouter } from "@openrouter/sdk";
+import type { ChatContentItems, ChatMessages } from "@openrouter/sdk/models";
 
 import { isOpenRouterSDKError } from "../errors";
 
@@ -13,16 +18,6 @@ import { isOpenRouterSDKError } from "../errors";
  * `OpenRouterLlmGateway` — Infrastructure Adapter
  *
  * Bridges the OpenRouter SDK to Briom's domain `LlmGateway` port.
- *
- * **Abort & Anti-Hang Strategy**
- * The OpenRouter SDK returns an async iterable that can silently stall
- * (TCP freeze, no data, no error, no EOF). A plain `for await` loop
- * would hang indefinitely.
- *
- * Fix: Use `Promise.race([iterator.next(), abortPromise])` so that:
- * - Manual abort (moderator) breaks the loop immediately
- * - Timeout abort (from `TurnLifecycleOrchestrator`) breaks the loop
- * - The iterator is properly closed via `iterator.return()` on abort
  */
 export class OpenRouterLlmGateway implements LlmGateway {
 	public constructor(private readonly client: OpenRouter) {}
@@ -32,9 +27,9 @@ export class OpenRouterLlmGateway implements LlmGateway {
 	): Promise<IResult<ReadableStream<string>, StreamError>> {
 		const { messages, qualifiedModel, systemPrompt, signal } = input;
 
-		const fullMessages = [
-			{ role: "system" as const, content: systemPrompt },
-			...messages.map((m) => ({ role: m.role, content: m.content })),
+		const fullMessages: ChatMessages[] = [
+			{ role: "system", content: systemPrompt },
+			...messages.map((m) => this.toSdkMessage(m)),
 		];
 
 		try {
@@ -55,10 +50,9 @@ export class OpenRouterLlmGateway implements LlmGateway {
 					let sawAnyContent = false;
 
 					if (signal?.aborted) {
-						controller.error(
+						return controller.error(
 							new DOMException(signal.reason ?? "Aborted", "AbortError"),
 						);
-						return;
 					}
 
 					const iterable = response as unknown as AsyncIterable<{
@@ -72,28 +66,27 @@ export class OpenRouterLlmGateway implements LlmGateway {
 					}>;
 
 					const iterator = iterable[Symbol.asyncIterator]();
-
 					const onAbort = async () => {
 						try {
 							await iterator.return?.();
 						} catch {}
+
 						controller.error(
 							new DOMException(signal?.reason ?? "Aborted", "AbortError"),
 						);
 					};
 
 					signal?.addEventListener("abort", onAbort, { once: true });
-
 					try {
 						while (true) {
 							if (signal?.aborted) {
 								try {
 									await iterator.return?.();
 								} catch {}
-								controller.error(
+
+								return controller.error(
 									new DOMException(signal.reason ?? "Aborted", "AbortError"),
 								);
-								return;
 							}
 
 							const { done, value: chunk } = await iterator.next();
@@ -129,10 +122,8 @@ export class OpenRouterLlmGateway implements LlmGateway {
 							return;
 						}
 
-						const message =
-							error instanceof Error ? error.message : "Stream failed";
-
-						controller.error(StreamError.streamFailure(message));
+						const e = error instanceof Error ? error.message : "Stream failed";
+						controller.error(StreamError.streamFailure(e));
 					} finally {
 						signal?.removeEventListener("abort", onAbort);
 					}
@@ -146,6 +137,41 @@ export class OpenRouterLlmGateway implements LlmGateway {
 			}
 			return Result.error(this.classifyError(error, qualifiedModel));
 		}
+	}
+
+	/**
+	 * @description
+	 * Maps a domain `Message` to an SDK `ChatMessages` shape.
+	 *
+	 * - `string` content → passed through as-is (all non-image turns).
+	 * - `ContentBlock[]` → mapped via `toSdkContent()` to `ChatContentItems[]`.
+	 */
+	private toSdkMessage(message: Message): ChatMessages {
+		if (typeof message.content === "string") {
+			return { role: message.role, content: message.content } as ChatMessages;
+		}
+
+		return {
+			role: message.role,
+			content: this.toSdkContent(message.content),
+		} as ChatMessages;
+	}
+
+	/**
+	 * @description
+	 * Translates domain `ContentBlock[]` to SDK `ChatContentItems[]`.
+	 *
+	 * Domain uses the OpenAI wire format (`image_url` snake_case).
+	 * OpenRouter SDK uses camelCase (`imageUrl`).
+	 */
+	private toSdkContent(blocks: ContentBlock[]): ChatContentItems[] {
+		return blocks.map((block): ChatContentItems => {
+			if (block.type === "text") return { type: "text", text: block.text };
+			return {
+				type: "image_url",
+				imageUrl: { url: block.image_url.url },
+			} as ChatContentItems;
+		});
 	}
 
 	private classifyError(error: unknown, model: string): StreamError {

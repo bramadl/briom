@@ -1,6 +1,7 @@
 import {
 	index,
 	integer,
+	jsonb,
 	pgTable,
 	text,
 	timestamp,
@@ -89,6 +90,25 @@ export const turnsTable = pgTable(
 
 		/**
 		 * @description
+		 * File attachments for this turn, stored as a JSONB array.
+		 *
+		 * Only moderator turns carry attachments — participant turns always
+		 * have an empty array here (enforced by the `Turn` domain invariant).
+		 *
+		 * Each element conforms to `AttachmentRecord`. `textContent` is NOT
+		 * stored — it is fetched from Supabase Storage on demand.
+		 *
+		 * Default `'[]'::jsonb` — safe for existing rows before migration.
+		 *
+		 * Migration: `ALTER TABLE turns ADD COLUMN attachments jsonb NOT NULL DEFAULT '[]'::jsonb;`
+		 */
+		attachments: jsonb("attachments")
+			.$type<AttachmentRecord[]>()
+			.notNull()
+			.default([]),
+
+		/**
+		 * @description
 		 * Current lifecycle status.
 		 */
 		status: turnStatusEnum("status").notNull().default("pending"),
@@ -148,3 +168,23 @@ export const turnsTable = pgTable(
  * Inferred TypeScript type for turn table rows.
  */
 export type TurnRecord = typeof turnsTable.$inferSelect;
+
+/**
+ * @description
+ * Serialized shape of a `TurnAttachment` as stored in the `attachments` JSONB column.
+ *
+ * This is NOT the domain Value Object — it's the raw DB representation.
+ * `TurnMapper` converts between this and `TurnAttachment`.
+ *
+ * `textContent` is intentionally excluded from persistence:
+ * - Text file content is fetched from Supabase Storage on demand by
+ *   `TranscriptorRenderer` — storing it here would duplicate data.
+ * - Image attachments use `url` (base64 data-URI) which IS stored.
+ */
+export interface AttachmentRecord {
+	mediaType: "text" | "image";
+	mimeType: string;
+	name: string;
+	sizeBytes: number;
+	url: string;
+}

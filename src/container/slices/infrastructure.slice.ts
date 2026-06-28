@@ -11,7 +11,6 @@ import {
 	BriomAbortRegistry,
 	BriomEventBus,
 	BriomScheduler,
-	SupabaseSseForwarder,
 } from "@briom/libs/briom/wrappers";
 import {
 	DrizzleRoomRepository,
@@ -19,6 +18,8 @@ import {
 	DrizzleTurnSequencer,
 	DrizzleUsageRepository,
 } from "@briom/libs/providers/drizzle";
+import { SupabaseSseForwarder } from "@briom/libs/providers/supabase";
+import { SupabaseAttachmentStorage } from "@briom/libs/providers/supabase/adapters/supabase.storage";
 import { OpenRouterLlmGateway } from "@briom/open-router";
 import { openRouter } from "@briom/open-router/client";
 
@@ -36,6 +37,7 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 		.add("Adapter:Scheduler", () => new BriomScheduler())
 		.add("Adapter:AbortRegistry", () => new BriomAbortRegistry())
 		.add("Adapter:SseForwarder", () => new SupabaseSseForwarder())
+		.add("Adapter:AttachmentStorage", () => new SupabaseAttachmentStorage())
 		.add(
 			"Adapter:LlmGateway",
 			(r) => new OpenRouterLlmGateway(r["Client:OpenRouter"]),
@@ -64,7 +66,10 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 		)
 		.add("Policy:TurnLimit", () => new TurnLimitPolicy())
 		.add("Policy:RoomDeliberation", () => new RoomDeliberation())
-		.add("Policy:TranscriptorRenderer", () => new TranscriptorRenderer())
+		.add(
+			"Policy:TranscriptorRenderer",
+			(r) => new TranscriptorRenderer(r["Adapter:AttachmentStorage"]),
+		)
 
 		.add("Orchestrator:TurnLifecycle", (r) => {
 			return new TurnLifecycleOrchestrator(

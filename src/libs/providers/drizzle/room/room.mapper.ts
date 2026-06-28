@@ -108,6 +108,7 @@ export const RoomMapper = {
 			synthesisStatus: record.synthesisStatus as SynthesisProcess,
 			synthesisCreatedAt: record.synthesisCreatedAt,
 			synthesisCreatedBy: record.synthesisCreatedBy,
+			attachmentCount: record.attachmentCount,
 		});
 	},
 
@@ -133,6 +134,7 @@ export const RoomMapper = {
 			synthesisStatus: room.get("synthesisStatus"),
 			synthesisCreatedAt: room.get("synthesisCreatedAt"),
 			synthesisCreatedBy: room.get("synthesisCreatedBy"),
+			attachmentCount: room.get("attachmentCount"),
 		};
 	},
 };

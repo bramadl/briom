@@ -1,4 +1,4 @@
-import { index, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { roomStatusEnum, roomSynthesisEnum } from "../schema";
 
@@ -20,6 +20,18 @@ export const roomsTable = pgTable(
 		 * Unique room identifier (UUID).
 		 */
 		id: text("id").primaryKey(),
+
+		/**
+		 * @description
+		 * Cumulative count of file attachments across all turns in this room.
+		 *
+		 * Tracked as a denormalized counter here (rather than derived from
+		 * `turns.attachments`) so `Room.registerAttachment()` can enforce the
+		 * per-room ceiling without loading the full turn list.
+		 *
+		 * Default 0 — existing rooms before this migration have no attachments.
+		 */
+		attachmentCount: integer("attachment_count").notNull().default(0),
 
 		/**
 		 * @description

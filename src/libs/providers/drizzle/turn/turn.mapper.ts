@@ -6,6 +6,7 @@ import {
 	type STREAM_ERROR,
 	StreamError,
 	Turn,
+	TurnAttachment,
 	TurnAuthor,
 	TurnId,
 	TurnPerspective,
@@ -14,7 +15,7 @@ import {
 	type TurnStatusOption,
 } from "@briom/core/domain";
 
-import type { TurnRecord } from "./turn.model";
+import type { AttachmentRecord, TurnRecord } from "./turn.model";
 
 /**
  * @description
@@ -79,6 +80,16 @@ export const TurnMapper = {
 			createdAt: record.createdAt,
 			settledAt: record.settledAt,
 			failedAt: record.failedAt,
+			attachments: (record.attachments ?? []).map((a) =>
+				TurnAttachment.rehydrate({
+					name: a.name,
+					url: a.url,
+					mediaType: a.mediaType,
+					mimeType: a.mimeType,
+					sizeBytes: a.sizeBytes,
+					textContent: null,
+				}),
+			),
 		};
 
 		// Reconstruct perspective for settled or streaming turns
@@ -113,6 +124,16 @@ export const TurnMapper = {
 		const author = turn.get("author");
 		const error = turn.get("error");
 
+		const attachments: AttachmentRecord[] = turn
+			.get("attachments")
+			.map((a) => ({
+				name: a.name,
+				url: a.url,
+				mediaType: a.mediaType,
+				mimeType: a.mimeType,
+				sizeBytes: a.sizeBytes,
+			}));
+
 		return {
 			id: turn.id.value(),
 			roomId: turn.get("roomId").value(),
@@ -124,6 +145,7 @@ export const TurnMapper = {
 			content: turn.get("perspective").get("content"),
 			status: turn.get("status"),
 			previousTurnId: turn.get("previousTurnId")?.value() || null,
+			attachments,
 			errorKind: error?.get("kind") || null,
 			errorMessage: error?.get("message") || null,
 			errorRetryAfter: error?.get("retryAfter") || null,
