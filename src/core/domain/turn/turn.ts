@@ -30,6 +30,7 @@ import {
 	type TurnStatusOption,
 } from "./options";
 import type { StreamError } from "./streams";
+import type { TurnAttachment } from "./turn.attachment";
 import { TurnAuthor } from "./turn.author";
 import type { TurnId } from "./turn.id";
 import type { TurnIntent } from "./turn.intent";
@@ -37,6 +38,17 @@ import { TurnPerspective } from "./turn.perspective";
 import type { TurnSequence } from "./turn.sequence";
 
 export interface TurnProps {
+	/**
+	 * @description
+	 * Files attached to this turn by the moderator.
+	 *
+	 * **Invariant**: Only moderator turns may carry attachments.
+	 * Participant turns always have an empty array here.
+	 *
+	 * Attachments are immutable once the turn is initiated — a moderator
+	 * cannot add or remove files after sending.
+	 */
+	attachments: TurnAttachment[];
 	author: TurnAuthor;
 	createdAt: Date;
 	error: StreamError | null;
@@ -70,15 +82,15 @@ export interface TurnProps {
  * `ABANDONED`
  * ```
  *
- * **Turn vs Message**
- * A `Turn` is NOT a message. A `Turn` carries intent, participates in a deliberation,
- * and has a stateful lifecycle. A message is a chat paradigm concept — passive,
- * stateless, and without purpose beyond transmission.
+ * **Attachments**
+ * Moderator turns may carry up to the room's attachment limit worth of files.
+ * The `Room` aggregate enforces the per-room count; `Turn` only enforces
+ * that participant turns cannot have attachments.
  *
- * **Human-Led Principle**
- * Only the moderator decides when a turn initiates. The `Turn` aggregate ensures
- * that once initiated, it follows a valid lifecycle path. It cannot autonomously
- * transition states — all transitions are explicit domain operations.
+ * **Turn vs Message**
+ * A `Turn` is NOT a message. A `Turn` carries intent, participates in a
+ * deliberation, and has a stateful lifecycle. A message is a chat paradigm
+ * concept — passive, stateless, and without purpose beyond transmission.
  *
  * **Ubiquitous Language**
  * - `Turn`: single contribution dalam deliberation (NOT "message", "response", "reply")
@@ -86,31 +98,7 @@ export interface TurnProps {
  * - `Perspective`: the unique reasoning contribution (NOT "answer", "output", "generation")
  * - `Settle`: completing a turn after streaming (NOT "send", "submit")
  * - `Stream`: the process of accumulating tokens from an LLM (NOT "generate", "respond")
- *
- * @example
- * ```typescript
- * // Moderator turn (immediately settled)
- * const modTurn = Turn.initiateModeratorTurn({
- *   id: TurnId(),
- *   roomId: RoomId("room-1"),
- *   sequence: TurnSequence.first(),
- *   moderatorId: ModeratorId("user-1"),
- *   content: "Let's discuss CQRS vs Event Sourcing"
- * }).value();
- *
- * // Participant turn (pending → streaming → settled)
- * const aiTurn = Turn.initiateParticipantTurn({
- *   id: TurnId(),
- *   roomId: RoomId("room-1"),
- *   sequence: TurnSequence.next(prevSequence),
- *   participantId: ParticipantId("gpt-4"),
- *   intent: TurnIntent.from(INTENT_OPTION.RESPOND)
- * }).value();
- *
- * aiTurn.startStream();
- * aiTurn.accumulate("I think CQRS works best when...");
- * aiTurn.settle("I think CQRS works best when write and read models diverge significantly.");
- * ```
+ * - `Attachment`: a file provided by the moderator to enrich shared context
  */
 export class Turn extends Aggregate<TurnProps> {
 	private constructor(props: TurnProps) {
@@ -123,20 +111,28 @@ export class Turn extends Aggregate<TurnProps> {
 	 * - Sequence must be ≥ 1
 	 * - Moderator turns cannot have intent
 	 * - Participant turns must have intent
+	 * - Participant turns cannot have attachments
 	 * - Settled turns must have non-empty perspective content
 	 */
 	public static override isValidProps(
 		props: TurnProps,
 	): DomainError | undefined {
-		if (props.sequence.get("value") < 1) {
-			return new NegativeSequenceError();
-		}
+		if (props.sequence.get("value") < 1) return new NegativeSequenceError();
 
 		const author = props.author;
+
 		if (author.isModerator && props.intent !== null) {
 			return new InvalidAuthorError("Moderator turn cannot have intent");
-		} else if (author.isParticipant && props.intent === null) {
+		}
+
+		if (author.isParticipant && props.intent === null) {
 			return new MissingIntentError();
+		}
+
+		if (author.isParticipant && props.attachments.length > 0) {
+			return new InvalidAuthorError(
+				"Participant turns cannot carry attachments — only moderator turns can",
+			);
 		}
 
 		if (props.status === TURN_STATUS_OPTION.SETTLED) {
@@ -164,7 +160,11 @@ export class Turn extends Aggregate<TurnProps> {
 	 * Moderator turns are immediately settled because the moderator's content
 	 * is provided synchronously (no LLM streaming).
 	 *
-	 * @param props - `Turn` properties including moderator ID and content
+	 * Attachments are optional and default to an empty array. The caller
+	 * (application layer) is responsible for ensuring the room's attachment
+	 * count has capacity before passing attachments here.
+	 *
+	 * @param props - Turn properties including moderator ID, content, and optional attachments
 	 * @returns Result containing the settled Turn or domain error
 	 * @emits `TurnSettled` domain event.
 	 * @emits `TurnInitiated` domain event.
@@ -175,6 +175,7 @@ export class Turn extends Aggregate<TurnProps> {
 		sequence: TurnSequence;
 		moderatorId: ModeratorId;
 		content: string;
+		attachments?: TurnAttachment[];
 		clientTurnId?: string;
 	}): IResult<Turn, DomainError> {
 		const perspectiveResult = TurnPerspective.finalize(props.content);
@@ -196,6 +197,7 @@ export class Turn extends Aggregate<TurnProps> {
 			createdAt: new Date(),
 			settledAt: new Date(),
 			failedAt: null,
+			attachments: props.attachments ?? [],
 		});
 
 		if (result.isSuccess()) {
@@ -228,8 +230,9 @@ export class Turn extends Aggregate<TurnProps> {
 	 * @description
 	 * Factory for participant turns.
 	 *
-	 * Participant starts in `PENDING` status. The LLM stream will later transition
-	 * it through `STREAMING` to `SETTLED` (or `FAILED`).
+	 * Participant turns start in `PENDING` status with no attachments.
+	 * The LLM stream will later transition through `STREAMING` to `SETTLED`
+	 * (or `FAILED`).
 	 *
 	 * @param props - Turn properties including participant ID and intent
 	 * @returns Result containing the pending Turn or domain error
@@ -257,6 +260,7 @@ export class Turn extends Aggregate<TurnProps> {
 			createdAt: new Date(),
 			settledAt: null,
 			failedAt: null,
+			attachments: [],
 		});
 
 		if (result.isSuccess()) {
@@ -364,6 +368,14 @@ export class Turn extends Aggregate<TurnProps> {
 	 */
 	public get moderatorId(): ModeratorId | null {
 		return this.get("author").moderatorId;
+	}
+
+	/**
+	 * @description
+	 * Whether this moderator turn has at least one file attached.
+	 */
+	public get hasAttachments(): boolean {
+		return this.get("attachments").length > 0;
 	}
 
 	/**

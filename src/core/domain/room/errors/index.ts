@@ -5,6 +5,7 @@ export * from "./cannot-start-deliberation.error";
 export * from "./cannot-synthesize.error";
 export * from "./empty-title.error";
 export * from "./empty-topic.error";
+export * from "./maximum-attachment-reached.error";
 export * from "./maximum-participant-reached.error";
 export * from "./no-synthesis-in-progress";
 export * from "./participant-already-invited.error";

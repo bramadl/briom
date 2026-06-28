@@ -16,6 +16,7 @@ import {
 	CannotSynthesizeError,
 	EmptyTitleError,
 	EmptyTopicError,
+	MaximumAttachmentsReachedError,
 	MaximumParticipantReachedError,
 	NoSynthesisInProgressError,
 	ParticipantAlreadyInvitedError,
@@ -32,11 +33,13 @@ import {
 } from "./events";
 import type { ModeratorId } from "./moderator/moderator.id";
 import type { Participant, ParticipantId } from "./participant";
+import { RoomAttachmentPolicy } from "./room.attachment";
 import type { RoomId } from "./room.id";
 import { ROOM_STATUS_OPTION, type RoomStatusOption } from "./room.status";
 import type { SynthesisProcess } from "./synthesis/process";
 
 interface RoomProps {
+	attachmentCount: number;
 	createdAt: Date;
 	id: RoomId;
 	moderatorId: ModeratorId;
@@ -56,12 +59,19 @@ interface RoomProps {
  * `Room` — Aggregate Root
  *
  * A dedicated thinking space where deliberation occurs. The `Room` is the consistency
- * boundary for all deliberation state: participants, turns, status lifecycle, and topic.
+ * boundary for all deliberation state: participants, turns, status lifecycle, topic,
+ * and file attachment quota.
  *
  * **Lifecycle**
  * ```
  * `FORMING` → `DELIBERATING` → [`PAUSED`] → `CONCLUDED`
  * ```
+ *
+ * **Attachment quota**
+ * The room tracks a cumulative `attachmentCount` across all moderator turns.
+ * `registerAttachment()` enforces the ceiling defined by `RoomAttachmentPolicy`
+ * before the application layer persists any new attachment. This keeps the
+ * invariant inside the aggregate where it belongs.
  *
  * **Why this matters**
  * The `Room` protects the invariant that deliberation is human-led and sequential.
@@ -75,6 +85,7 @@ interface RoomProps {
  * - `Participant`: invited AI model with identity (NOT "bot", "agent")
  * - `Moderator`: human user who guides deliberation (NOT "admin", "owner")
  * - `Turn`: single contribution within deliberation (NOT "message", "response")
+ * - `Attachment`: a file provided by the moderator to enrich shared context
  *
  * @example
  * ```typescript
@@ -87,6 +98,7 @@ interface RoomProps {
  *
  * room.inviteParticipant(gptParticipant);
  * room.startDeliberation("Should we use CQRS?");
+ * room.registerAttachment().orThrow(); // guard before persisting file
  * room.registerTurn(turn.id);
  * room.pause();
  * room.resume();
@@ -95,6 +107,7 @@ interface RoomProps {
  */
 export class Room extends Aggregate<RoomProps> {
 	private readonly MAXIMUM_PARTICIPANTS = 4;
+	private readonly attachmentPolicy = new RoomAttachmentPolicy();
 
 	private constructor(props: RoomProps) {
 		super(props);
@@ -116,18 +129,22 @@ export class Room extends Aggregate<RoomProps> {
 	 * @description
 	 * Factory method for creating a new `Room` in `FORMING` status.
 	 *
-	 * @param props - `Room` properties excluding derived defaults (topic, participants, turnIds, status)
+	 * @param props - `Room` properties excluding derived defaults
 	 * @returns Result containing the new `Room` or `EmptyTitleError`
 	 * @emits `RoomFormed` domain event.
 	 */
 	public static form(
-		props: Omit<RoomProps, "topic" | "participants" | "turnIds" | "status">,
+		props: Omit<
+			RoomProps,
+			"topic" | "participants" | "turnIds" | "status" | "attachmentCount"
+		>,
 	): IResult<Room, EmptyTitleError> {
 		const fullProps: RoomProps = {
 			...props,
 			topic: null,
 			participants: [],
 			turnIds: [],
+			attachmentCount: 0,
 			status: ROOM_STATUS_OPTION.FORMING,
 			synthesis: null,
 			synthesisStatus: "idle",
@@ -216,27 +233,72 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Finds a participant by their ID within this room's participant list.
+	 * Whether the moderator can still attach more files to this room.
+	 * Checked by the application layer before accepting an upload.
 	 */
+	public get canAttachMore(): boolean {
+		return !this.attachmentPolicy.isRoomLimitReached(
+			this.get("attachmentCount"),
+		);
+	}
+
+	/**
+	 * @description
+	 * How many more files can be attached to this room.
+	 * Useful for UI indicators ("1 attachment slot remaining").
+	 */
+	public get remainingAttachmentSlots(): number {
+		return this.attachmentPolicy.remaining(this.get("attachmentCount"));
+	}
+
+	// ─── Queries ──────────────────────────────────────────────────────────────
+
 	public findParticipantById(participantId: ParticipantId) {
 		return this.get("participants").find((p) => p.id.isEqual(participantId));
+	}
+
+	// ─── Mutations ────────────────────────────────────────────────────────────
+
+	/**
+	 * @description
+	 * Registers a file attachment slot against the room's quota.
+	 *
+	 * **Call this before persisting the attachment** — if this returns an error,
+	 * the upload should be rejected and the file should not be stored.
+	 *
+	 * The `count` parameter defaults to 1. Pass the number of files being
+	 * attached in a single moderator turn (currently always 1 per attachment).
+	 *
+	 * **Invariant**: Total `attachmentCount` across the room cannot exceed
+	 * `RoomAttachmentPolicy.MAX_ATTACHMENTS_PER_ROOM`.
+	 *
+	 * @returns Result void or `MaximumAttachmentsReachedError`
+	 */
+	public registerAttachment(
+		count = 1,
+	): IResult<void, MaximumAttachmentsReachedError> {
+		const current = this.get("attachmentCount");
+
+		if (
+			this.attachmentPolicy.isRoomLimitReached(current) ||
+			current + count > RoomAttachmentPolicy.MAX_ATTACHMENTS_PER_ROOM
+		) {
+			return Result.error(new MaximumAttachmentsReachedError());
+		}
+
+		this.change("attachmentCount", current + count);
+		return Result.success(undefined);
 	}
 
 	/**
 	 * @description
 	 * Invites a participant into the room.
 	 *
-	 * **Invariant**: For MVP, maximum of 4 participants can be invited
+	 * **Invariant**: Max 4 participants.
+	 * **Invariant**: Can only invite while `FORMING`.
+	 * **Invariant**: No duplicate IDs or models.
 	 *
-	 * **Invariant**: Can only invite while `FORMING`. Once deliberation starts,
-	 * the participant set is frozen to preserve deliberation context integrity.
-	 *
-	 * **Invariant**:
-	 * - Duplicate participants (by ID) are rejected.
-	 * - Duplicate participant models (by qualified model) are rejected.
-	 *
-	 * @param participant - The AI participant to invite
-	 * @returns Result containing void or domain error
+	 * @emits `ParticipantInvited` domain event.
 	 */
 	public inviteParticipant(
 		participantToInvite: Participant,
@@ -253,13 +315,13 @@ export class Room extends Aggregate<RoomProps> {
 		}
 
 		const currentParticipants = this.get("participants");
-		const invitedParticipant = currentParticipants.find(
+		const alreadyInvited = currentParticipants.find(
 			(p) =>
 				participantToInvite.id.isEqual(p.id) ||
 				participantToInvite.qualifiedModel.includes(p.qualifiedModel),
 		);
 
-		if (invitedParticipant) {
+		if (alreadyInvited) {
 			return Result.error(new ParticipantAlreadyInvitedError());
 		}
 
@@ -284,11 +346,7 @@ export class Room extends Aggregate<RoomProps> {
 	 * @description
 	 * Starts deliberation by setting a topic and transitioning to `DELIBERATING`.
 	 *
-	 * **Invariant**: Room must be in `FORMING` status.
-	 * **Invariant**: Topic must be non-empty.
-	 * **Invariant**: At least one participant must be invited.
-	 *
-	 * @param topic - The subject of deliberation introduced by the moderator
+	 * **Invariant**: `FORMING` status, non-empty topic, ≥1 participant.
 	 * @emits `DeliberationStarted` domain event.
 	 */
 	public startDeliberation(
@@ -329,10 +387,6 @@ export class Room extends Aggregate<RoomProps> {
 	/**
 	 * @description
 	 * Registers a turn within this room's deliberation history.
-	 *
-	 * Maintains the ordered sequence of turn IDs for shared context reconstruction.
-	 *
-	 * @param turnId - The ID of the turn to register
 	 * @emits `TurnRegistered` domain event.
 	 */
 	public registerTurn(turnId: TurnId): void {
@@ -398,8 +452,7 @@ export class Room extends Aggregate<RoomProps> {
 	 * @description
 	 * Concludes deliberation, ending the thinking session.
 	 *
-	 * **Invariant**: `Room` cannot be `CONCLUDED`.
-	 * **Invariant**: `Room` must be `DELIBERATING` or `PAUSED`.
+	 * **Invariant**: `DELIBERATING` or `PAUSED`, not already `CONCLUDED`.
 	 * @emits `DeliberationConcluded` domain event.
 	 */
 	public conclude(): IResult<void, CannotConcludeRoomError> {
@@ -432,7 +485,6 @@ export class Room extends Aggregate<RoomProps> {
 	/**
 	 * @description
 	 * Renames the room.
-	 *
 	 * **Invariant**: Title must be non-empty.
 	 */
 	public rename(newTitle: string): IResult<void, EmptyTitleError> {
@@ -446,10 +498,9 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Start the synthesizing process.
+	 * Starts the synthesis process.
 	 *
-	 * **Invariant**: `Room` must be `CONCLUDED`.
-	 * **Invariant**: `Room` must not have any synthesizing in-flights.
+	 * **Invariant**: `CONCLUDED`, no synthesis already in-flight.
 	 */
 	public initiateSynthesis(): IResult<void, CannotSynthesizeError> {
 		if (!this.isConcluded) {
@@ -476,9 +527,8 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Save any synthesis made.
-	 *
-	 * **Invariant**: `Room` must have a prior synthesizing in-flight.
+	 * Saves a completed synthesis.
+	 * **Invariant**: A synthesis must be in-flight.
 	 */
 	public saveSynthesis(
 		content: string,
@@ -498,7 +548,7 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Mark synthesizing process as fail.
+	 * Marks an in-flight synthesis as failed.
 	 */
 	public failSynthesis(): void {
 		if (this.isSynthesizing) {
