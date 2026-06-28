@@ -9,13 +9,14 @@ import { FailedTurn } from "./_/failed-turn";
 
 interface TurnRendererProps {
 	content: string;
+	isExpanded: boolean;
 	isFailed: boolean;
-	isLastTurn?: boolean;
 	isPending: boolean;
 	isRetryable?: boolean;
 	isRetrying?: boolean;
 	isStreaming: boolean;
 	onRetried?: () => void;
+	onToggleExpand: () => void;
 	showAbort?: boolean;
 	turn: RoomDeliberationTurnDTO;
 }
@@ -23,12 +24,13 @@ interface TurnRendererProps {
 export function TurnRenderer({
 	content,
 	isFailed,
-	isLastTurn,
+	isExpanded,
 	isPending,
 	isRetryable = false,
 	isRetrying = false,
 	isStreaming,
 	onRetried,
+	onToggleExpand,
 	showAbort,
 	turn,
 }: TurnRendererProps) {
@@ -61,7 +63,8 @@ export function TurnRenderer({
 		return (
 			<TurnPerspectiveExpander
 				className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert"
-				defaultCollapsed={!isLastTurn}
+				isExpanded={isExpanded}
+				onToggleExpand={onToggleExpand}
 			>
 				<TurnPerspective content={content} />
 				<FailedTurn
@@ -77,8 +80,9 @@ export function TurnRenderer({
 	return (
 		<TurnPerspectiveExpander
 			className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert"
-			defaultCollapsed={!isLastTurn}
+			isExpanded={isExpanded}
 			isStreaming={isStreaming}
+			onToggleExpand={onToggleExpand}
 		>
 			<TurnPerspective content={content} />
 			{isStreaming && <Logo animate className="mt-4" />}

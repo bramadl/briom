@@ -10,18 +10,19 @@ interface TurnPerspectiveExpanderProps {
 	children: React.ReactNode;
 	className?: string;
 	collapsedHeight?: number;
-	defaultCollapsed?: boolean;
+	isExpanded: boolean;
 	isStreaming?: boolean;
+	onToggleExpand: () => void;
 }
 
 export function TurnPerspectiveExpander({
 	children,
 	collapsedHeight = DEFAULT_COLLAPSED_HEIGHT,
-	defaultCollapsed = true,
 	className,
+	isExpanded,
 	isStreaming = false,
+	onToggleExpand,
 }: TurnPerspectiveExpanderProps) {
-	const [expanded, setExpanded] = useState(!defaultCollapsed);
 	const contentRef = useRef<HTMLDivElement>(null);
 	const [isOverflowing, setIsOverflowing] = useState(false);
 
@@ -38,16 +39,12 @@ export function TurnPerspectiveExpander({
 		checkOverflow();
 	}, [checkOverflow]);
 
-	useEffect(() => {
-		setExpanded(!defaultCollapsed);
-	}, [defaultCollapsed]);
-
-	const showFade = isOverflowing && !expanded && !isStreaming;
+	const showFade = isOverflowing && !isExpanded && !isStreaming;
 	const showToggle = isOverflowing && !isStreaming;
 
 	const maxHeight = isStreaming
 		? undefined
-		: expanded
+		: isExpanded
 			? undefined
 			: isOverflowing
 				? collapsedHeight
@@ -73,11 +70,11 @@ export function TurnPerspectiveExpander({
 			{showToggle && (
 				<button
 					className="mt-1.5 flex items-center gap-1 text-[11px] font-mono uppercase tracking-widest text-muted-foreground transition-colors hover:text-foreground"
-					onClick={() => setExpanded((v) => !v)}
+					onClick={onToggleExpand}
 					type="button"
 				>
-					{expanded ? "Show less" : "Show more"}
-					{expanded ? (
+					{isExpanded ? "Show less" : "Show more"}
+					{isExpanded ? (
 						<ChevronUp className="size-3" />
 					) : (
 						<ChevronDown className="size-3" />

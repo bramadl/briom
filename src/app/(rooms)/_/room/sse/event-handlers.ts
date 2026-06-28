@@ -1,9 +1,13 @@
 import type {
 	RoomDeliberationConcludedPayload,
 	RoomDeliberationDTO,
+	RoomDeliberationPausedPayload,
+	RoomDeliberationResumedPayload,
 	RoomDeliberationStartedPayload,
 	RoomDeliberationTurnDTO,
+	RoomFormedPayload,
 	RoomParticipantJoinedPayload,
+	RoomTurnRegisteredPayload,
 	TurnFailedPayload,
 	TurnInitiatedPayload,
 	TurnSettledPayload,
@@ -12,8 +16,9 @@ import type {
 } from "@briom/app";
 import type { QueryClient } from "@tanstack/react-query";
 import { useTurnStreamStore } from "../../deliberation/hooks/use-turn-stream.store";
-import { roomQueries } from "../queries/registry";
 
+import { moderatorQueryKeys } from "../../moderator/queries/keys";
+import { roomQueries } from "../queries/registry";
 import type { RoomEventName } from "./event-names";
 
 type SseEventContext<TPayload = unknown> = {
@@ -28,12 +33,12 @@ type SseEventHandler<TPayload = unknown> = (
 
 interface RoomEventPayloadMap {
 	"room:deliberation-concluded": RoomDeliberationConcludedPayload;
-	"room:deliberation-paused": unknown;
-	"room:deliberation-resumed": unknown;
+	"room:deliberation-paused": RoomDeliberationPausedPayload;
+	"room:deliberation-resumed": RoomDeliberationResumedPayload;
 	"room:deliberation-started": RoomDeliberationStartedPayload;
-	"room:formed": unknown;
+	"room:formed": RoomFormedPayload;
 	"room:participant-joined": RoomParticipantJoinedPayload;
-	"room:turn-registered": unknown;
+	"room:turn-registered": RoomTurnRegisteredPayload;
 	"turn:failed": TurnFailedPayload;
 	"turn:initiated": TurnInitiatedPayload;
 	"turn:settled": TurnSettledPayload;
@@ -262,6 +267,12 @@ function turnFailedHandler({
 	}));
 }
 
+function turnRegisteredHandler({
+	queryClient,
+}: SseEventContext<RoomTurnRegisteredPayload>): void {
+	queryClient.invalidateQueries({ queryKey: moderatorQueryKeys.usage() });
+}
+
 export const ROOM_EVENT_HANDLERS: {
 	[K in RoomEventName]: SseEventHandler<RoomEventPayloadMap[K]>;
 } = {
@@ -271,7 +282,7 @@ export const ROOM_EVENT_HANDLERS: {
 	"room:deliberation-started": deliberationStartedHandler,
 	"room:formed": noopHandler,
 	"room:participant-joined": participantJoinedHandler,
-	"room:turn-registered": noopHandler,
+	"room:turn-registered": turnRegisteredHandler,
 	"turn:failed": turnFailedHandler,
 	"turn:initiated": turnInitiatedHandler,
 	"turn:settled": turnSettledHandler,

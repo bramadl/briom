@@ -68,13 +68,18 @@ export class InitiateParticipantTurnHandler
 	): Promise<IResult<InitiateParticipantTurnOutput, DomainError>> {
 		const { roomId, participantId, intent, moderatorId } = command.input;
 
+		let currentCount = 0;
 		const usage = await this.usageRepository.getUsage(moderatorId);
-		if (usage && this.turnLimit.isNewPeriod(usage.periodStart)) {
-			await this.usageRepository.resetPeriod(moderatorId);
+		if (usage) {
+			if (this.turnLimit.isNewPeriod(usage.periodStart)) {
+				await this.usageRepository.resetPeriod(moderatorId);
+				currentCount = 0;
+			} else {
+				currentCount = usage.count;
+			}
+		} else {
+			currentCount = 0;
 		}
-
-		const currentCount =
-			usage && !this.turnLimit.isNewPeriod(usage.periodStart) ? usage.count : 0;
 
 		if (this.turnLimit.isExceeded(currentCount)) {
 			return Result.error(

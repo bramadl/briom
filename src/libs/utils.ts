@@ -28,6 +28,14 @@ export function pipe<A, B, C, D, E>(
 	cd: (c: C) => D,
 	de: (d: D) => E,
 ): E;
+export function pipe<A, B, C, D, E, F>(
+	a: A,
+	ab: (a: A) => B,
+	bc: (b: B) => C,
+	cd: (c: C) => D,
+	de: (d: D) => E,
+	ef: (e: E) => F,
+): F;
 
 export function pipe(
 	initial: unknown,

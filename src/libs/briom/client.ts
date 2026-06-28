@@ -1,5 +1,4 @@
-import type { RoomContext } from "./contexts/room.context";
-import type { TurnContext } from "./contexts/turn.context";
+import type { ModeratorContext, RoomContext, TurnContext } from "./contexts";
 
 /**
  * @description
@@ -10,6 +9,11 @@ import type { TurnContext } from "./contexts/turn.context";
  * to enable testability and swappable implementations.
  */
 export interface BriomDeps {
+	/**
+	 * @description
+	 * Moderator lifecycle operations (account, billing, usage.).
+	 */
+	moderator: ModeratorContext;
 	/**
 	 * @description
 	 * Room lifecycle operations (create, invite, start, pause, etc.).
@@ -74,6 +78,14 @@ export interface BriomDeps {
  */
 export class Briom {
 	public constructor(private readonly deps: BriomDeps) {}
+
+	/**
+	 * @description
+	 * Moderator lifecycle context: account, billing, usage.
+	 */
+	public get moderator() {
+		return this.deps.moderator;
+	}
 
 	/**
 	 * @description

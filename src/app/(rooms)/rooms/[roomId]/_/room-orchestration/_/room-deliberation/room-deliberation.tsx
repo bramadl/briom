@@ -2,6 +2,8 @@
 
 import { useDeliberation } from "@briom/rooms/_/deliberation/hooks/use-deliberation";
 import { useTurnStreamStore } from "@briom/rooms/_/deliberation/hooks/use-turn-stream.store";
+import { useModeratorUsage } from "@briom/rooms/_/moderator/hooks/use-moderator-usage";
+import { ModeratorUsageBanner } from "@briom/rooms/_/moderator/ui/usage-banner";
 import { useEffect, useRef } from "react";
 
 import { EmptySequence } from "./_/empty-sequence";
@@ -25,6 +27,8 @@ export function RoomDeliberation({
 	onTurnRegistered,
 	onTurnPending,
 }: RoomDeliberationProps) {
+	const { exceeded: isLimitExceeded } = useModeratorUsage();
+
 	const {
 		abortStreaming,
 		acceptProposal,
@@ -62,9 +66,7 @@ export function RoomDeliberation({
 		return useTurnStreamStore.subscribe(
 			(state) => state.streamingTurnId,
 			(current) => {
-				if (prev === null && current !== null) {
-					onTurnPendingRef.current?.();
-				}
+				if (prev === null && current !== null) onTurnPendingRef.current?.();
 				prev = current;
 			},
 		);
@@ -76,6 +78,7 @@ export function RoomDeliberation({
 
 	return (
 		<section className="relative min-w-0 min-h-0 h-full flex-1 flex flex-col overflow-hidden">
+			<ModeratorUsageBanner />
 			<div
 				className="flex-1 flex flex-col gap-8 p-8 lg:py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar overflow-x-hidden"
 				ref={onScrollerLoaded}
@@ -86,7 +89,7 @@ export function RoomDeliberation({
 					<TurnSequence
 						onProposalAccepted={acceptProposal}
 						proposals={proposals}
-						showProposals={canAcceptProposal}
+						showProposals={isLimitExceeded ? false : canAcceptProposal}
 					/>
 				)}
 			</div>
@@ -94,7 +97,7 @@ export function RoomDeliberation({
 			{!isConcluded && (
 				<div className="sticky bottom-0 z-10 shrink-0 p-8 pt-0">
 					<ModeratorInput
-						canEdit={!isSequencing}
+						canEdit={isLimitExceeded ? false : !isSequencing}
 						canMention={isMultiDeliberationRoom}
 						isPending={isSendingModerator}
 						isStreaming={isParticipantActive}

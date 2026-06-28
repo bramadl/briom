@@ -12,12 +12,14 @@ import { useRetryTurnMutation } from "@briom/rooms/_/turn/mutations/use-retry-tu
 import { TurnPerspectiveActions } from "@briom/rooms/_/turn/ui/turn-perspective-actions";
 import { format, parseISO } from "date-fns";
 import { memo } from "react";
+
 import { ParticipantInfo } from "./_/turn-info";
 import { TurnRenderer } from "./_/turn-renderer/turn-renderer";
 
 interface ParticipantTurnProps {
-	isLastTurn?: boolean;
+	isExpanded: boolean;
 	isRetryable?: boolean;
+	onToggleExpand: () => void;
 	participant: RoomDeliberationParticipantDTO;
 	showAbort?: boolean;
 	showIntent?: boolean;
@@ -25,12 +27,13 @@ interface ParticipantTurnProps {
 }
 
 function ParticipantTurnComponent({
-	isLastTurn,
+	isExpanded,
 	isRetryable = false,
 	participant,
 	showAbort,
 	showIntent,
 	turn,
+	onToggleExpand,
 }: ParticipantTurnProps) {
 	const { isRetrying, setIsRetrying } = useDeliberation();
 	const retryMutation = useRetryTurnMutation();
@@ -84,13 +87,14 @@ function ParticipantTurnComponent({
 				/>
 				<TurnRenderer
 					content={liveContent}
+					isExpanded={isExpanded}
 					isFailed={isFailed}
-					isLastTurn={isLastTurn}
 					isPending={isPending}
 					isRetryable={isRetryable}
 					isRetrying={resolvedIsRetrying}
 					isStreaming={isStreaming}
 					onRetried={handleRetry}
+					onToggleExpand={onToggleExpand}
 					showAbort={showAbort}
 					turn={turn}
 				/>

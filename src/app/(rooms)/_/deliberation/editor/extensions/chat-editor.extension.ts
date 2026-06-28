@@ -22,6 +22,7 @@ export const ChatEditorExtension = defineExtension({
 	name: "@briom/lexical/ChatEditor",
 	namespace: "briom-chat-editor",
 	theme: {
+		hr: "my-4",
 		paragraph: "my-1 leading-relaxed",
 		code: [
 			"not-prose",

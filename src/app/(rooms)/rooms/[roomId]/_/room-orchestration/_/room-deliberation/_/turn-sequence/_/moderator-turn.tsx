@@ -5,13 +5,15 @@ import { TurnPerspective } from "@briom/rooms/_/turn/ui/turn-perspective";
 import { TurnPerspectiveActions } from "@briom/rooms/_/turn/ui/turn-perspective-actions";
 import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective-expander";
 import { format, parseISO } from "date-fns";
-import { memo } from "react";
+import { memo, useState } from "react";
 
 interface ModeratorTurnProps {
 	turn: RoomDeliberationTurnDTO;
 }
 
 function ModeratorTurnComponent({ turn }: ModeratorTurnProps) {
+	const [isExpanded, setIsExpanded] = useState(false);
+
 	const time = turn.settledAt || turn.failedAt || turn.createdAt || null;
 	const timeSent = time ? format(parseISO(time), "HH:mm") : "––:––";
 
@@ -21,7 +23,11 @@ function ModeratorTurnComponent({ turn }: ModeratorTurnProps) {
 			id={turn.id}
 		>
 			<div className="relative bg-muted/50 p-4 rounded-lg">
-				<TurnPerspectiveExpander className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert">
+				<TurnPerspectiveExpander
+					className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert"
+					isExpanded={isExpanded}
+					onToggleExpand={() => setIsExpanded((v) => !v)}
+				>
 					<TurnPerspective content={turn.content} />
 				</TurnPerspectiveExpander>
 			</div>
