@@ -38,9 +38,16 @@ import type {
  * creates the turn, then delegates the LLM call and streaming lifecycle
  * to `TurnStreamingService`.
  *
+ * **render() is awaited**
+ * `TranscriptorRenderer.render()` is now async — it fetches text attachment
+ * content from Supabase Storage on demand for any moderator turns that carry
+ * text files. The `after()` callback captures the resolved `messages` array,
+ * so Storage reads happen before streaming begins (not inside the SSE loop).
+ *
  * @see TurnStreamingService — for the streaming/accumulate/settle lifecycle
  * @see TurnLifecycleOrchestrator — for the turn state machine
  * @see RoomDeliberation — for intent validation rules
+ * @see TranscriptorRenderer — for attachment-aware message building
  */
 export class InitiateParticipantTurnHandler
 	implements
@@ -77,8 +84,6 @@ export class InitiateParticipantTurnHandler
 			} else {
 				currentCount = usage.count;
 			}
-		} else {
-			currentCount = 0;
 		}
 
 		if (this.turnLimit.isExceeded(currentCount)) {
@@ -151,7 +156,7 @@ export class InitiateParticipantTurnHandler
 			participants,
 		});
 
-		const messages = this.transcriptor.render({ participants, turns });
+		const messages = await this.transcriptor.render({ participants, turns });
 
 		after(() =>
 			this.streaming.streamAndSettle({

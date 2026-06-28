@@ -58,3 +58,10 @@ Note: Do not prefix your response with your name, model name, or any identifier 
     `.trim();
 	},
 };
+
+export const TopicGenerationPrompt = {
+	summarizer: "openrouter/free",
+	build(): string {
+		return `Summarize the user's message as a concise topic (12-16 words, no punctuation, no explanation). Output ONLY the topic text, nothing else.`;
+	},
+};

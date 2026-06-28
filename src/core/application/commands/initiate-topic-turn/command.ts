@@ -1,3 +1,5 @@
+import type { AttachmentInput } from "../initiate-moderator-turn/command";
+
 /**
  * Input for `InitiateTopicTurnCommand`.
  *
@@ -6,6 +8,17 @@
  * 2. The first moderator turn content (full text)
  */
 export interface InitiateTopicTurnInput {
+	/**
+	 * @description
+	 * File attachments to include with the opening moderator turn.
+	 *
+	 * The topic turn is the first moderator turn in a deliberation — attaching
+	 * files here provides shared context from the very start. The room's
+	 * attachment quota is enforced identically to `InitiateModeratorTurnCommand`.
+	 *
+	 * Defaults to empty array when omitted.
+	 */
+	attachments?: AttachmentInput[];
 	/**
 	 * @description
 	 * Correlation id for FE optimistic reconciliation.

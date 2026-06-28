@@ -24,6 +24,12 @@ import type { RetryTurnCommand, RetryTurnOutput } from "./command";
  * context, then delegates to `TurnStreamingService` — the same streaming
  * lifecycle `InitiateParticipantTurnHandler` uses.
  *
+ * **render() is awaited**
+ * `TranscriptorRenderer.render()` is now async — it fetches text attachment
+ * content from Storage on demand. Retries benefit from this automatically:
+ * if the original moderator turn had a text file attached, it will be
+ * re-injected correctly into the retry's message context.
+ *
  * @see TurnStreamingService — for the streaming/accumulate/settle lifecycle
  * @see TurnLifecycleOrchestrator.retry — for the FAILED → PENDING reset
  */
@@ -92,8 +98,7 @@ export class RetryTurnHandler
 			participants,
 		});
 
-		const messages = this.transcriptor.render({ participants, turns });
-
+		const messages = await this.transcriptor.render({ participants, turns });
 		const streamResult = await this.streaming.streamAndSettle({
 			turnId: turn.id,
 			roomId: room.id,

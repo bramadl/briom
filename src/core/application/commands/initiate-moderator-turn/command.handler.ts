@@ -2,6 +2,8 @@ import {
 	ModeratorId,
 	RoomId,
 	type RoomRepository,
+	resolveMediaType,
+	TurnAttachment,
 	TurnId,
 	type TurnSequencer,
 } from "@briom/domain";
@@ -24,21 +26,24 @@ import type {
  * @description
  * `InitiateModeratorTurnHandler` — Command Handler
  *
- * Executes the creation of a moderator turn.
+ * Executes the creation of a moderator turn, with optional file attachments.
  *
  * **Flow**
  * 1. Find room by ID
  * 2. Verify room is deliberating
- * 3. Generate next sequence number
- * 4. Delegate to `TurnLifecycleOrchestrator.initiateModeratorTurn()`
- * 5. Register turn in room
- * 6. Persist room and turn
- * 7. Publish all domain events
+ * 3. If attachments present: check room quota via `room.registerAttachment()`
+ * 4. Rehydrate `AttachmentInput[]` → `TurnAttachment[]` value objects
+ * 5. Generate next sequence number
+ * 6. Delegate to `TurnLifecycleOrchestrator.initiateModeratorTurn()`
+ * 7. Register turn in room
+ * 8. Persist room and turn
+ * 9. Publish all domain events
  *
- * **Why Orchestrator?**
- * Moderator turns skip LLM streaming but still need lifecycle management
- * (persist, events, room registration). The orchestrator provides uniform
- * handling regardless of turn type.
+ * **Attachment quota**
+ * `room.registerAttachment()` is called before the turn is created. If the
+ * room has reached its ceiling (`RoomAttachmentPolicy.MAX_ATTACHMENTS_PER_ROOM`),
+ * the command fails fast with `MaximumAttachmentsReachedError` and no turn is
+ * persisted. This mirrors the optimistic check on the FE (`room.canAttachMore`).
  *
  * **Events Published**
  * - `TurnInitiated` — signals new turn slot
@@ -46,7 +51,8 @@ import type {
  * - `TurnRegistered` — signals room has new turn in history
  *
  * @see TurnLifecycleOrchestrator — for lifecycle coordination
- * @see TurnSseSubscriber — for event forwarding
+ * @see Room.registerAttachment — for quota enforcement
+ * @see RoomAttachmentPolicy — for per-room ceiling
  */
 export class InitiateModeratorTurnHandler
 	implements
@@ -63,17 +69,16 @@ export class InitiateModeratorTurnHandler
 		private readonly eventBus: IEventBus,
 	) {}
 
-	/**
-	 * @description
-	 * Creates a moderator turn with human content.
-	 *
-	 * @param command - Room ID, moderator ID, and content
-	 * @returns Result containing turnId, or domain error
-	 */
 	public async execute(
 		command: InitiateModeratorTurnCommand,
 	): Promise<IResult<InitiateModeratorTurnOutput, DomainError>> {
-		const { roomId, moderatorId, content, clientTurnId } = command.input;
+		const {
+			roomId,
+			moderatorId,
+			content,
+			clientTurnId,
+			attachments = [],
+		} = command.input;
 
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) {
@@ -90,6 +95,24 @@ export class InitiateModeratorTurnHandler
 			);
 		}
 
+		if (attachments.length > 0) {
+			const quotaResult = room.registerAttachment(attachments.length);
+			if (quotaResult.isError()) {
+				return Result.error(quotaResult.error());
+			}
+		}
+
+		const turnAttachments = attachments.map((a) =>
+			TurnAttachment.rehydrate({
+				name: a.name,
+				url: a.url,
+				mimeType: a.mimeType,
+				mediaType: resolveMediaType(a.mimeType) ?? "text",
+				sizeBytes: a.sizeBytes,
+				textContent: null,
+			}),
+		);
+
 		const nextSequence = await this.sequencer.nextPositionInside(room);
 		const result = await this.orchestrator.initiateModeratorTurn({
 			id: TurnId(),
@@ -97,6 +120,7 @@ export class InitiateModeratorTurnHandler
 			sequence: nextSequence,
 			moderatorId: ModeratorId(moderatorId),
 			content,
+			attachments: turnAttachments,
 			clientTurnId,
 		});
 

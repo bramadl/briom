@@ -3,6 +3,9 @@ import {
 	ModeratorId,
 	RoomId,
 	type RoomRepository,
+	resolveMediaType,
+	TopicGenerationPrompt,
+	TurnAttachment,
 	TurnId,
 	type TurnSequencer,
 } from "@briom/domain";
@@ -27,21 +30,18 @@ import type {
  * Atomic orchestration of room's first deliberation:
  * 1. Generate concise topic from moderator content (LLM)
  * 2. Start deliberation with generated topic
- * 3. Create moderator turn (SETTLED, synchronous)
- * 4. Auto-trigger first participant with DIRECT intent
+ * 3. If attachments present: check room quota via `room.registerAttachment()`
+ * 4. Rehydrate `AttachmentInput[]` → `TurnAttachment[]`
+ * 5. Create moderator turn (SETTLED, synchronous) with attachments
+ * 6. Register turn in room, persist, publish events
  *
  * **Why Atomic?**
  * FE sends one command. BE handles the complexity.
  * No FE state management for "is this the first message?"
  *
  * **Topic Generation**
- * LLM prompt: "Summarize this as a 3-5 word topic: {content}"
+ * LLM prompt: "Summarize this as a 12-16 word topic: {content}"
  * Expected output: "API Rate Limiting Strategies" (no quotes, no explanation)
- *
- * **Auto-Trigger**
- * First invited participant responds with DIRECT intent.
- * No moderator action needed — room is still "passive" until
- * first participant responds, then moderator takes over.
  */
 export class InitiateTopicTurnHandler
 	implements
@@ -58,7 +58,13 @@ export class InitiateTopicTurnHandler
 	public async execute(
 		command: InitiateTopicTurnCommand,
 	): Promise<IResult<InitiateTopicTurnOutput, DomainError>> {
-		const { roomId, moderatorId, content, clientTurnId } = command.input;
+		const {
+			roomId,
+			moderatorId,
+			content,
+			clientTurnId,
+			attachments = [],
+		} = command.input;
 
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) {
@@ -76,14 +82,27 @@ export class InitiateTopicTurnHandler
 		}
 
 		const topicResult = await this.generateTopic(content);
-		if (topicResult.isError()) {
-			return Result.error(topicResult.error());
-		}
-
+		if (topicResult.isError()) return Result.error(topicResult.error());
 		const topic = topicResult.value();
 
 		const startResult = room.startDeliberation(topic);
 		if (startResult.isError()) return Result.error(startResult.error());
+
+		if (attachments.length > 0) {
+			const quotaResult = room.registerAttachment(attachments.length);
+			if (quotaResult.isError()) return Result.error(quotaResult.error());
+		}
+
+		const turnAttachments = attachments.map((a) =>
+			TurnAttachment.rehydrate({
+				name: a.name,
+				url: a.url,
+				mimeType: a.mimeType,
+				mediaType: resolveMediaType(a.mimeType) ?? "text",
+				sizeBytes: a.sizeBytes,
+				textContent: null,
+			}),
+		);
 
 		const moderatorSequence = await this.turnSequencer.nextPositionInside(room);
 		const moderatorTurnResult =
@@ -93,6 +112,7 @@ export class InitiateTopicTurnHandler
 				sequence: moderatorSequence,
 				moderatorId: ModeratorId(moderatorId),
 				content,
+				attachments: turnAttachments,
 				clientTurnId,
 			});
 
@@ -125,8 +145,8 @@ export class InitiateTopicTurnHandler
 	): Promise<IResult<string, DomainError>> {
 		const streamResult = await this.llmGateway.stream({
 			messages: [{ role: "user", content }],
-			qualifiedModel: "openai/gpt-4o-mini",
-			systemPrompt: `Summarize the user's message as a concise topic (12-16 words, no punctuation, no explanation). Output ONLY the topic text, nothing else.`,
+			qualifiedModel: TopicGenerationPrompt.summarizer,
+			systemPrompt: TopicGenerationPrompt.build(),
 		});
 
 		if (streamResult.isError()) {

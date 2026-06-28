@@ -22,8 +22,16 @@ import type {
  * @description
  * `GenerateSynthesisHandler` — Command Handler
  *
- * Thin wrapper around `GenerateSynthesisCommand` enforcing `ICommand` contract.
- * Returns the synthesis output as a Result for consistency with command handlers.
+ * Builds a full deliberation transcript, then streams a synthesis response
+ * from the selected participant model.
+ *
+ * **render() is awaited**
+ * `TranscriptorRenderer.render()` is now async — it fetches text attachment
+ * content from Storage on demand. The synthesis prompt therefore includes
+ * all file context that was present during deliberation, giving the synthesis
+ * model the same information as the deliberating participants had.
+ *
+ * @see TranscriptorRenderer.buildSynthesisPrompt — for synthesis system prompt
  */
 export class GenerateSynthesisHandler
 	implements
@@ -36,13 +44,6 @@ export class GenerateSynthesisHandler
 		private readonly transcriptor: TranscriptorRenderer,
 	) {}
 
-	/**
-	 * @description
-	 * Executes the synthesis generation query.
-	 *
-	 * @param input - Room ID and participant ID
-	 * @returns Result wrapping the synthesis output
-	 */
 	public async execute({
 		input,
 	}: GenerateSynthesisCommand): Promise<
@@ -54,7 +55,7 @@ export class GenerateSynthesisHandler
 		if (!room) {
 			return Result.error(
 				new DomainError("Room not found", {
-					context: "InitiateParticipantTurn",
+					context: "GenerateSynthesis",
 				}),
 			);
 		}
@@ -63,7 +64,7 @@ export class GenerateSynthesisHandler
 		if (!participant) {
 			return Result.error(
 				new DomainError("Participant not found", {
-					context: "InitiateParticipantTurn",
+					context: "GenerateSynthesis",
 				}),
 			);
 		}
@@ -75,8 +76,7 @@ export class GenerateSynthesisHandler
 			participant,
 		});
 
-		const messages = this.transcriptor.render({ participants, turns });
-
+		const messages = await this.transcriptor.render({ participants, turns });
 		const streamResult = await this.llmGateway.stream({
 			messages,
 			qualifiedModel: participant.qualifiedModel,

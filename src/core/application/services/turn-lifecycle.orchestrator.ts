@@ -4,6 +4,7 @@ import {
 	type RoomId,
 	type StreamError,
 	Turn,
+	type TurnAttachment,
 	type TurnId,
 	type TurnIntent,
 	type TurnRepository,
@@ -110,6 +111,7 @@ export class TurnLifecycleOrchestrator {
 		moderatorId: ModeratorId;
 		content: string;
 		clientTurnId?: string;
+		attachments?: TurnAttachment[];
 	}): Promise<IResult<Turn, DomainError>> {
 		const result = Turn.initiateModeratorTurn(props);
 

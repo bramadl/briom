@@ -3,6 +3,7 @@ export * from "./events";
 export * from "./moderator";
 export * from "./participant";
 export * from "./room";
+export * from "./room.attachment";
 export * from "./room.deliberation";
 export * from "./room.id";
 export * from "./room.repository";
