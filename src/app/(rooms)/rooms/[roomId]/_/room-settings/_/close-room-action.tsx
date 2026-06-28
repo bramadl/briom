@@ -13,7 +13,6 @@ import {
 } from "@briom/components/ui/dialog";
 import { DropdownMenuItem } from "@briom/components/ui/dropdown-menu";
 import { useSidebar } from "@briom/components/ui/sidebar";
-import { isServerError } from "@briom/libs/server-action";
 import { useCloseRoomMutation } from "@briom/rooms/_/room/mutations/use-close-room.mutation";
 import { Loader2Icon, MessageCircleOffIcon } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -29,22 +28,20 @@ export function CloseRoom() {
 	const mutation = useCloseRoomMutation();
 
 	const handleConfirm = useCallback(async () => {
-		const result = await mutation.mutateAsync({ roomId });
-
-		if (isServerError(result)) {
-			toast.error("Failed to close room", {
-				description: result.error.message,
+		try {
+			await mutation.mutateAsync({ roomId });
+			toast.success("Room closed", {
+				description: "The room has been permanently closed.",
 			});
-			return;
+
+			if (!sidebar.open) sidebar.setOpen(true);
+			setOpen(false);
+			router.push("/rooms");
+		} catch (error) {
+			toast.error("Failed to close room", {
+				description: (error as Error).message,
+			});
 		}
-
-		setOpen(false);
-		toast.success("Room closed", {
-			description: "The room has been permanently closed.",
-		});
-
-		if (!sidebar.open) sidebar.setOpen(true);
-		router.push("/rooms");
 	}, [
 		mutation.mutateAsync,
 		roomId,

@@ -1,5 +1,4 @@
-"use client";
-
+import { unwrapOrThrow } from "@briom/libs/server-action";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -10,7 +9,7 @@ export function useCloseRoomMutation() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: closeRoom,
+		mutationFn: unwrapOrThrow(closeRoom),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: roomQueryKeys.all });
 		},

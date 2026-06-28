@@ -1,3 +1,9 @@
+import type {
+	GetRoomDeliberationOutput,
+	GetRoomsOverviewOutput,
+	RenameRoomInput,
+} from "@briom/app";
+import { type ServerResponse, unwrapOrThrow } from "@briom/libs/server-action";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -5,12 +11,24 @@ import { renameRoom } from "../actions";
 import { roomQueryKeys } from "../queries/keys";
 import { roomQueries } from "../queries/registry";
 
+type RenameRoomContext = {
+	previousRooms?: GetRoomsOverviewOutput;
+	previousRoom?: GetRoomDeliberationOutput;
+	roomId: string;
+	roomKey: ReturnType<typeof roomQueryKeys.deliberation>;
+};
+
 export function useRenameRoomMutation() {
 	const queryClient = useQueryClient();
 	const roomsKey = roomQueries.getRoomsOverview().queryKey;
 
-	return useMutation({
-		mutationFn: renameRoom,
+	return useMutation<
+		ServerResponse<void>,
+		Error,
+		RenameRoomInput,
+		RenameRoomContext
+	>({
+		mutationFn: unwrapOrThrow(renameRoom),
 
 		onMutate: async ({ roomId, newTitle: title }) => {
 			await queryClient.cancelQueries({ queryKey: roomQueryKeys.all });

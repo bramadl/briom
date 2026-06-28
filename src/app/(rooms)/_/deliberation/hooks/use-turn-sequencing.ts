@@ -1,5 +1,4 @@
 import type { TurnProposalDTO } from "@briom/app";
-import { isServerError } from "@briom/libs/server-action";
 import { roomQueries } from "@briom/rooms/_/room/queries/registry";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef } from "react";
@@ -133,17 +132,21 @@ export function useTurnSequencing(
 				);
 			}
 
-			const result = await initiateTopic(payload);
-			if (isServerError(result) || !room.participants[0]) return onError();
+			try {
+				await initiateTopic(payload);
+				if (!room.participants[0]) return onError();
 
-			initiateParticipant(
-				{
-					roomId,
-					participantId: nextToRespond.id,
-					intent: multiDeliberation ? "respond" : "direct",
-				},
-				{ onSettled: releaseModeratorFlag },
-			);
+				initiateParticipant(
+					{
+						roomId,
+						participantId: nextToRespond.id,
+						intent: multiDeliberation ? "respond" : "direct",
+					},
+					{ onSettled: releaseModeratorFlag },
+				);
+			} catch {
+				onError();
+			}
 		},
 		[
 			multiDeliberation,
@@ -172,13 +175,17 @@ export function useTurnSequencing(
 				);
 			}
 
-			const result = await initiateModerator(payload);
-			if (isServerError(result) || !firstParticipant) return onError();
+			try {
+				await initiateModerator(payload);
+				if (!firstParticipant) return onError();
 
-			initiateParticipant(
-				{ roomId, participantId: firstParticipant.id, intent: "respond" },
-				{ onSettled: releaseModeratorFlag },
-			);
+				initiateParticipant(
+					{ roomId, participantId: firstParticipant.id, intent: "respond" },
+					{ onSettled: releaseModeratorFlag },
+				);
+			} catch {
+				onError();
+			}
 		},
 		[
 			room.participants,
@@ -210,19 +217,22 @@ export function useTurnSequencing(
 				);
 			}
 
-			const result = await initiateModerator(payload);
-			if (isServerError(result)) return onError();
-			if (!nextResponder) return onError();
+			try {
+				await initiateModerator(payload);
+				if (!nextResponder) return onError();
 
-			const isPrimaryMention = mentionedParticipants.some((m) => m.isPrimary);
-			initiateParticipant(
-				{
-					roomId,
-					participantId: nextResponder.id,
-					intent: isPrimaryMention ? "direct" : "respond",
-				},
-				{ onSettled: releaseModeratorFlag },
-			);
+				const isPrimaryMention = mentionedParticipants.some((m) => m.isPrimary);
+				initiateParticipant(
+					{
+						roomId,
+						participantId: nextResponder.id,
+						intent: isPrimaryMention ? "direct" : "respond",
+					},
+					{ onSettled: releaseModeratorFlag },
+				);
+			} catch {
+				onError();
+			}
 		},
 		[
 			roomId,
@@ -240,6 +250,26 @@ export function useTurnSequencing(
 		({ participantId, intent }: TurnProposalDTO) => {
 			setHasAccepted(true);
 			if (!multiDeliberation || isParticipantActive) return;
+
+			const participant = room.participants.find((p) => p.id === participantId);
+			if (participant) {
+				queryClient.setQueryData(
+					roomQueries.getRoomDeliberation({ roomId }).queryKey,
+					(old) => {
+						if (!old?.room) return old;
+						return {
+							room: {
+								...old.room,
+								turns: [
+									...old.room.turns,
+									buildOptimisticParticipantTurn({ participant }),
+								],
+							},
+						};
+					},
+				);
+			}
+
 			initiateParticipant(
 				{ roomId, participantId, intent },
 				{ onSettled: () => invalidateRef.current(roomId) },
@@ -249,6 +279,8 @@ export function useTurnSequencing(
 			multiDeliberation,
 			isParticipantActive,
 			roomId,
+			room.participants,
+			queryClient,
 			initiateParticipant,
 			setHasAccepted,
 		],

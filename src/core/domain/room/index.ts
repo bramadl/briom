@@ -1,6 +1,6 @@
 export * from "./errors";
 export * from "./events";
-export * from "./moderator.id";
+export * from "./moderator";
 export * from "./participant";
 export * from "./room";
 export * from "./room.deliberation";

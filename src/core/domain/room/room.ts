@@ -30,7 +30,7 @@ import {
 	RoomFormed,
 	TurnRegistered,
 } from "./events";
-import type { ModeratorId } from "./moderator.id";
+import type { ModeratorId } from "./moderator/moderator.id";
 import type { Participant, ParticipantId } from "./participant";
 import type { RoomId } from "./room.id";
 import { ROOM_STATUS_OPTION, type RoomStatusOption } from "./room.status";

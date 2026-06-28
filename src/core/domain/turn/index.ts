@@ -7,6 +7,7 @@ export * from "./turn";
 export * from "./turn.author";
 export * from "./turn.id";
 export * from "./turn.intent";
+export * from "./turn.limit";
 export * from "./turn.perspective";
 export * from "./turn.repository";
 export * from "./turn.sequence";

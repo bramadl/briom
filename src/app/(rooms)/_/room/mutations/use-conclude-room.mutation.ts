@@ -1,3 +1,4 @@
+import { unwrapOrThrow } from "@briom/libs/server-action";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -8,7 +9,7 @@ export function useConcludeRoomMutation() {
 	const queryClient = useQueryClient();
 
 	return useMutation({
-		mutationFn: concludeRoom,
+		mutationFn: unwrapOrThrow(concludeRoom),
 		onSuccess: () => {
 			queryClient.invalidateQueries({ queryKey: roomQueryKeys.all });
 			toast.success("Deliberation concluded", {

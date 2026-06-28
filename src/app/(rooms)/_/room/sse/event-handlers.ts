@@ -117,6 +117,10 @@ function turnInitiatedHandler({
 		? `optimistic-${data.clientTurnId}`
 		: null;
 
+	const optimisticParticipantId = data.participantId
+		? `optimistic-participant-${data.participantId}`
+		: null;
+
 	patchDeliberation(queryClient, roomId, (room) => {
 		const existingIndex = room.turns.findIndex((t) => t.id === data.turnId);
 
@@ -151,10 +155,7 @@ function turnInitiatedHandler({
 
 		const newTurn: RoomDeliberationTurnDTO = {
 			id: data.turnId,
-			author: {
-				type: data.authorType,
-				profile,
-			},
+			author: { type: data.authorType, profile },
 			intent: data.intent ?? null,
 			content: "",
 			status: "pending",
@@ -164,6 +165,15 @@ function turnInitiatedHandler({
 			settledAt: null,
 		};
 
+		const filteredTurns = room.turns.filter((t) => {
+			if (optimisticId && t.id === optimisticId) return false;
+			if (optimisticParticipantId && t.id === optimisticParticipantId) {
+				return false;
+			}
+
+			return true;
+		});
+
 		const optimisticIndex = optimisticId
 			? room.turns.findIndex((t) => t.id === optimisticId)
 			: -1;
@@ -171,10 +181,14 @@ function turnInitiatedHandler({
 		if (optimisticIndex !== -1) {
 			const next = [...room.turns];
 			next[optimisticIndex] = newTurn;
-			return { ...room, turns: next };
+
+			return {
+				...room,
+				turns: next.filter((t) => t.id !== optimisticParticipantId),
+			};
 		}
 
-		return { ...room, turns: [...room.turns, newTurn] };
+		return { ...room, turns: [...filteredTurns, newTurn] };
 	});
 }
 

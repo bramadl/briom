@@ -12,6 +12,11 @@ export interface InitiateParticipantTurnInput {
 	intent: IntentOption;
 	/**
 	 * @description
+	 * Moderator ID.
+	 */
+	moderatorId: string;
+	/**
+	 * @description
 	 * Participant ID (must be invited to the room).
 	 */
 	participantId: string;

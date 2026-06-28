@@ -1,34 +1,34 @@
-import { roomQueries } from "@briom/rooms/_/room/queries/registry";
+import type {
+	InitiateParticipantTurnInput,
+	InitiateParticipantTurnOutput,
+} from "@briom/app";
+import { type ServerResponse, unwrapOrThrow } from "@briom/libs/server-action";
 import { initiateParticipantTurn } from "@briom/rooms/_/turn/actions";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-
-import { isOptimisticParticipantTurn } from "./helpers/build-optimistic-participant-turn";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export function useInitiateParticipantTurnMutation() {
-	const queryClient = useQueryClient();
-
-	return useMutation({
-		mutationFn: initiateParticipantTurn,
-
-		onSuccess: (_, variables) => {
-			const deliberationKey = roomQueries.getRoomDeliberation({
-				roomId: variables.roomId,
-			}).queryKey;
-
-			queryClient.setQueryData(deliberationKey, (old) => {
-				if (!old?.room) return old;
-				return {
-					room: {
-						...old.room,
-						turns: old.room.turns.filter(
-							(t) => !isOptimisticParticipantTurn(t.id),
-						),
-					},
-				};
-			});
-		},
+	return useMutation<
+		ServerResponse<InitiateParticipantTurnOutput>,
+		Error,
+		Omit<InitiateParticipantTurnInput, "moderatorId">
+	>({
+		mutationFn: unwrapOrThrow<
+			Omit<InitiateParticipantTurnInput, "moderatorId">,
+			InitiateParticipantTurnOutput
+		>(initiateParticipantTurn),
 
 		onError: (error) => {
+			const message = error?.message ?? "Failed to render perspective";
+
+			if (message.includes("Monthly turn limit reached")) {
+				toast.error("Monthly limit reached", {
+					description:
+						"You've used all 200 AI turns this month. Resets on the 1st.",
+				});
+				return;
+			}
+
 			console.error("Failed to render perspective", error);
 		},
 	});

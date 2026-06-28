@@ -27,7 +27,6 @@ import {
 import { Input } from "@briom/components/ui/input";
 import { Label } from "@briom/components/ui/label";
 import { useIsMobile } from "@briom/hooks/use-mobile";
-import { isServerError } from "@briom/libs/server-action";
 import { cn } from "@briom/libs/utils";
 import { useParticipantSelector } from "@briom/rooms/_/participant/hooks/use-participant-selector";
 import { useInviteParticipantMutation } from "@briom/rooms/_/participant/mutations/use-invite-participant.mutation";
@@ -85,25 +84,24 @@ export function InviteParticipant({
 	const handleInvite = async () => {
 		if (!selectedModel || !displayName.trim()) return;
 
-		const result = await inviteMutation.mutateAsync({
-			roomId,
-			displayName: displayName.trim(),
-			model: selectedModel.model,
-			provider: selectedModel.provider,
-		});
-
-		if (isServerError(result)) {
-			toast.error("Failed to invite participant", {
-				description: result.error.message,
+		try {
+			await inviteMutation.mutateAsync({
+				roomId,
+				displayName: displayName.trim(),
+				model: selectedModel.model,
+				provider: selectedModel.provider,
 			});
-			return;
+
+			toast.success(`${displayName.trim()} invited`, {
+				description: `${selectedModel.provider}/${selectedModel.model} is ready to deliberate.`,
+			});
+
+			handleOpenChange(false);
+		} catch (error) {
+			toast.error("Failed to invite participant", {
+				description: (error as Error).message,
+			});
 		}
-
-		toast.success(`${displayName.trim()} invited`, {
-			description: `${selectedModel.provider}/${selectedModel.model} is ready to deliberate.`,
-		});
-
-		handleOpenChange(false);
 	};
 
 	const canSubmit =

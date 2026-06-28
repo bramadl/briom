@@ -70,11 +70,14 @@ export async function initiateModeratorTurn(
 }
 
 export async function initiateParticipantTurn(
-	input: InitiateParticipantTurnInput,
+	input: Omit<InitiateParticipantTurnInput, "moderatorId">,
 ): Promise<ServerActionResult<InitiateParticipantTurnOutput>> {
 	try {
-		await getAuthenticatedModerator();
-		const result = await briom.turns.initiateParticipantTurn(input);
+		const { id: moderatorId } = await getAuthenticatedModerator();
+		const result = await briom.turns.initiateParticipantTurn({
+			...input,
+			moderatorId,
+		});
 		if (result.isError()) return parseError(result.error());
 		return parseResponse(result.value());
 	} catch (error) {

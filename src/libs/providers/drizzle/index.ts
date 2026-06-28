@@ -6,6 +6,7 @@ export * from "./queries/get-rooms-overview.query";
 export * from "./queries/get-turn.query";
 export * from "./queries/get-turn-proposals.query";
 export * from "./queries/get-turns.query";
+export * from "./room/moderator/usage.repository";
 export * from "./room/room.repository";
 export * from "./turn/turn.repository";
 export * from "./turn/turn.sequencer";

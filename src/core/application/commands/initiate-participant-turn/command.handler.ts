@@ -1,5 +1,6 @@
 import {
 	type IntentOption,
+	type IUsageRepository,
 	ParticipantId,
 	type RoomDeliberation,
 	RoomId,
@@ -7,6 +8,8 @@ import {
 	type TranscriptorRenderer,
 	TurnId,
 	TurnIntent,
+	TurnLimitExceededError,
+	type TurnLimitPolicy,
 	type TurnRepository,
 	type TurnSequencer,
 } from "@briom/domain";
@@ -56,12 +59,28 @@ export class InitiateParticipantTurnHandler
 		private readonly transcriptor: TranscriptorRenderer,
 		private readonly eventBus: IEventBus,
 		private readonly streaming: TurnStreamingService,
+		private readonly usageRepository: IUsageRepository,
+		private readonly turnLimit: TurnLimitPolicy,
 	) {}
 
 	public async execute(
 		command: InitiateParticipantTurnCommand,
 	): Promise<IResult<InitiateParticipantTurnOutput, DomainError>> {
-		const { roomId, participantId, intent } = command.input;
+		const { roomId, participantId, intent, moderatorId } = command.input;
+
+		const usage = await this.usageRepository.getUsage(moderatorId);
+		if (usage && this.turnLimit.isNewPeriod(usage.periodStart)) {
+			await this.usageRepository.resetPeriod(moderatorId);
+		}
+
+		const currentCount =
+			usage && !this.turnLimit.isNewPeriod(usage.periodStart) ? usage.count : 0;
+
+		if (this.turnLimit.isExceeded(currentCount)) {
+			return Result.error(
+				new TurnLimitExceededError(currentCount, this.turnLimit.LIMIT),
+			);
+		}
 
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) {
@@ -113,7 +132,9 @@ export class InitiateParticipantTurnHandler
 
 		const turn = initiateResult.value();
 		room.registerTurn(turn.id);
+
 		await this.roomRepository.persist(room);
+		await this.usageRepository.increment(moderatorId);
 
 		const turnEvents = turn.pullEvents();
 		const roomEvents = room.pullEvents();

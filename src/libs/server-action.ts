@@ -51,3 +51,21 @@ export function handleActionError(error: unknown): ServerError {
 	if (error instanceof UnauthorizedError) return unauthorizedError();
 	return internalServerError(error);
 }
+
+export function unwrapOrThrow<TOutput>(
+	action: () => Promise<ServerActionResult<TOutput>>,
+): () => Promise<ServerResponse<TOutput>>;
+
+export function unwrapOrThrow<TInput, TOutput>(
+	action: (input: TInput) => Promise<ServerActionResult<TOutput>>,
+): (input: TInput) => Promise<ServerResponse<TOutput>>;
+
+export function unwrapOrThrow(
+	action: (input?: unknown) => Promise<ServerActionResult<unknown>>,
+): (input?: unknown) => Promise<ServerResponse<unknown>> {
+	return async (input?: unknown) => {
+		const result = await action(input);
+		if (isServerError(result)) throw new Error(result.error.message);
+		return result;
+	};
+}

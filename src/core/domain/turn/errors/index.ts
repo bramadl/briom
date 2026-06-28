@@ -5,3 +5,4 @@ export * from "./invalid-state-transition.error";
 export * from "./invalid-turn-intent.error";
 export * from "./missing-intent.error";
 export * from "./negative-sequence.error";
+export * from "./turn-limit-exceeded.error";

@@ -1,4 +1,3 @@
-import { isServerError } from "@briom/libs/server-action";
 import type { SubmitHandler } from "@formisch/react";
 import { toast } from "sonner";
 
@@ -25,45 +24,45 @@ export function useRoomFormSubmission({
 	const isProcessing = isForming || isInviting;
 
 	const handleSubmit: SubmitHandler<typeof RoomFormSchema> = async (output) => {
-		const roomResult = await formRoomMutation.mutateAsync({
-			title: output.title,
-		});
+		try {
+			const roomResult = await formRoomMutation.mutateAsync({
+				title: output.title,
+			});
 
-		if (isServerError(roomResult)) {
+			const roomId = roomResult.data.roomId;
+			toast.success("Room formed", { description: "Inviting participants..." });
+
+			const { summary } = await inviteSequentially({
+				roomId,
+				participants: output.participants,
+				invite: inviteMutation.mutateAsync,
+			});
+
+			if (summary.hasPartialFailure) {
+				toast.warning("Room ready with partial perspectives", {
+					description: `${summary.success} of ${summary.total} participants connected.`,
+				});
+			} else {
+				toast.success("Room ready", {
+					description: `${summary.success} participants invited.`,
+				});
+			}
+
+			if (summary.failed.length > 0) {
+				toast.error("Some participants failed", {
+					description: summary.failed
+						.map((f) => `${f.name}: ${f.error}`)
+						.join("\n"),
+				});
+			}
+
+			invalidateRooms();
+			onRoomFormed?.(roomId);
+		} catch (error) {
 			return toast.error("Couldn't form room", {
-				description: roomResult.error.message,
+				description: (error as Error).message,
 			});
 		}
-
-		const roomId = roomResult.data.roomId;
-		toast.success("Room formed", { description: "Inviting participants..." });
-
-		const { summary } = await inviteSequentially({
-			roomId,
-			participants: output.participants,
-			invite: inviteMutation.mutateAsync,
-		});
-
-		if (summary.hasPartialFailure) {
-			toast.warning("Room ready with partial perspectives", {
-				description: `${summary.success} of ${summary.total} participants connected.`,
-			});
-		} else {
-			toast.success("Room ready", {
-				description: `${summary.success} participants invited.`,
-			});
-		}
-
-		if (summary.failed.length > 0) {
-			toast.error("Some participants failed", {
-				description: summary.failed
-					.map((f) => `${f.name}: ${f.error}`)
-					.join("\n"),
-			});
-		}
-
-		invalidateRooms();
-		onRoomFormed?.(roomId);
 	};
 
 	return {

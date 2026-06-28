@@ -11,7 +11,6 @@ import {
 	DialogTrigger,
 } from "@briom/components/ui/dialog";
 import { DropdownMenuItem } from "@briom/components/ui/dropdown-menu";
-import { isServerError } from "@briom/libs/server-action";
 import { useConcludeRoomMutation } from "@briom/rooms/_/room/mutations/use-conclude-room.mutation";
 import { ConciergeBellIcon, Loader2Icon } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -25,16 +24,14 @@ export function ConcludeRoom() {
 	const mutation = useConcludeRoomMutation();
 
 	const handleConfirm = async () => {
-		const result = await mutation.mutateAsync({ roomId });
-
-		if (isServerError(result)) {
+		try {
+			await mutation.mutateAsync({ roomId });
+			setOpen(false);
+		} catch (error) {
 			toast.error("Cannot conclude room", {
-				description: result.error.message,
+				description: (error as Error).message,
 			});
-			return;
 		}
-
-		setOpen(false);
 	};
 
 	return (

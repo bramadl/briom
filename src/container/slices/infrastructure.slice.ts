@@ -2,6 +2,7 @@ import { TurnLifecycleOrchestrator, TurnStreamingService } from "@briom/app";
 import {
 	RoomDeliberation,
 	TranscriptorRenderer,
+	TurnLimitPolicy,
 	TurnTimeoutPolicy,
 } from "@briom/domain";
 import type { ContainerBuilder } from "@briom/drimion";
@@ -16,6 +17,7 @@ import {
 	DrizzleRoomRepository,
 	DrizzleTurnRepository,
 	DrizzleTurnSequencer,
+	DrizzleUsageRepository,
 } from "@briom/libs/providers/drizzle";
 import { OpenRouterLlmGateway } from "@briom/open-router";
 import { openRouter } from "@briom/open-router/client";
@@ -29,6 +31,7 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 	return container
 		.add("Client:Database", () => db)
 		.add("Client:OpenRouter", () => openRouter)
+
 		.add("Adapter:EventBus", () => new BriomEventBus())
 		.add("Adapter:Scheduler", () => new BriomScheduler())
 		.add("Adapter:AbortRegistry", () => new BriomAbortRegistry())
@@ -37,24 +40,32 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 			"Adapter:LlmGateway",
 			(r) => new OpenRouterLlmGateway(r["Client:OpenRouter"]),
 		)
-		.add("Adapter:TurnSequencer", (r) => {
-			return new DrizzleTurnSequencer(r["Client:Database"]);
-		})
-		.add("Repository:Room", (r) => {
-			return new DrizzleRoomRepository(r["Client:Database"]);
-		})
-		.add("Repository:Turn", (r) => {
-			return new DrizzleTurnRepository(r["Client:Database"]);
-		})
-		.add("Policy:TurnTimeout", () => {
-			return new TurnTimeoutPolicy({ ms: TURN_TIMEOUT_MS });
-		})
-		.add("Policy:RoomDeliberation", () => {
-			return new RoomDeliberation();
-		})
-		.add("Policy:TranscriptorRenderer", () => {
-			return new TranscriptorRenderer();
-		})
+		.add(
+			"Adapter:TurnSequencer",
+			(r) => new DrizzleTurnSequencer(r["Client:Database"]),
+		)
+
+		.add(
+			"Repository:Room",
+			(r) => new DrizzleRoomRepository(r["Client:Database"]),
+		)
+		.add(
+			"Repository:Usage",
+			(r) => new DrizzleUsageRepository(r["Client:Database"]),
+		)
+		.add(
+			"Repository:Turn",
+			(r) => new DrizzleTurnRepository(r["Client:Database"]),
+		)
+
+		.add(
+			"Policy:TurnTimeout",
+			() => new TurnTimeoutPolicy({ ms: TURN_TIMEOUT_MS }),
+		)
+		.add("Policy:TurnLimit", () => new TurnLimitPolicy())
+		.add("Policy:RoomDeliberation", () => new RoomDeliberation())
+		.add("Policy:TranscriptorRenderer", () => new TranscriptorRenderer())
+
 		.add("Orchestrator:TurnLifecycle", (r) => {
 			return new TurnLifecycleOrchestrator(
 				r["Adapter:EventBus"],
@@ -64,6 +75,7 @@ export const infrastructureSlice = (container: ContainerBuilder) => {
 				r["Adapter:AbortRegistry"],
 			);
 		})
+
 		.add("Service:TurnStreaming", (r) => {
 			return new TurnStreamingService(
 				r["Orchestrator:TurnLifecycle"],

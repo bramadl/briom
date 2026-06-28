@@ -76,6 +76,8 @@ export const turnSlice = (container: ReturnType<typeof roomSlice>) => {
 				r["Policy:TranscriptorRenderer"],
 				r["Adapter:EventBus"],
 				r["Service:TurnStreaming"],
+				r["Repository:Usage"],
+				r["Policy:TurnLimit"],
 			);
 		})
 		.add("Handler:InitiateTopicTurn", (r) => {
