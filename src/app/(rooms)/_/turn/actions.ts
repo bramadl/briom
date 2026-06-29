@@ -22,7 +22,7 @@ import {
 	parseResponse,
 	type ServerActionResult,
 } from "@briom/libs/server-action";
-import { getAuthenticatedModerator } from "@briom/supabase/utils/get-authenticated-moderator";
+import { getAuthenticatedModerator } from "@briom/supabase";
 
 export async function getTurns(
 	input: GetTurnsInput,

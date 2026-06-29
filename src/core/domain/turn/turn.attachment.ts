@@ -13,15 +13,15 @@ import {
  * @description
  * Maximum allowed sizes per media type.
  *
- * Text: 50 KB — keeps token amplification predictable across a room's
- * full turn history (50 KB ≈ ~12 500 tokens per LLM call).
+ * Text: 100 KB — keeps token amplification predictable across a room's
+ * full turn history (100 KB ≈ ~25,000 tokens per LLM call).
  *
- * Image: 1 MB — vision models process images internally rather than
- * tokenizing them character-by-character, so the ceiling is higher.
+ * Image: 5 MB — accommodates high-res screenshots from Retina displays
+ * or modern smartphone cameras.
  */
 export const ATTACHMENT_SIZE_LIMIT = {
-	[ATTACHMENT_MEDIA_TYPE.TEXT]: 50 * 1024,
-	[ATTACHMENT_MEDIA_TYPE.IMAGE]: 1 * 1024 * 1024,
+	[ATTACHMENT_MEDIA_TYPE.TEXT]: 100 * 1024, // 100 KB
+	[ATTACHMENT_MEDIA_TYPE.IMAGE]: 5 * 1024 * 1024, // 5 MB
 } as const satisfies Record<AttachmentMediaType, number>;
 
 interface TurnAttachmentProps {
@@ -30,6 +30,7 @@ interface TurnAttachmentProps {
 
 	/** Full MIME type string (e.g. "text/plain", "image/png"). */
 	mimeType: string;
+
 	/** Original filename as uploaded by the moderator. */
 	name: string;
 
@@ -148,35 +149,66 @@ export class TurnAttachment extends ValueObject<TurnAttachmentProps> {
 		return new TurnAttachment({ ...this.props, textContent: content });
 	}
 
-	/** Convenience getter — discriminates text vs image without importing the constant. */
+	/**
+	 * @description
+	 * Whether the file is a "text" kind of type.
+	 */
 	public get isText(): boolean {
 		return this.get("mediaType") === ATTACHMENT_MEDIA_TYPE.TEXT;
 	}
 
+	/**
+	 * @description
+	 * Whether the file is an "image" kind of type.
+	 */
 	public get isImage(): boolean {
 		return this.get("mediaType") === ATTACHMENT_MEDIA_TYPE.IMAGE;
 	}
 
+	/**
+	 * @description
+	 * Get the name of the file.
+	 */
 	public get name(): string {
 		return this.get("name");
 	}
 
+	/**
+	 * @description
+	 * Public URL of the file.
+	 */
 	public get url(): string {
 		return this.get("url");
 	}
 
+	/**
+	 * @description
+	 * The type of the file either it's image or text.
+	 */
 	public get mediaType(): AttachmentMediaType {
 		return this.get("mediaType");
 	}
 
+	/**
+	 * @description
+	 * The mime type (or type for short) of the file.
+	 */
 	public get mimeType(): string {
 		return this.get("mimeType");
 	}
 
+	/**
+	 * @description
+	 * The size of the file in bytes.
+	 */
 	public get sizeBytes(): number {
 		return this.get("sizeBytes");
 	}
 
+	/**
+	 * @description
+	 * The content of the file turned into text.
+	 */
 	public get textContent(): string | null {
 		return this.get("textContent");
 	}

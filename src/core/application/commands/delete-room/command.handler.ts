@@ -1,4 +1,8 @@
-import { RoomId, type RoomRepository } from "@briom/domain";
+import {
+	type IAttachmentStorage,
+	RoomId,
+	type RoomRepository,
+} from "@briom/domain";
 import { type ICommand, type IResult, Result } from "@briom/libs/drimion";
 
 import type { DeleteRoomCommand } from "./command";
@@ -26,7 +30,10 @@ import type { DeleteRoomCommand } from "./command";
 export class DeleteRoomHandler
 	implements ICommand<DeleteRoomCommand, void, never>
 {
-	public constructor(private readonly roomRepository: RoomRepository) {}
+	public constructor(
+		private readonly roomRepository: RoomRepository,
+		private readonly attachmentStorage: IAttachmentStorage,
+	) {}
 
 	/**
 	 * @description
@@ -43,7 +50,19 @@ export class DeleteRoomHandler
 		const room = await this.roomRepository.findById(RoomId(roomId));
 		if (!room) return Result.success(undefined);
 
-		await this.roomRepository.close(room);
+		const results = await Promise.allSettled([
+			this.attachmentStorage.deleteRoomFolder(roomId),
+			this.roomRepository.close(room),
+		]);
+
+		for (const result of results) {
+			if (result.status === "rejected") {
+				console.warn(
+					"[DeleteRoomHandler] Background purge step failed:",
+					result.reason,
+				);
+			}
+		}
 
 		return Result.success(undefined);
 	}

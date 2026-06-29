@@ -18,10 +18,12 @@ import {
 	DrizzleTurnSequencer,
 	DrizzleUsageRepository,
 } from "@briom/libs/providers/drizzle";
-import { SupabaseSseForwarder } from "@briom/libs/providers/supabase";
-import { SupabaseAttachmentStorage } from "@briom/libs/providers/supabase/adapters/supabase.storage";
 import { OpenRouterLlmGateway } from "@briom/open-router";
 import { openRouter } from "@briom/open-router/client";
+import {
+	SupabaseAttachmentStorage,
+	SupabaseSseForwarder,
+} from "@briom/supabase";
 
 const TURN_TIMEOUT_MS = Number.parseInt(
 	(process.env.GLOBAL_TURN_TIMEOUT ?? "60000").replace(/_/g, ""),

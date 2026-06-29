@@ -29,7 +29,7 @@ export function buildModeratorTurnMutation<
 		return useMutation({
 			mutationFn,
 
-			onMutate: async ({ roomId, clientTurnId, content }) => {
+			onMutate: async ({ roomId, clientTurnId, content, attachments }) => {
 				const deliberationKey = roomQueries.getRoomDeliberation({
 					roomId,
 				}).queryKey;
@@ -48,7 +48,11 @@ export function buildModeratorTurnMutation<
 								...old.room,
 								turns: [
 									...old.room.turns,
-									buildOptimisticModeratorTurn({ clientTurnId, content }),
+									buildOptimisticModeratorTurn({
+										clientTurnId,
+										content,
+										attachments,
+									}),
 								],
 							},
 						};

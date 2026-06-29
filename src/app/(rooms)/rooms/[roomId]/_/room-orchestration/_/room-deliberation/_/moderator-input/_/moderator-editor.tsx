@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@briom/libs/utils";
 import { ChatEditorExtension } from "@briom/rooms/_/deliberation/editor/extensions/chat-editor.extension";
 import { createDraftingExtension } from "@briom/rooms/_/deliberation/editor/extensions/drafting.extension";
 import { SUBMIT_COMMAND } from "@briom/rooms/_/deliberation/editor/extensions/send.extension";
@@ -108,13 +107,9 @@ export function ModeratorEditor({
 		<LexicalExtensionComposer contentEditable={null} extension={extension}>
 			<ContentEditable
 				aria-placeholder={placeholder}
-				className={cn(
-					"min-h-20 lg:min-h-16 max-h-[36rem] w-full bg-transparent",
-					"px-4 pt-3 pb-1 text-base md:text-sm leading-relaxed",
-					"overflow-y-auto focus:outline-none",
-				)}
+				className="size-full bg-transparent focus:outline-none"
 				placeholder={
-					<div className="pointer-events-none absolute inset-0 px-4 pt-4 text-sm text-muted-foreground/30 select-none leading-relaxed">
+					<div className="pointer-events-none absolute inset-0 px-4 mt-1 text-sm text-muted-foreground/30 select-none leading-relaxed">
 						{placeholder}
 					</div>
 				}

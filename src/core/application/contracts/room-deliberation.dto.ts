@@ -121,6 +121,19 @@ export interface RoomDeliberationDTO {
 export interface RoomDeliberationTurnDTO {
 	/**
 	 * @description
+	 * File attachments on this turn.
+	 *
+	 * Only moderator turns carry attachments — participant turns always
+	 * have an empty array. `textContent` is intentionally excluded from
+	 * the DTO: the LLM already consumed it; the FE only needs display metadata.
+	 *
+	 * Empty array (not null) for consistency — callers can always safely
+	 * iterate without a null check.
+	 */
+	attachments: RoomDeliberationTurnAttachmentDTO[];
+
+	/**
+	 * @description
 	 * Turn author with embedded display profile.
 	 */
 	author: {
@@ -280,4 +293,20 @@ export interface RoomDeliberationParticipantDTO {
 	 * Moderator-assigned display name.
 	 */
 	name: string;
+}
+
+/**
+ * @description
+ * Attachment descriptor exposed to the FE.
+ *
+ * `textContent` is excluded — it was consumed by the LLM and is
+ * too large to carry in the DTO. `url` is included so the FE can
+ * offer a "view/download" link if needed.
+ */
+export interface RoomDeliberationTurnAttachmentDTO {
+	mediaType: "text" | "image";
+	mimeType: string;
+	name: string;
+	sizeBytes: number;
+	url: string;
 }

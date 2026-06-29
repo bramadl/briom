@@ -1,5 +1,6 @@
 import type { IAttachmentStorage } from "@briom/domain";
 import { supabaseAdmin } from "@briom/supabase/admin";
+import { SUPABASE_STORAGE } from "../config/storage";
 
 /**
  * @description
@@ -10,12 +11,13 @@ import { supabaseAdmin } from "@briom/supabase/admin";
  * Called by `TranscriptorRenderer.render()` to fetch text file content
  * for any moderator turns that carry text attachments. Images are never
  * fetched here — they use the base64 data-URI stored in `TurnAttachment.url`.
+ * * Also called by `DeleteRoomHandler` to purge all room storage assets.
  *
  * **Why fetch at render time, not at upload time?**
  * - Keeps `turns.attachments` JSONB lean (no large text blobs in DB).
  * - Supabase free tier has a 500 MB DB limit but 1 GB Storage limit.
  * - Render happens once per LLM call — not per token — so the overhead
- *   is bounded to 1 fetch per text attachment per participant turn.
+ * is bounded to 1 fetch per text attachment per participant turn.
  *
  * **Error handling**
  * A fetch failure returns an empty string. `TranscriptorRenderer` will
@@ -33,16 +35,15 @@ export class SupabaseAttachmentStorage implements IAttachmentStorage {
 	 * Fetches the UTF-8 text content of a file from Supabase Storage.
 	 *
 	 * @param url - The Supabase Storage URL for the file. The path segment
-	 *   after `/storage/v1/object/public/room-attachments/` (or the signed
-	 *   URL path) is extracted and used for the download call.
+	 * after `/storage/v1/object/public/room-attachments/` (or the signed
+	 * URL path) is extracted and used for the download call.
 	 * @returns UTF-8 string content of the file, or empty string on failure.
 	 */
 	public async fetchTextContent(url: string): Promise<string> {
 		try {
 			const path = this.extractStoragePath(url);
-
 			const { data, error } = await supabaseAdmin.storage
-				.from("room-attachments")
+				.from(SUPABASE_STORAGE.BUCKET_NAME)
 				.download(path);
 
 			if (error || !data) {
@@ -65,6 +66,44 @@ export class SupabaseAttachmentStorage implements IAttachmentStorage {
 
 	/**
 	 * @description
+	 * Permanently deletes all storage objects within a specific room folder.
+	 * Bypasses RLS utilizing the server-side admin client.
+	 * * @param roomId - The target room identifier, serving as the top-level folder name.
+	 */
+	public async deleteRoomFolder(roomId: string): Promise<void> {
+		try {
+			const storage = supabaseAdmin.storage.from(SUPABASE_STORAGE.BUCKET_NAME);
+
+			const { data: files, error: listError } = await storage.list(roomId);
+			if (listError) {
+				console.warn(
+					`[SupabaseAttachmentStorage] Failed to list files for folder purges "${roomId}":`,
+					listError.message,
+				);
+				return;
+			}
+
+			if (!files || files.length === 0) return;
+
+			const pathsToRemove = files.map((file) => `${roomId}/${file.name}`);
+			const { error: deleteError } = await storage.remove(pathsToRemove);
+
+			if (deleteError) {
+				console.warn(
+					`[SupabaseAttachmentStorage] Failed to delete bulk files for room "${roomId}":`,
+					deleteError.message,
+				);
+			}
+		} catch (err) {
+			console.warn(
+				`[SupabaseAttachmentStorage] Unexpected error during folder purge for room "${roomId}":`,
+				err,
+			);
+		}
+	}
+
+	/**
+	 * @description
 	 * Extracts the storage object path from a full Supabase Storage URL.
 	 *
 	 * Supabase Storage URLs look like:
@@ -73,12 +112,9 @@ export class SupabaseAttachmentStorage implements IAttachmentStorage {
 	 * The `download()` API expects just `<path>` (relative to the bucket).
 	 */
 	private extractStoragePath(url: string): string {
-		const marker = "/room-attachments/";
+		const marker = `/${SUPABASE_STORAGE.BUCKET_NAME}/`;
 		const idx = url.indexOf(marker);
-		if (idx === -1) {
-			// Fallback: treat the whole URL as a path (graceful degradation).
-			return url;
-		}
+		if (idx === -1) return url;
 		return url.slice(idx + marker.length);
 	}
 }

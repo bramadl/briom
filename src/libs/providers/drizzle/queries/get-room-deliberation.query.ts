@@ -1,163 +1,169 @@
 import type {
+	RoomDeliberationDTO,
+	RoomDeliberationParticipantDTO,
+	RoomDeliberationTurnAttachmentDTO,
+	RoomDeliberationTurnDTO,
+} from "@briom/app/contracts";
+import type {
 	GetRoomDeliberationInput,
 	GetRoomDeliberationOutput,
-	GetRoomDeliberationQuery,
-	RoomDeliberationDTO,
-	RoomDeliberationSynthesisDTO,
-	RoomDeliberationTurnDTO,
-} from "@briom/core/application";
-import type {
-	IntentOption,
-	RoomStatusOption,
-	STREAM_ERROR,
-	SynthesisProcess,
-	TurnStatusOption,
-} from "@briom/core/domain";
-import type { Database } from "@briom/drizzle/client";
-import {
-	participantsTable,
-	roomsTable,
-	turnsTable,
-} from "@briom/drizzle/schema";
+} from "@briom/core/application/queries/get-room-deliberation/query";
 import { and, asc, eq } from "drizzle-orm";
+
+import type { Database } from "../client";
+import { participantsTable, roomsTable, turnsTable } from "../schema";
+import type { AttachmentRecord } from "../turn/turn.model";
 
 /**
  * @description
  * `DrizzleGetRoomDeliberationQuery` — Infrastructure Query
  *
- * Returns the full denormalized deliberation view in two parallel DB queries,
- * assembled in the application layer via an in-memory participant Map.
+ * Returns the full denormalized deliberation view for a room in one
+ * round-trip (room + participants + turns joined in SQL).
  *
- * **Query strategy**
- * 1. Load room row (single lookup)
- * 2. In parallel: load all participants + all turns for this room
- * 3. Build a `participantId → { displayName, model }` Map (O(n), n ≤ 4)
- * 4. Map each turn row, embedding author profile from the Map
+ * **Attachment mapping**
+ * `turnsTable.attachments` is a JSONB column of `AttachmentRecord[]`.
+ * Each record is mapped to `RoomDeliberationTurnAttachmentDTO` — same
+ * fields minus `textContent` (which was never stored in DB).
  *
- * No ORM JOIN is used deliberately — Drizzle expands JOINs to one row per
- * joined record, requiring deduplication logic that is messier than two
- * clean queries at MVP participant counts.
+ * Participant turns always have `attachments: []` by domain invariant;
+ * the mapping is consistent regardless.
  *
- * **Author profile embedding**
- * - Participant turns: profile populated from the participants Map via
- *   `participantId`. If the participant has been soft-deleted (rare — the
- *   schema uses `ON DELETE SET NULL`), profile falls back to `null` to
- *   prevent render errors.
- * - Moderator turns: profile is always `null` (no moderator display entity
- *   in the MVP domain model).
- *
- * **Synthesis**
- * `synthesis` field in the DTO is `null` unless `synthesisStatus === "completed"`
- * AND synthesis content exists. FE always checks `synthesisStatus` to
- * distinguish pending/failed from the absence of a synthesis document.
+ * **Why no ORM relations?**
+ * Drizzle's `with` / `relations` API adds overhead for this read pattern.
+ * Three separate queries (room, participants, turns) then assembled in
+ * application memory is simpler, more readable, and fast enough for the
+ * turn counts Briom targets (~40 turns per room).
  */
-export class DrizzleGetRoomDeliberationQuery
-	implements GetRoomDeliberationQuery
-{
-	constructor(private readonly db: Database) {}
+export class DrizzleGetRoomDeliberationQuery {
+	public constructor(private readonly db: Database) {}
 
-	async execute(
+	public async execute(
 		input: GetRoomDeliberationInput,
 	): Promise<GetRoomDeliberationOutput> {
-		const room = await this.db.query.roomsTable.findFirst({
-			where: and(
-				eq(roomsTable.id, input.roomId),
-				eq(roomsTable.moderatorId, input.moderatorId),
-			),
-		});
+		const { roomId, moderatorId } = input;
+
+		const room = await this.db
+			.select()
+			.from(roomsTable)
+			.where(
+				and(eq(roomsTable.id, roomId), eq(roomsTable.moderatorId, moderatorId)),
+			)
+			.limit(1)
+			.then((rows) => rows[0] ?? null);
 
 		if (!room) return { room: null };
 
-		const [participantRecords, turnRecords] = await Promise.all([
+		const [participants, turns] = await Promise.all([
 			this.db
 				.select()
 				.from(participantsTable)
-				.where(eq(participantsTable.roomId, input.roomId)),
+				.where(eq(participantsTable.roomId, roomId)),
 			this.db
 				.select()
 				.from(turnsTable)
-				.where(eq(turnsTable.roomId, input.roomId))
+				.where(eq(turnsTable.roomId, roomId))
 				.orderBy(asc(turnsTable.sequence)),
 		]);
 
-		const participantMap = new Map(
-			participantRecords.map((p) => [
-				p.id,
-				{
-					id: p.id,
-					displayName: p.displayName,
-					model: `${p.provider}/${p.model}`,
-				},
-			]),
-		);
+		const participantMap = new Map(participants.map((p) => [p.id, p]));
+		const turnDTOs: RoomDeliberationTurnDTO[] = turns.map((turn) => {
+			const participant = turn.participantId
+				? participantMap.get(turn.participantId)
+				: null;
 
-		const turns: RoomDeliberationTurnDTO[] = turnRecords.map((record) => {
-			const isParticipant = record.authorType === "participant";
 			const profile =
-				isParticipant && record.participantId
-					? (participantMap.get(record.participantId) ?? null)
+				turn.authorType === "participant" && participant
+					? {
+							id: participant.id,
+							displayName: participant.displayName,
+							model: `${participant.provider}/${participant.model}`,
+						}
 					: null;
 
-			const error: RoomDeliberationTurnDTO["error"] = record.errorKind
-				? {
-						kind: record.errorKind as (typeof STREAM_ERROR)[keyof typeof STREAM_ERROR],
-						message: record.errorMessage ?? "Unknown error",
-						attributes:
-							record.errorRetryAfter != null
-								? { retryIn: record.errorRetryAfter }
-								: null,
-					}
-				: null;
+			const attachments = this.mapAttachments(
+				(turn.attachments ?? []) as AttachmentRecord[],
+			);
 
 			return {
-				id: record.id,
+				attachments,
 				author: {
-					type: record.authorType as "moderator" | "participant",
+					type: turn.authorType as "moderator" | "participant",
 					profile,
 				},
-				content: record.content,
-				intent: record.intent as IntentOption | null,
-				status: record.status as TurnStatusOption,
-				error,
-				failedAt: record.failedAt?.toISOString() ?? null,
-				settledAt: record.settledAt?.toISOString() ?? null,
-				createdAt: record.createdAt.toISOString(),
-			} satisfies RoomDeliberationTurnDTO;
+				content: turn.content,
+				createdAt: turn.createdAt.toISOString(),
+				error: turn.errorKind
+					? {
+							kind: turn.errorKind,
+							message: turn.errorMessage ?? "Unknown error",
+							attributes: turn.errorRetryAfter
+								? { retryIn: turn.errorRetryAfter }
+								: null,
+						}
+					: null,
+				failedAt: turn.failedAt?.toISOString() ?? null,
+				id: turn.id,
+				intent: turn.intent as RoomDeliberationTurnDTO["intent"],
+				settledAt: turn.settledAt?.toISOString() ?? null,
+				status: turn.status as RoomDeliberationTurnDTO["status"],
+			};
 		});
 
-		const synthesisStatus = room.synthesisStatus as SynthesisProcess;
-		const synthesis: RoomDeliberationSynthesisDTO | null =
-			synthesisStatus === "completed" &&
-			room.synthesis &&
-			room.synthesisCreatedBy &&
-			room.synthesisCreatedAt
-				? {
-						content: room.synthesis,
-						createdBy: room.synthesisCreatedBy,
-						createdAt: room.synthesisCreatedAt.toISOString(),
-					}
-				: null;
-
-		const deliberation: RoomDeliberationDTO = {
-			id: room.id,
-			title: room.title,
-			status: room.status as RoomStatusOption,
-			topic: room.topic,
-			participants: participantRecords.map((p) => ({
+		const participantDTOs: RoomDeliberationParticipantDTO[] = participants.map(
+			(p) => ({
 				id: p.id,
-				name: p.displayName,
 				model: `${p.provider}/${p.model}`,
-			})),
-			turns,
-			synthesis,
-			synthesisStatus,
+				name: p.displayName,
+			}),
+		);
+
+		const dto: RoomDeliberationDTO = {
+			id: room.id,
 			info: {
 				shortId: room.id.slice(0, 8),
 				formedAt: room.createdAt.toISOString(),
 				moderatorId: room.moderatorId,
 			},
+			participants: participantDTOs,
+			status: room.status as RoomDeliberationDTO["status"],
+			synthesis:
+				room.synthesisStatus === "completed" &&
+				room.synthesis &&
+				room.synthesisCreatedAt &&
+				room.synthesisCreatedBy
+					? {
+							content: room.synthesis,
+							createdAt: room.synthesisCreatedAt.toISOString(),
+							createdBy: room.synthesisCreatedBy,
+						}
+					: null,
+			synthesisStatus:
+				room.synthesisStatus as RoomDeliberationDTO["synthesisStatus"],
+			title: room.title,
+			topic: room.topic,
+			turns: turnDTOs,
 		};
 
-		return { room: deliberation };
+		return { room: dto };
+	}
+
+	/**
+	 * @description
+	 * Maps `AttachmentRecord[]` from JSONB → `RoomDeliberationTurnAttachmentDTO[]`.
+	 *
+	 * `textContent` is intentionally excluded — it was consumed by the LLM
+	 * and is never stored in the DB. The FE only needs display metadata + URL.
+	 */
+	private mapAttachments(
+		records: AttachmentRecord[],
+	): RoomDeliberationTurnAttachmentDTO[] {
+		return records.map((r) => ({
+			mediaType: r.mediaType,
+			mimeType: r.mimeType,
+			name: r.name,
+			sizeBytes: r.sizeBytes,
+			url: r.url,
+		}));
 	}
 }

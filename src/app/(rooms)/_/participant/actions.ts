@@ -13,7 +13,7 @@ import {
 	parseResponse,
 	type ServerActionResult,
 } from "@briom/libs/server-action";
-import { getAuthenticatedModerator } from "@briom/supabase/utils/get-authenticated-moderator";
+import { getAuthenticatedModerator } from "@briom/supabase";
 import { revalidatePath } from "next/cache";
 
 export async function getParticipantModels(

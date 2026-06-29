@@ -25,6 +25,16 @@ interface AuthModalProps {
 	open: boolean;
 }
 
+function getURL() {
+	let url =
+		process.env.NEXT_PUBLIC_SITE_URL ??
+		process.env.NEXT_PUBLIC_VERCEL_URL ??
+		"http://localhost:3000";
+
+	url = url.includes("http") ? url : `https://${url}`;
+	return url.endsWith("/") ? url.slice(0, -1) : url;
+}
+
 export function AuthModal({ onOpenChange, open }: AuthModalProps) {
 	const [step, setStep] = useState<AuthStep>("idle");
 	const [email, setEmail] = useState("");
@@ -48,14 +58,13 @@ export function AuthModal({ onOpenChange, open }: AuthModalProps) {
 		setLoadingSource("google");
 		const { error } = await supabaseClient.auth.signInWithOAuth({
 			provider: "google",
-			options: { redirectTo: `${window.location.origin}/auth/callback` },
+			options: { redirectTo: `${getURL()}/auth/callback` },
 		});
 
 		if (error) {
 			toast.error("Google sign in failed", { description: error.message });
 			setLoadingSource(null);
 		}
-		// no reset on success — page will redirect
 	}, []);
 
 	const handleMagicLink = useCallback(async () => {
@@ -65,7 +74,7 @@ export function AuthModal({ onOpenChange, open }: AuthModalProps) {
 		setLoadingSource("magic-link");
 		const { error } = await supabaseClient.auth.signInWithOtp({
 			email: trimmed,
-			options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
+			options: { emailRedirectTo: `${getURL()}/auth/callback` },
 		});
 		setLoadingSource(null);
 

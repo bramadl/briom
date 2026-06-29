@@ -55,7 +55,10 @@ export const roomSlice = (
 			);
 		})
 		.add("Handler:DeleteRoom", (r) => {
-			return new DeleteRoomHandler(r["Repository:Room"]);
+			return new DeleteRoomHandler(
+				r["Repository:Room"],
+				r["Adapter:AttachmentStorage"],
+			);
 		})
 		.add("Handler:GetRoomDeliberation", (r) => {
 			return new GetRoomDeliberationHandler(r["Query:GetRoomDeliberation"]);

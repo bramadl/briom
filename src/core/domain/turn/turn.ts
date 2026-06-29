@@ -38,16 +38,6 @@ import { TurnPerspective } from "./turn.perspective";
 import type { TurnSequence } from "./turn.sequence";
 
 export interface TurnProps {
-	/**
-	 * @description
-	 * Files attached to this turn by the moderator.
-	 *
-	 * **Invariant**: Only moderator turns may carry attachments.
-	 * Participant turns always have an empty array here.
-	 *
-	 * Attachments are immutable once the turn is initiated — a moderator
-	 * cannot add or remove files after sending.
-	 */
 	attachments: TurnAttachment[];
 	author: TurnAuthor;
 	createdAt: Date;

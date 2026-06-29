@@ -5,11 +5,11 @@
  * Discriminates how a `TurnAttachment` is rendered into LLM context:
  *
  * - `text`: content is injected verbatim as an `<attached>` block inside
- *   the moderator turn's message. The LLM reads it as plain text in its
- *   conversation history.
+ * the moderator turn's message. The LLM reads it as plain text in its
+ * conversation history.
  *
  * - `image`: content is forwarded as a multimodal `image_url` content block.
- *   Requires a vision-capable model at the OpenRouter gateway level.
+ * Requires a vision-capable model at the OpenRouter gateway level.
  *
  * This distinction lives in the domain because `TranscriptorRenderer` uses it
  * to branch rendering logic — infrastructure must not decide this.
@@ -32,6 +32,7 @@ export type AttachmentMediaType =
 export const TEXT_MIME_TYPES = new Set([
 	"text/plain",
 	"text/markdown",
+	"text/csv",
 	"text/x-typescript",
 	"text/x-python",
 	"text/javascript",
