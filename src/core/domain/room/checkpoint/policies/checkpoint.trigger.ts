@@ -12,8 +12,8 @@
 
 // biome-ignore lint/complexity/noStaticOnlyClass: <DomainPolicy>
 export class CheckpointTriggerPolicy {
-	private static readonly TOKEN_THRESHOLD = 6000;
-	private static readonly ESTIMATED_TOKEN_THRESHOLD = 6000;
+	private static readonly TOKEN_THRESHOLD = 24_000;
+	private static readonly ESTIMATED_TOKEN_THRESHOLD = 24_000;
 
 	/**
 	 * @description
