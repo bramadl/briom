@@ -2,10 +2,8 @@ import { DomainError } from "@briom/libs/drimion";
 
 /**
  * @description
- * Thrown when attempting to invite a participant after deliberation has started.
- *
- * **Invariant**: Participant roster is frozen once deliberation begins to preserve
- * shared context integrity.
+ * Thrown when attempting to invite a participant after
+ * deliberation has started.
  */
 export class ParticipateAfterDeliberationError extends DomainError {
 	public constructor() {

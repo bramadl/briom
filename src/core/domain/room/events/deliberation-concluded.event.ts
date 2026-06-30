@@ -1,26 +1,15 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import { Room } from "../room";
-
 import type { BaseRoomDomainEventPayload } from "./base.event";
 
 /**
  * @description
- * Emitted when deliberation is concluded.
- *
- * The room transitions to `CONCLUDED` status. No further turns can be initiated.
- * The thinking session is complete.
+ * Emitted when a Room is concluded and becomes read-only.
  */
-export interface DeliberationConcludedPayload
-	extends BaseRoomDomainEventPayload {}
-
-export class DeliberationConcluded extends BaseDomainEvent<DeliberationConcludedPayload> {
+export class DeliberationConcluded extends BaseDomainEvent<BaseRoomDomainEventPayload> {
 	public static readonly type = "room:deliberation-concluded" as const;
 
-	public constructor(
-		aggregateId: string,
-		payload: DeliberationConcludedPayload,
-	) {
-		super(DeliberationConcluded.type, aggregateId, Room.name, payload);
+	public constructor(aggregateId: string, payload: BaseRoomDomainEventPayload) {
+		super(DeliberationConcluded.type, aggregateId, "Room", payload);
 	}
 }

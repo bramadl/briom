@@ -4,228 +4,277 @@ import {
 	type IResult,
 	Result,
 	validator as v,
-} from "@briom/drimion";
+} from "@briom/libs/drimion";
 
-import type { TurnId } from "../turn";
+import type { ModeratorId } from "../moderator/moderator.id";
 
+import { CheckpointId } from "./checkpoint";
 import {
 	CannotConcludeRoomError,
-	CannotPauseRoomError,
-	CannotResumeRoomError,
+	CannotFreezeRoomError,
+	CannotLockRoomError,
 	CannotStartDeliberationError,
-	CannotSynthesizeError,
 	EmptyTitleError,
 	EmptyTopicError,
-	MaximumAttachmentsReachedError,
-	MaximumParticipantReachedError,
-	NoSynthesisInProgressError,
+	NotAcceptingTurnsError,
 	ParticipantAlreadyInvitedError,
 	ParticipateAfterDeliberationError,
 } from "./errors";
 import {
+	CheckpointGenerated,
+	CheckpointInitiated,
 	DeliberationConcluded,
-	DeliberationPaused,
-	DeliberationResumed,
 	DeliberationStarted,
-	ParticipantInvited,
 	RoomFormed,
-	TurnRegistered,
+	RoomFrozen,
+	RoomLocked,
+	RoomUnfrozen,
+	RoomUnlocked,
+	TurnSlotClaimed,
+	TurnSlotReleased,
 } from "./events";
-import type { ModeratorId } from "./moderator/moderator.id";
-import type { Participant, ParticipantId } from "./participant";
-import { RoomAttachmentPolicy } from "./room.attachment";
+import type { Participant } from "./participant/participant";
+import type { ParticipantId } from "./participant/participant.id";
 import type { RoomId } from "./room.id";
-import { ROOM_STATUS_OPTION, type RoomStatusOption } from "./room.status";
-import type { SynthesisProcess } from "./synthesis/process";
+import { RoomState } from "./room.state";
+import { RoomStatus } from "./room.status";
+import { TurnId } from "./turn/turn.id";
+import { TurnSequence } from "./turn/turn.sequence";
 
 interface RoomProps {
+	/**
+	 * @description
+	 * The Turn currently claimed for in-flight contribution, or null when
+	 * the room is open to accept the next turn. Set by `claimTurnSlot()`,
+	 * cleared by `releaseTurnSlot()`. The single source of truth FE relies
+	 * on (via `TurnSlotClaimed`/`TurnSlotReleased`) to know whether the
+	 * moderator input, turn proposals, and retry actions should be enabled.
+	 */
+	activeTurnId: TurnId | null;
+
+	/**
+	 * @description
+	 * Cumulative number of files attached across all moderator turns.
+	 * Checked by the application layer against ModeratorPolicy before each upload.
+	 */
 	attachmentCount: number;
-	createdAt: Date;
+
+	/**
+	 * @description
+	 * Ordered list of Checkpoint IDs attached to this Room, oldest first.
+	 * The renderer only ever needs the latest one (`latestCheckpointId`);
+	 * the full list is kept for audit/debug tracing.
+	 */
+	checkpointIds: CheckpointId[];
+
+	/**
+	 * @description
+	 * Stable branded type identity.
+	 */
 	id: RoomId;
+
+	/**
+	 * @description
+	 * The Moderator who opened this Room. Immutable after formation.
+	 */
 	moderatorId: ModeratorId;
+
+	/**
+	 * @description
+	 * AI models currently invited into the deliberation.
+	 * Mutable only while FORMING.
+	 */
 	participants: Participant[];
-	status: RoomStatusOption;
-	synthesis: string | null;
-	synthesisCreatedAt: Date | null;
-	synthesisCreatedBy: string | null;
-	synthesisStatus: SynthesisProcess;
+
+	/**
+	 * @description
+	 * Why this Room currently rejects new turns, or null if it doesn't.
+	 * Orthogonal to `status` — see `RoomState` for the distinction between
+	 * a self-resolvable freeze and an admin-only lock.
+	 */
+	state: RoomState | null;
+
+	/**
+	 * @description
+	 * Room status lifecycle: FORMING → DELIBERATING → CONCLUDED.
+	 * State transitions are guarded by domain invariants in the Room aggregate.
+	 */
+	status: RoomStatus;
+
+	/**
+	 * @description
+	 * Human-readable name for the Room.
+	 */
 	title: string;
+
+	/**
+	 * @description
+	 * The central question driving deliberation.
+	 * Null until deliberation starts.
+	 */
 	topic: string | null;
+
+	/**
+	 * @description
+	 * Ordered list of Turn IDs registered in this Room.
+	 * Source of truth for deliberation sequence.
+	 */
 	turnIds: TurnId[];
 }
 
 /**
  * @description
- * `Room` — Aggregate Root
+ * A dedicated thinking space where AI perspectives meet under human guidance.
  *
- * A dedicated thinking space where deliberation occurs. The `Room` is the consistency
- * boundary for all deliberation state: participants, turns, status lifecycle, topic,
- * and file attachment quota.
+ * Room is the consistency boundary for all deliberation state: who is invited,
+ * what the topic is, how many files have been shared, and where in the lifecycle
+ * the deliberation stands.
  *
- * **Lifecycle**
- * ```
- * `FORMING` → `DELIBERATING` → [`PAUSED`] → `CONCLUDED`
- * ```
+ * Lifecycle: FORMING → DELIBERATING → CONCLUDED
  *
- * **Attachment quota**
- * The room tracks a cumulative `attachmentCount` across all moderator turns.
- * `registerAttachment()` enforces the ceiling defined by `RoomAttachmentPolicy`
- * before the application layer persists any new attachment. This keeps the
- * invariant inside the aggregate where it belongs.
+ * **What Room governs:**
+ * - Participant invitation and removal (while FORMING)
+ * - Topic setting and deliberation start
+ * - Turn registration
+ * - Attachment count tracking
+ * - Status transitions
+ * - Turn slot ownership (who may contribute right now)
+ * - Lock/freeze state (whether the room currently accepts turns at all)
  *
- * **Why this matters**
- * The `Room` protects the invariant that deliberation is human-led and sequential.
- * It enforces that participants are invited before deliberation starts, that turns
- * are registered in order, and that state transitions (pause, resume, conclude)
- * follow valid paths.
- *
- * **Ubiquitous Language**
- * - `Room`: dedicated thinking space (NOT "chat", "conversation", "thread")
- * - `Deliberation`: the ongoing process of evolving perspectives through sequential turns
- * - `Participant`: invited AI model with identity (NOT "bot", "agent")
- * - `Moderator`: human user who guides deliberation (NOT "admin", "owner")
- * - `Turn`: single contribution within deliberation (NOT "message", "response")
- * - `Attachment`: a file provided by the moderator to enrich shared context
- *
- * @example
- * ```typescript
- * const room = Room.form({
- *   id: RoomId(),
- *   title: "Architecture Decision",
- *   moderatorId: ModeratorId("user-123"),
- *   createdAt: new Date(),
- * }).value();
- *
- * room.inviteParticipant(gptParticipant);
- * room.startDeliberation("Should we use CQRS?");
- * room.registerAttachment().orThrow(); // guard before persisting file
- * room.registerTurn(turn.id);
- * room.pause();
- * room.resume();
- * room.conclude();
- * ```
+ * **What Room does NOT govern:**
+ * - Whether a Moderator is allowed to form another room → ModeratorPolicy
+ * - Whether a Moderator is allowed to invite more participants → ModeratorPolicy
+ * - Whether a Moderator is allowed to attach more files → ModeratorPolicy
+ * - Turn content, streaming, or LLM calls → Turn domain
+ * - Who should speak next and with what intent → RoomDeliberationService
  */
 export class Room extends Aggregate<RoomProps> {
-	private readonly MAXIMUM_PARTICIPANTS = 4;
-	private readonly attachmentPolicy = new RoomAttachmentPolicy();
-
 	private constructor(props: RoomProps) {
 		super(props);
 	}
 
-	/**
-	 * @description
-	 * Validates that a `Room` can be constructed with the given props.
-	 * Enforces: title must be non-empty.
-	 */
 	public static override isValidProps(
 		props: RoomProps,
 	): DomainError | undefined {
 		if (v.string(props.title).isEmpty()) return new EmptyTitleError();
-		return undefined;
 	}
 
 	/**
 	 * @description
-	 * Factory method for creating a new `Room` in `FORMING` status.
+	 * Opens a new Room in FORMING status, ready for participant invitations.
 	 *
-	 * @param props - `Room` properties excluding derived defaults
-	 * @returns Result containing the new `Room` or `EmptyTitleError`
-	 * @emits `RoomFormed` domain event.
+	 * @emits RoomFormed
 	 */
 	public static form(
 		props: Omit<
 			RoomProps,
-			"topic" | "participants" | "turnIds" | "status" | "attachmentCount"
+			| "turnIds"
+			| "status"
+			| "attachmentCount"
+			| "topic"
+			| "activeTurnId"
+			| "checkpointIds"
+			| "lock"
 		>,
-	): IResult<Room, EmptyTitleError> {
+	): IResult<Room, DomainError> {
 		const fullProps: RoomProps = {
 			...props,
-			topic: null,
-			participants: [],
-			turnIds: [],
+			activeTurnId: null,
 			attachmentCount: 0,
-			status: ROOM_STATUS_OPTION.FORMING,
-			synthesis: null,
-			synthesisStatus: "idle",
-			synthesisCreatedAt: null,
-			synthesisCreatedBy: null,
+			checkpointIds: [],
+			state: null,
+			status: RoomStatus.FORMING,
+			topic: null,
+			turnIds: [],
 		};
 
-		const validation = Room.isValidProps(fullProps);
-		if (validation) return Result.error(validation);
+		const error = Room.isValidProps(fullProps);
+		if (error) return Result.error(error);
 
 		const room = new Room(fullProps);
 		room.emit(
 			new RoomFormed(room.id.value(), {
-				moderatorId: room.get("moderatorId"),
-				occurredAt: new Date(),
 				roomId: room.id,
+				occurredAt: new Date(),
 			}),
 		);
+
 		return Result.success(room);
 	}
 
 	/**
 	 * @description
-	 * Rehydrates from persistence. Does not emit domain events.
-	 */
-	public static rehydrate(props: RoomProps): Room {
-		return new Room(props);
-	}
-
-	/**
-	 * @description
-	 * Whether the `Room` is awaiting for deliberation.
+	 * Participants are being invited. Deliberation has not begun.
 	 */
 	public get isForming(): boolean {
-		return this.get("status") === ROOM_STATUS_OPTION.FORMING;
+		return this.get("status") === RoomStatus.FORMING;
 	}
 
 	/**
 	 * @description
-	 * Whether the `Room` is actively deliberating (not paused, not concluded, not forming).
-	 * Used by application layer to guard turn initiation.
+	 * Topic is set, turns are flowing. Active deliberation in progress.
 	 */
 	public get isDeliberating(): boolean {
-		return this.get("status") === ROOM_STATUS_OPTION.DELIBERATING;
+		return this.get("status") === RoomStatus.DELIBERATING;
 	}
 
 	/**
 	 * @description
-	 * Whether the `Room` is paused by moderator.
+	 * Returns true if the room has no turns registered before.
 	 */
-	public get isPaused(): boolean {
-		return this.get("status") === ROOM_STATUS_OPTION.PAUSED;
+	public get isFresh(): boolean {
+		return this.get("turnIds").length === 0;
 	}
 
 	/**
 	 * @description
-	 * Whether the `Room` is concluded by moderator.
+	 * True if the Room can claim a new turn slot right now — not locked,
+	 * and no other turn is currently in flight. The single condition FE
+	 * needs to decide whether to enable the moderator input.
+	 */
+	public get isAcceptingTurns(): boolean {
+		return (
+			!this.isLocked && !this.isFrozen && this.get("activeTurnId") === null
+		);
+	}
+
+	/**
+	 * @description
+	 * True if this Room currently is in frozen state.
+	 */
+	public get isFrozen(): boolean {
+		return this.state !== null && this.state.kind === "frozen";
+	}
+
+	/**
+	 * @description
+	 * True if this Room currently has a lock applied.
+	 */
+	public get isLocked(): boolean {
+		return this.state !== null && this.state.kind === "locked";
+	}
+
+	/**
+	 * @description
+	 * The current state detail, or null if the Room has no state.
+	 * FE reads `state.reason` for display and `state.isSelfResolvable`
+	 * to decide whether to show a "top up" call-to-action.
+	 */
+	public get state(): RoomState | null {
+		return this.get("state");
+	}
+
+	/**
+	 * @description
+	 * Deliberation has ended. Room is read-only.
 	 */
 	public get isConcluded(): boolean {
-		return this.get("status") === ROOM_STATUS_OPTION.CONCLUDED;
+		return this.get("status") === RoomStatus.CONCLUDED;
 	}
 
 	/**
 	 * @description
-	 * Whether the `Room` has reached maximum participants.
-	 */
-	public get isMaximumParticipantsReached(): boolean {
-		return this.get("participants").length === this.MAXIMUM_PARTICIPANTS;
-	}
-
-	/**
-	 * @description
-	 * Whether the `Room` is in synthesizing process.
-	 */
-	public get isSynthesizing(): boolean {
-		return this.get("synthesisStatus") === "pending";
-	}
-
-	/**
-	 * @description
-	 * Whether the `Room` has participants.
+	 * True if at least one Participant has been invited.
 	 */
 	public get hasParticipants(): boolean {
 		return this.get("participants").length > 0;
@@ -233,75 +282,91 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Whether the moderator can still attach more files to this room.
-	 * Checked by the application layer before accepting an upload.
+	 * Number of Participants currently in the Room.
 	 */
-	public get canAttachMore(): boolean {
-		return !this.attachmentPolicy.isRoomLimitReached(
-			this.get("attachmentCount"),
-		);
+	public get participantCount(): number {
+		return this.get("participants").length;
 	}
 
 	/**
 	 * @description
-	 * How many more files can be attached to this room.
-	 * Useful for UI indicators ("1 attachment slot remaining").
+	 * Number of files attached across all moderator turns in this Room.
 	 */
-	public get remainingAttachmentSlots(): number {
-		return this.attachmentPolicy.remaining(this.get("attachmentCount"));
+	public get attachmentCount(): number {
+		return this.get("attachmentCount");
 	}
-
-	// ─── Queries ──────────────────────────────────────────────────────────────
-
-	public findParticipantById(participantId: ParticipantId) {
-		return this.get("participants").find((p) => p.id.isEqual(participantId));
-	}
-
-	// ─── Mutations ────────────────────────────────────────────────────────────
 
 	/**
 	 * @description
-	 * Registers a file attachment slot against the room's quota.
+	 * Returns the next sequence of a turn.
 	 *
-	 * **Call this before persisting the attachment** — if this returns an error,
-	 * the upload should be rejected and the file should not be stored.
-	 *
-	 * The `count` parameter defaults to 1. Pass the number of files being
-	 * attached in a single moderator turn (currently always 1 per attachment).
-	 *
-	 * **Invariant**: Total `attachmentCount` across the room cannot exceed
-	 * `RoomAttachmentPolicy.MAX_ATTACHMENTS_PER_ROOM`.
-	 *
-	 * @returns Result void or `MaximumAttachmentsReachedError`
+	 * Caller has to call this before invoking `room.registerTurn`.
 	 */
-	public registerAttachment(
-		count = 1,
-	): IResult<void, MaximumAttachmentsReachedError> {
-		const current = this.get("attachmentCount");
+	public get nextSequence(): TurnSequence {
+		return TurnSequence.fromNumber(this.get("turnIds").length + 1);
+	}
 
-		if (
-			this.attachmentPolicy.isRoomLimitReached(current) ||
-			current + count > RoomAttachmentPolicy.MAX_ATTACHMENTS_PER_ROOM
-		) {
-			return Result.error(new MaximumAttachmentsReachedError());
+	/**
+	 * @description
+	 * The most recently attached Checkpoint ID, or null if none exist yet.
+	 */
+	public get latestCheckpointId(): CheckpointId | null {
+		const ids = this.get("checkpointIds");
+		return ids.length > 0 ? ids[ids.length - 1] : null;
+	}
+
+	/**
+	 * @description
+	 * Which checkpoint generation comes next — 1 if none exist yet.
+	 */
+	public get nextCheckpointIteration(): number {
+		return this.get("checkpointIds").length + 1;
+	}
+
+	/**
+	 * @description
+	 * Renames the Room. Allowed at any lifecycle stage.
+	 */
+	public rename(newTitle: string): IResult<void, EmptyTitleError> {
+		if (v.string(newTitle).isEmpty()) {
+			return Result.error(new EmptyTitleError());
 		}
 
-		this.change("attachmentCount", current + count);
+		this.change("title", newTitle);
 		return Result.success(undefined);
 	}
 
 	/**
 	 * @description
-	 * Invites a participant into the room.
+	 * Returns the Participant, or undefined if not found.
+	 */
+	public findParticipant(participant: Participant): Participant | undefined {
+		return this.get("participants").find(
+			(p) =>
+				p.id.isEqual(participant.id) ||
+				p.qualifiedModel === participant.qualifiedModel,
+		);
+	}
+
+	/**
+	 * @description
+	 * Returns the Participant by the given ID, or undefined if not found.
+	 */
+	public findParticipantById(
+		participantId: ParticipantId,
+	): Participant | undefined {
+		return this.get("participants").find((p) => p.id.isEqual(participantId));
+	}
+
+	/**
+	 * @description
+	 * Invites an AI model into the Room as a named Participant.
+	 * Only allowed while FORMING. Duplicate model or ID is rejected.
 	 *
-	 * **Invariant**: Max 4 participants.
-	 * **Invariant**: Can only invite while `FORMING`.
-	 * **Invariant**: No duplicate IDs or models.
-	 *
-	 * @emits `ParticipantInvited` domain event.
+	 * Caller must verify ModeratorPolicy.canInviteParticipant() first.
 	 */
 	public inviteParticipant(
-		participantToInvite: Participant,
+		participant: Participant,
 	): IResult<
 		void,
 		ParticipateAfterDeliberationError | ParticipantAlreadyInvitedError
@@ -310,33 +375,28 @@ export class Room extends Aggregate<RoomProps> {
 			return Result.error(new ParticipateAfterDeliberationError());
 		}
 
-		if (this.isMaximumParticipantsReached) {
-			return Result.error(new MaximumParticipantReachedError());
+		const duplicate = this.findParticipant(participant);
+		if (duplicate) return Result.error(new ParticipantAlreadyInvitedError());
+
+		this.change("participants", [...this.get("participants"), participant]);
+		return Result.success(undefined);
+	}
+
+	/**
+	 * @description
+	 * Removes a Participant from the Room.
+	 * Only allowed while FORMING — deliberation locks the roster.
+	 */
+	public uninviteParticipant(
+		participantId: ParticipantId,
+	): IResult<void, DomainError> {
+		if (!this.isForming) {
+			return Result.error(new ParticipateAfterDeliberationError());
 		}
 
-		const currentParticipants = this.get("participants");
-		const alreadyInvited = currentParticipants.find(
-			(p) =>
-				participantToInvite.id.isEqual(p.id) ||
-				participantToInvite.qualifiedModel.includes(p.qualifiedModel),
-		);
-
-		if (alreadyInvited) {
-			return Result.error(new ParticipantAlreadyInvitedError());
-		}
-
-		this.change("participants", [...currentParticipants, participantToInvite]);
-
-		this.emit(
-			new ParticipantInvited(this.id.value(), {
-				participantId: participantToInvite.id,
-				model: participantToInvite.get("model").model,
-				provider: participantToInvite.get("model").provider,
-				name: participantToInvite.get("displayName"),
-				qualifiedModel: participantToInvite.qualifiedModel,
-				occurredAt: new Date(),
-				roomId: this.id,
-			}),
+		this.change(
+			"participants",
+			this.get("participants").filter((p) => !p.id.isEqual(participantId)),
 		);
 
 		return Result.success(undefined);
@@ -344,18 +404,14 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Starts deliberation by setting a topic and transitioning to `DELIBERATING`.
+	 * Sets the topic and transitions the Room into active deliberation.
+	 * Requires at least one Participant to be present.
 	 *
-	 * **Invariant**: `FORMING` status, non-empty topic, ≥1 participant.
-	 * @emits `DeliberationStarted` domain event.
+	 * @emits DeliberationStarted
 	 */
-	public startDeliberation(
+	public deliberate(
 		topic: string,
 	): IResult<void, EmptyTopicError | CannotStartDeliberationError> {
-		if (v.string(topic).isEmpty()) {
-			return Result.error(new EmptyTopicError());
-		}
-
 		if (!this.isForming) {
 			return Result.error(
 				new CannotStartDeliberationError("Room is not in forming status"),
@@ -370,14 +426,16 @@ export class Room extends Aggregate<RoomProps> {
 			);
 		}
 
+		if (v.string(topic).isEmpty()) return Result.error(new EmptyTopicError());
+
 		this.change("topic", topic);
-		this.change("status", ROOM_STATUS_OPTION.DELIBERATING);
+		this.change("status", RoomStatus.DELIBERATING);
 
 		this.emit(
 			new DeliberationStarted(this.id.value(), {
-				occurredAt: new Date(),
 				roomId: this.id,
 				topic,
+				occurredAt: new Date(),
 			}),
 		);
 
@@ -386,38 +444,154 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Registers a turn within this room's deliberation history.
-	 * @emits `TurnRegistered` domain event.
+	 * Claims the Room's turn slot for a new contribution, generating and
+	 * returning a fresh `TurnId` in the same step. Callers (the orchestrating
+	 * command handler) pass this ID straight into `Turn.initiateModeratorTurn`
+	 * or `Turn.initiateParticipantTurn` — the Turn never needs to invent its
+	 * own identity, and FE that receives the ID from the command response
+	 * never has to swap an optimistic ID for a server-issued one.
+	 *
+	 * Fails if the Room is locked/frozen or another turn is already in flight —
+	 * this is the single gate that prevents two turns from being processed
+	 * concurrently, whether from a legitimate sequential flow or a FE race.
+	 *
+	 * Pass `{ silent: true }` for claims that are purely an internal
+	 * implementation detail of a single orchestration step (e.g. the
+	 * moderator-turn claim that resolves synchronously before the
+	 * participant-turn claim that follows it) — FE has no use for an event
+	 * about a slot that opens and closes within the same command.
+	 *
+	 * @emits TurnSlotClaimed
+	 */
+	public claimTurnSlot(options?: {
+		silent?: boolean;
+	}): IResult<TurnId, NotAcceptingTurnsError> {
+		if (!this.isAcceptingTurns) {
+			return Result.error(new NotAcceptingTurnsError());
+		}
+
+		const turnId = TurnId();
+		this.change("activeTurnId", turnId);
+
+		if (!options?.silent) {
+			this.emit(
+				new TurnSlotClaimed(this.id.value(), {
+					roomId: this.id,
+					turnId,
+					occurredAt: new Date(),
+				}),
+			);
+		}
+
+		return Result.success(turnId);
+	}
+
+	/**
+	 * @description
+	 * Releases the Room's turn slot, allowing the next slot to be claimed.
+	 * Called once a Turn reaches a terminal state (settled, or
+	 * failed-and-abandoned).
+	 *
+	 * Pass `{ silent: true }` for the same reason as `claimTurnSlot` —
+	 * to suppress the event for internal release/claim pairs that carry
+	 * no signal FE needs to act on.
+	 *
+	 * @emits TurnSlotReleased
+	 */
+	public releaseTurnSlot(options?: { silent?: boolean }): void {
+		this.change("activeTurnId", null);
+
+		if (!options?.silent) {
+			this.emit(
+				new TurnSlotReleased(this.id.value(), {
+					roomId: this.id,
+					occurredAt: new Date(),
+				}),
+			);
+		}
+	}
+
+	/**
+	 * @description
+	 * Records a Turn ID into the Room's deliberation history.
+	 * No event emitted — Turn domain owns turn lifecycle events.
 	 */
 	public registerTurn(turnId: TurnId): void {
 		this.change("turnIds", [...this.get("turnIds"), turnId]);
+	}
+
+	/**
+	 * @description
+	 * Increments the attachment counter.
+	 * Caller must verify ModeratorPolicy.canAttachFile() first.
+	 */
+	public registerAttachment(): void {
+		this.change("attachmentCount", this.get("attachmentCount") + 1);
+	}
+
+	/**
+	 * @description
+	 * Tells the Room that a Checkpoint is about to be generated, returning
+	 * a pre-generated `CheckpointId`. Callers use this ID to instantiate the
+	 * `Checkpoint` entity directly, mirroring the claim-before-create pattern
+	 * used by `claimTurnSlot` — the entity never has to invent its own
+	 * identity mid-flow.
+	 *
+	 * @emits CheckpointInitiated
+	 */
+	public initiateCheckpoint(): IResult<CheckpointId, never> {
+		const checkpointId = CheckpointId();
+
 		this.emit(
-			new TurnRegistered(this.id.value(), {
-				occurredAt: new Date(),
+			new CheckpointInitiated(this.id.value(), {
 				roomId: this.id,
-				turnId,
+				checkpointId,
+				occurredAt: new Date(),
+			}),
+		);
+
+		return Result.success(checkpointId);
+	}
+
+	/**
+	 * @description
+	 * Attaches a newly generated Checkpoint to the Room's history.
+	 * Called by the application layer after a Checkpoint has been successfully
+	 * generated and persisted.
+	 *
+	 * @emits CheckpointGenerated
+	 */
+	public attachCheckpoint(checkpointId: CheckpointId): void {
+		this.change("checkpointIds", [...this.get("checkpointIds"), checkpointId]);
+
+		this.emit(
+			new CheckpointGenerated(this.id.value(), {
+				roomId: this.id,
+				checkpointId,
+				occurredAt: new Date(),
 			}),
 		);
 	}
 
 	/**
 	 * @description
-	 * Pauses an active deliberation.
+	 * Applies a lock to the Room, immediately preventing new turns from
+	 * being claimed (`isAcceptingTurns` becomes false). Only an actively
+	 * deliberating Room can be locked.
 	 *
-	 * **Invariant**: `Room` must be `DELIBERATING`.
-	 * @emits `DeliberationPaused` domain event.
+	 * @emits RoomLocked
 	 */
-	public pause(): IResult<void, CannotPauseRoomError> {
-		if (!this.isDeliberating) {
-			return Result.error(new CannotPauseRoomError());
-		}
+	public lockRoom(reason: string): IResult<void, CannotLockRoomError> {
+		if (!this.isDeliberating) return Result.error(new CannotLockRoomError());
 
-		this.change("status", ROOM_STATUS_OPTION.PAUSED);
+		this.change("state", RoomState.locked(reason));
 
 		this.emit(
-			new DeliberationPaused(this.id.value(), {
-				occurredAt: new Date(),
+			new RoomLocked(this.id.value(), {
 				roomId: this.id,
+				kind: "locked",
+				reason,
+				occurredAt: new Date(),
 			}),
 		);
 
@@ -426,22 +600,43 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Resumes a paused deliberation.
+	 * Lifts the Room's current lock, if any, allowing turns to be claimed
+	 * again. Called after an admin clears a moderation lock.
 	 *
-	 * **Invariant**: `Room` must be `PAUSED`.
-	 * @emits `DeliberationResumed` domain event.
+	 * @emits RoomUnlocked
 	 */
-	public resume(): IResult<void, CannotResumeRoomError> {
-		if (!this.isPaused) {
-			return Result.error(new CannotResumeRoomError());
-		}
+	public unlockRoom(): void {
+		if (this.state && this.state.kind !== "locked") return;
 
-		this.change("status", ROOM_STATUS_OPTION.DELIBERATING);
+		this.change("state", null);
 
 		this.emit(
-			new DeliberationResumed(this.id.value(), {
-				occurredAt: new Date(),
+			new RoomUnlocked(this.id.value(), {
 				roomId: this.id,
+				occurredAt: new Date(),
+			}),
+		);
+	}
+
+	/**
+	 * @description
+	 * Freezes the Room, immediately preventing new turns from
+	 * being claimed (`isAcceptingTurns` becomes false). Only an actively
+	 * deliberating Room can be frozen.
+	 *
+	 * @emits RoomFrozen
+	 */
+	public freezeRoom(reason: string): IResult<void, CannotFreezeRoomError> {
+		if (!this.isDeliberating) return Result.error(new CannotFreezeRoomError());
+
+		this.change("state", RoomState.frozen(reason));
+
+		this.emit(
+			new RoomFrozen(this.id.value(), {
+				roomId: this.id,
+				kind: "frozen",
+				reason,
+				occurredAt: new Date(),
 			}),
 		);
 
@@ -450,109 +645,51 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Concludes deliberation, ending the thinking session.
+	 * Unfroze the Room's current state, if any, allowing turns to be claimed
+	 * again. Called after a moderator self-resolves a freeze (e.g. tops up
+	 * credits).
 	 *
-	 * **Invariant**: `DELIBERATING` or `PAUSED`, not already `CONCLUDED`.
-	 * @emits `DeliberationConcluded` domain event.
+	 * @emits RoomUnfrozen
+	 */
+	public unfrozeRoom(): void {
+		if (this.state && this.state.kind !== "frozen") return;
+
+		this.change("state", null);
+
+		this.emit(
+			new RoomUnfrozen(this.id.value(), {
+				roomId: this.id,
+				occurredAt: new Date(),
+			}),
+		);
+	}
+
+	/**
+	 * @description
+	 * Concludes the deliberation. Room becomes permanently read-only.
+	 *
+	 * @emits DeliberationConcluded
 	 */
 	public conclude(): IResult<void, CannotConcludeRoomError> {
-		if (this.isConcluded) {
-			return Result.error(
-				new CannotConcludeRoomError("Room is already concluded"),
-			);
-		}
-
-		if (!this.isDeliberating && !this.isPaused) {
+		if (!this.isDeliberating) {
 			return Result.error(
 				new CannotConcludeRoomError(
-					"Can only conclude active or paused deliberation",
+					this.isConcluded
+						? "Room is already concluded"
+						: "Only an active deliberation can be concluded",
 				),
 			);
 		}
 
-		this.change("status", ROOM_STATUS_OPTION.CONCLUDED);
+		this.change("status", RoomStatus.CONCLUDED);
 
 		this.emit(
 			new DeliberationConcluded(this.id.value(), {
-				occurredAt: new Date(),
 				roomId: this.id,
+				occurredAt: new Date(),
 			}),
 		);
 
 		return Result.success(undefined);
-	}
-
-	/**
-	 * @description
-	 * Renames the room.
-	 * **Invariant**: Title must be non-empty.
-	 */
-	public rename(newTitle: string): IResult<void, EmptyTitleError> {
-		if (v.string(newTitle).isEmpty()) {
-			return Result.error(new EmptyTitleError());
-		}
-
-		this.change("title", newTitle);
-		return Result.success(undefined);
-	}
-
-	/**
-	 * @description
-	 * Starts the synthesis process.
-	 *
-	 * **Invariant**: `CONCLUDED`, no synthesis already in-flight.
-	 */
-	public initiateSynthesis(): IResult<void, CannotSynthesizeError> {
-		if (!this.isConcluded) {
-			return Result.error(
-				new CannotSynthesizeError(
-					"Can only synthesize concluded deliberations",
-				),
-			);
-		}
-
-		if (this.isSynthesizing) {
-			return Result.error(
-				new CannotSynthesizeError("Synthesis already in progress"),
-			);
-		}
-
-		this.change("synthesisStatus", "pending");
-		this.change("synthesis", null);
-		this.change("synthesisCreatedAt", null);
-		this.change("synthesisCreatedBy", null);
-
-		return Result.success(undefined);
-	}
-
-	/**
-	 * @description
-	 * Saves a completed synthesis.
-	 * **Invariant**: A synthesis must be in-flight.
-	 */
-	public saveSynthesis(
-		content: string,
-		createdBy: string,
-	): IResult<void, DomainError> {
-		if (!this.isSynthesizing) {
-			return Result.error(new NoSynthesisInProgressError());
-		}
-
-		this.change("synthesis", content);
-		this.change("synthesisStatus", "completed");
-		this.change("synthesisCreatedAt", new Date());
-		this.change("synthesisCreatedBy", createdBy);
-
-		return Result.success(undefined);
-	}
-
-	/**
-	 * @description
-	 * Marks an in-flight synthesis as failed.
-	 */
-	public failSynthesis(): void {
-		if (this.isSynthesizing) {
-			this.change("synthesisStatus", "failed");
-		}
 	}
 }

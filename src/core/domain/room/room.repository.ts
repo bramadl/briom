@@ -5,11 +5,9 @@ import type { RoomId } from "./room.id";
  * @description
  * Repository contract for the `Room` aggregate.
  *
- * Abstracts persistence details from the domain. Implementations (e.g., DrizzleRoomRepository)
- * handle the actual database operations while the domain remains ignorant of storage technology.
- *
- * **DDD Rule**: Only aggregate roots have repositories. `Room` is the consistency boundary;
- * participants and turns are persisted through `Room` or their own repositories respectively.
+ * Abstracts persistence details from the domain. Implementations
+ * handle the actual database operations while the domain remains
+ * ignorant of storage technology.
  */
 export interface RoomRepository {
 	/**

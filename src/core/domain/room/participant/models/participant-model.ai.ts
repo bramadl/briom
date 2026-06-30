@@ -1,11 +1,8 @@
-import type { Brand } from "@briom/core/shared";
+import type { Brand } from "@briom/libs/drimion";
 
 /**
  * @description
- * Branded type for AI model identifiers.
- *
- * Prevents accidental use of raw strings where a validated model ID is expected.
- * Examples: "gpt-4", "claude-3.5-sonnet", "gemini-pro".
+ * Branded AI model identifier. e.g. "gpt-4o-mini", "claude-3.5-haiku"
  */
 export type ParticipantModelAi = Brand<string, "ParticipantModelAi">;
 export const ParticipantModelAi = (value: string): ParticipantModelAi =>
