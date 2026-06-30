@@ -16,7 +16,9 @@ import type { CheckpointId } from "./checkpoint.id";
 export interface ICheckpointRepository {
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Finds a Checkpoint by its unique identifier. Used for audit/debug
+	 * tracing through a checkpoint's `previousCheckpointId` chain —
+	 * not part of the hot render path.
 	 */
 	findById(id: CheckpointId): Promise<Checkpoint | null>;
 
@@ -31,7 +33,8 @@ export interface ICheckpointRepository {
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Persists a newly generated Checkpoint. Checkpoints are write-once —
+	 * implementations should insert, never update an existing record.
 	 */
 	persist(checkpoint: Checkpoint): Promise<void>;
 }

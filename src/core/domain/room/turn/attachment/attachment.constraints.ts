@@ -5,29 +5,30 @@ const ONE_MB = ONE_KB * ONE_KB;
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * Maximum allowed file size per `AttachmentMediaType`, in bytes.
+ * Images get a much larger ceiling than text since a single image
+ * is usually a few hundred KB to a few MB, while text attachments are
+ * injected inline into the prompt and must stay small to control cost.
  */
 export const SIZE_LIMIT = {
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
-	 *
-	 * 100 KB.
+	 * Maximum size for TEXT attachments — 100 KB.
 	 */
 	[AttachmentMediaType.TEXT]: 100 * ONE_KB,
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
-	 *
-	 * 5 MB.
+	 * Maximum size for IMAGE attachments — 5 MB.
 	 */
 	[AttachmentMediaType.IMAGE]: 5 * ONE_MB,
 } as const satisfies Record<AttachmentMediaType, number>;
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * MIME types Briom accepts per `AttachmentMediaType`. Anything outside
+ * these two lists is rejected by `resolveMediaType` and, in turn, by
+ * `Attachment.isValidProps`.
  */
 export const ALLOWED_MIME: Record<AttachmentMediaType, readonly string[]> = {
 	/**

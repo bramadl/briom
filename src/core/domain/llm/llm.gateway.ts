@@ -5,7 +5,7 @@ import type { Message } from "./refs";
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * Input for a single streaming completion request to an LLM provider.
  */
 interface GenerateInput {
 	/**
@@ -39,7 +39,9 @@ interface GenerateInput {
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * Port to the upstream LLM aggregator (OpenRouter). Application-layer
+ * services depend on this abstraction rather than any specific provider
+ * SDK, keeping the domain and application layers free of HTTP/SDK concerns.
  */
 export interface LlmGateway {
 	/**

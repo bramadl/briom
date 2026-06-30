@@ -1,6 +1,8 @@
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * The two categories of file Briom accepts as moderator turn attachments.
+ * Drives both validation (`SIZE_LIMIT`, `ALLOWED_MIME`) and how the
+ * `TranscriptorRenderer` serializes the attachment into the LLM message.
  */
 export const AttachmentMediaType = {
 	/**

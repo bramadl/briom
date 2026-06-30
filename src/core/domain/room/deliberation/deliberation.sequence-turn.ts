@@ -3,7 +3,8 @@ import type { TurnIntent } from "../turn/turn.intent";
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * Mention and multi-deliberation context for a single
+ * `DeliberationService.decideNextResponder` call.
  */
 export interface NextSequenceTurnInput {
 	/**
@@ -24,7 +25,8 @@ export interface NextSequenceTurnInput {
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * The outcome of a `DeliberationService.decideNextResponder` call —
+ * who speaks next, and with what intent.
  */
 export interface NextSequenceTurnOutput {
 	/**

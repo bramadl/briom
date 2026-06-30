@@ -6,7 +6,8 @@ import type { BaseRoomDomainEventPayload } from "./base.event";
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * Payload carried by `CheckpointInitiated` — the pre-allocated ID for the
+ * Checkpoint about to be generated.
  */
 export interface CheckpointInitiatedPayload extends BaseRoomDomainEventPayload {
 	readonly checkpointId: CheckpointId;

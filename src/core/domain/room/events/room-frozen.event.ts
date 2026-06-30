@@ -4,7 +4,8 @@ import type { BaseRoomDomainEventPayload } from "./base.event";
 
 /**
  * @description
- * Lorem ipsum dolor sit amet.
+ * Payload carried by `RoomFrozen` — the lock kind (always "frozen" here)
+ * and the human-readable reason shown in the room banner.
  */
 export interface RoomFrozenPayload extends BaseRoomDomainEventPayload {
 	readonly kind: "frozen";

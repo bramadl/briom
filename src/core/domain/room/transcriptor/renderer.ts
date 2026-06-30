@@ -18,7 +18,9 @@ interface RenderInput {
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Every Participant currently in the room — used to resolve display
+	 * names for ASSISTANT messages and to build the "others" list in
+	 * system prompts.
 	 */
 	participants: Participant[];
 
@@ -36,19 +38,22 @@ interface RenderInput {
 interface BuildSystemPromptInput {
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * The Participant about to speak — the prompt is built from their
+	 * perspective and identity.
 	 */
 	currentParticipant: Participant;
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Why this Participant is contributing now — passed straight through
+	 * to `NarrativePrompt.build`.
 	 */
 	intent: TurnIntent;
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * All Participants in the room, including `currentParticipant` —
+	 * filtered down to "everyone else" internally before formatting.
 	 */
 	participants: Participant[];
 }
@@ -148,7 +153,10 @@ export class TranscriptorRenderer {
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Builds the ASSISTANT message for a settled participant turn, prefixing
+	 * the content with the speaking Participant's display name so the model
+	 * reading the history can tell voices apart. Falls back to "Assistant"
+	 * if the Participant has since been removed from the room.
 	 */
 	private buildParticipantMessage(
 		turn: Turn,

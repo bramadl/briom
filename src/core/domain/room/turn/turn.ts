@@ -374,7 +374,9 @@ export class Turn extends Aggregate<TurnProps> {
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * True if this turn failed in a way the moderator may retry — only
+	 * ever true for participant turns, since moderator turns settle
+	 * synchronously and never enter the FAILED state.
 	 */
 	public get canRetry(): boolean {
 		return this.isFailed && this.isFromParticipant;
@@ -382,7 +384,10 @@ export class Turn extends Aggregate<TurnProps> {
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * True if this turn is in a FAILED state and can be permanently
+	 * retired via `abandon()`. Distinct from `canRetry` — abandonment
+	 * doesn't require participant authorship, though in practice only
+	 * participant turns ever reach FAILED.
 	 */
 	public get canAbandon(): boolean {
 		return this.isFailed;
@@ -390,7 +395,8 @@ export class Turn extends Aggregate<TurnProps> {
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * True if this turn (always a moderator turn — see
+	 * `Turn.isValidProps`) carries at least one file attachment.
 	 */
 	public get hasAttachments(): boolean {
 		return this.get("attachments").length > 0;

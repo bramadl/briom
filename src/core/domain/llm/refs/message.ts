@@ -18,13 +18,16 @@ import type { Role } from "./role";
 export interface Message {
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * The message payload — plain text for simple turns, or a `ContentBlock[]`
+	 * array when at least one image attachment must ride alongside it.
 	 */
 	content: string | ContentBlock[];
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Which conversational role this message occupies in the LLM's history —
+	 * USER for moderator turns, ASSISTANT for participant turns, SYSTEM for
+	 * checkpoint summaries and other framing context.
 	 */
 	role: Role;
 }

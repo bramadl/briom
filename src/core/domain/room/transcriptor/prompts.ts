@@ -5,19 +5,23 @@ import { INSTRUCTIONS } from "./instructions";
 interface ParticipantPromptInput {
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * The Participant's human-readable name, as it should appear when the
+	 * model refers to itself in the deliberation (e.g. "Claude", "GPT-4o").
 	 */
 	displayName: string;
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Why this contribution is happening now — shapes which instruction
+	 * line from `INSTRUCTIONS` gets woven into the prompt.
 	 */
 	intent: TurnIntent;
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Pre-formatted list of the other Participants in the room, one per
+	 * line, so the model knows who else is in the conversation and never
+	 * mistakes itself for them.
 	 */
 	others: string;
 }

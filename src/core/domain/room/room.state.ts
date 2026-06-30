@@ -15,7 +15,7 @@ interface RoomStateProps {
 
 	/**
 	 * @description
-	 * When this state changes was occurred.
+	 * When this state change occurred.
 	 */
 	occurredAt: Date;
 
@@ -54,6 +54,9 @@ export class RoomState extends ValueObject<RoomStateProps> {
 	public static override isValidProps(
 		_props: RoomStateProps,
 	): DomainError | undefined {
+		// No structural invariant beyond what the type system already
+		// enforces — `kind` is a closed union and `reason`/`occurredAt`
+		// are always supplied by the static factories below.
 		return undefined;
 	}
 

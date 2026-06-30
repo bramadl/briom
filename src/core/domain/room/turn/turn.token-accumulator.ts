@@ -16,7 +16,11 @@ export class TurnTokenAccumulator {
 
 	/**
 	 * @description
-	 * Lorem ipsum dolor sit amet.
+	 * Reduces `turns` down to two raw signals `CheckpointTriggerPolicy`
+	 * needs: the sum of reported usage tokens (when the model returned
+	 * one), and a character-based fallback estimate for turns that didn't
+	 * report usage at all — common on free-tier models that omit the
+	 * `usage` field entirely.
 	 */
 	public static accumulate(turns: Turn[]): {
 		reportedTokens: number;
