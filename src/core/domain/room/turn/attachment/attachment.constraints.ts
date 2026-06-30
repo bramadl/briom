@@ -19,9 +19,9 @@ export const SIZE_LIMIT = {
 
 	/**
 	 * @description
-	 * Maximum size for IMAGE attachments — 5 MB.
+	 * Maximum size for IMAGE attachments — 1 MB.
 	 */
-	[AttachmentMediaType.IMAGE]: 5 * ONE_MB,
+	[AttachmentMediaType.IMAGE]: 1 * ONE_MB,
 } as const satisfies Record<AttachmentMediaType, number>;
 
 /**
