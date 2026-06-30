@@ -231,22 +231,6 @@ Discussion only.
 
 ---
 
-### No Long-Term Memory
-
-No persistent memory between rooms.
-
-Each room is self-contained.
-
----
-
-### No File Uploads
-
-No PDFs, documents, or external knowledge ingestion.
-
-Text discussion only.
-
----
-
 ### No Collaboration Between Humans
 
 Single-user experience only.
