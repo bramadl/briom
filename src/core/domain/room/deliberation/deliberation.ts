@@ -14,7 +14,7 @@ import {
 
 /**
  * @description
- * `RoomDeliberationService` — Domain Service
+ * `DeliberationService` — Domain Service
  *
  * Decides who speaks next after a moderator turn, given the Room's current
  * participants and turn history. Single source of truth for sequencing

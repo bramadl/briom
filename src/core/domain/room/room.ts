@@ -174,7 +174,7 @@ export class Room extends Aggregate<RoomProps> {
 			| "topic"
 			| "activeTurnId"
 			| "checkpointIds"
-			| "lock"
+			| "state"
 		>,
 	): IResult<Room, DomainError> {
 		const fullProps: RoomProps = {
