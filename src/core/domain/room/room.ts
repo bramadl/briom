@@ -28,6 +28,7 @@ import {
 	RoomFormed,
 	RoomFrozen,
 	RoomLocked,
+	RoomTopicGenerated,
 	RoomUnfrozen,
 	RoomUnlocked,
 	TurnSlotClaimed,
@@ -109,8 +110,10 @@ interface RoomProps {
 
 	/**
 	 * @description
-	 * The central question driving deliberation.
-	 * Null until deliberation starts.
+	 * The central question driving deliberation, generated asynchronously
+	 * from the room's first turn. Null until `setTopic()` is called —
+	 * independent of `status`, since deliberation itself starts the moment
+	 * the first turn registers, not when the topic finishes generating.
 	 */
 	topic: string | null;
 
@@ -134,7 +137,8 @@ interface RoomProps {
  *
  * **What Room governs:**
  * - Participant invitation and removal (while FORMING)
- * - Topic setting and deliberation start
+ * - Deliberation start (gated on the first turn being registered, not on topic)
+ * - Topic generation (async, decoupled from the FORMING → DELIBERATING transition)
  * - Turn registration
  * - Attachment count tracking
  * - Status transitions
@@ -147,6 +151,8 @@ interface RoomProps {
  * - Whether a Moderator is allowed to attach more files → ModeratorPolicy
  * - Turn content, streaming, or LLM calls → Turn domain
  * - Who should speak next and with what intent → RoomDeliberationService
+ * - Generating the topic's text itself → application layer / LLM gateway,
+ *   Room only records the result via `setTopic()`
  */
 export class Room extends Aggregate<RoomProps> {
 	private constructor(props: RoomProps) {
@@ -229,6 +235,10 @@ export class Room extends Aggregate<RoomProps> {
 	/**
 	 * @description
 	 * Returns true if the room has no turns registered before.
+	 *
+	 * This is the actual precondition for starting deliberation — not
+	 * the presence of a topic, which is generated asynchronously and can
+	 * lag behind the first turn by several seconds.
 	 */
 	public get isFresh(): boolean {
 		return this.get("turnIds").length === 0;
@@ -306,6 +316,16 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
+	 * The generated topic, or null if `setTopic()` hasn't resolved yet.
+	 * Independent of `status` — a Room can be DELIBERATING with turns
+	 * already flowing while this is still null.
+	 */
+	public get topic(): string | null {
+		return this.get("topic");
+	}
+
+	/**
+	 * @description
 	 * Returns the next sequence of a turn.
 	 *
 	 * Caller has to call this before invoking `room.registerTurn`.
@@ -369,7 +389,8 @@ export class Room extends Aggregate<RoomProps> {
 	/**
 	 * @description
 	 * Invites an AI model into the Room as a named Participant.
-	 * Only allowed while FORMING. Duplicate model or ID is rejected.
+	 * Only allowed while FORMING — once the first turn registers and
+	 * deliberation starts, the roster locks.
 	 *
 	 * Caller must verify ModeratorPolicy.canInviteParticipant() first.
 	 */
@@ -412,14 +433,20 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Sets the topic and transitions the Room into active deliberation.
-	 * Requires at least one Participant to be present.
+	 * Transitions the Room from FORMING into active deliberation.
+	 *
+	 * Gated on the first turn having been registered — NOT on a topic
+	 * being present. Topic is async, generated-after-the-fact metadata
+	 * (see `setTopic`) that describes a deliberation already underway;
+	 * it is never a precondition for the deliberation to begin.
+	 *
+	 * Callers register the seed turn via `registerTurn()` before calling
+	 * this, in the same transaction, so the FORMING → DELIBERATING
+	 * transition and the first turn's registration commit atomically.
 	 *
 	 * @emits DeliberationStarted
 	 */
-	public deliberate(
-		topic: string,
-	): IResult<void, EmptyTopicError | CannotStartDeliberationError> {
+	public deliberate(): IResult<void, CannotStartDeliberationError> {
 		if (!this.isForming) {
 			return Result.error(
 				new CannotStartDeliberationError("Room is not in forming status"),
@@ -434,13 +461,46 @@ export class Room extends Aggregate<RoomProps> {
 			);
 		}
 
-		if (v.string(topic).isEmpty()) return Result.error(new EmptyTopicError());
+		if (this.isFresh) {
+			return Result.error(
+				new CannotStartDeliberationError(
+					"Cannot start deliberation without any turn registered",
+				),
+			);
+		}
 
-		this.change("topic", topic);
 		this.change("status", RoomStatus.DELIBERATING);
 
 		this.emit(
 			new DeliberationStarted(this.id.value(), {
+				roomId: this.id,
+				occurredAt: new Date(),
+			}),
+		);
+
+		return Result.success(undefined);
+	}
+
+	/**
+	 * @description
+	 * Records the asynchronously generated topic for this Room.
+	 *
+	 * Fully decoupled from `deliberate()` — this is expected to be called
+	 * later, from a separate job, once the LLM call for topic summarization
+	 * completes. Idempotent: calling it again after a topic is already set
+	 * is a silent no-op rather than an overwrite, since only the seed turn's
+	 * content should ever determine the room's topic.
+	 *
+	 * @emits RoomTopicGenerated
+	 */
+	public setTopic(topic: string): IResult<void, EmptyTopicError> {
+		if (v.string(topic).isEmpty()) return Result.error(new EmptyTopicError());
+		if (this.get("topic") !== null) return Result.success(undefined);
+
+		this.change("topic", topic);
+
+		this.emit(
+			new RoomTopicGenerated(this.id.value(), {
 				roomId: this.id,
 				topic,
 				occurredAt: new Date(),
@@ -452,12 +512,12 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
-	 * Claims the Room's turn slot for a new contribution, generating and
-	 * returning a fresh `TurnId` in the same step. Callers (the orchestrating
-	 * command handler) pass this ID straight into `Turn.initiateModeratorTurn`
-	 * or `Turn.initiateParticipantTurn` — the Turn never needs to invent its
-	 * own identity, and FE that receives the ID from the command response
-	 * never has to swap an optimistic ID for a server-issued one.
+	 * Claims the Room's turn slot for a new contribution. Callers
+	 * (the orchestrating command handler) may pass `passedId` to reuse
+	 * an ID they already hold — e.g. an optimistic ID supplied by FE, or
+	 * a moderator turn ID resolved earlier in the same command — instead
+	 * of accepting a freshly generated one. When omitted, a fresh `TurnId`
+	 * is generated internally.
 	 *
 	 * Fails if the Room is locked/frozen or another turn is already in flight —
 	 * this is the single gate that prevents two turns from being processed
@@ -472,13 +532,14 @@ export class Room extends Aggregate<RoomProps> {
 	 * @emits TurnSlotClaimed
 	 */
 	public claimTurnSlot(options?: {
+		passedId?: TurnId;
 		silent?: boolean;
 	}): IResult<TurnId, NotAcceptingTurnsError> {
 		if (!this.isAcceptingTurns) {
 			return Result.error(new NotAcceptingTurnsError());
 		}
 
-		const turnId = TurnId();
+		const turnId = options?.passedId ?? TurnId();
 		this.change("activeTurnId", turnId);
 
 		if (!options?.silent) {

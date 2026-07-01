@@ -8,5 +8,6 @@ export * from "./room-frozen.event";
 export * from "./room-locked.event";
 export * from "./room-unfrozen.event";
 export * from "./room-unlocked.event";
+export * from "./topic-generated.event";
 export * from "./turn-slot-claimed.event";
 export * from "./turn-slot-released.event";
