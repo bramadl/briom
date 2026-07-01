@@ -212,6 +212,14 @@ export class Room extends Aggregate<RoomProps> {
 
 	/**
 	 * @description
+	 * Returns true when participants > 1
+	 */
+	public get isMultiDeliberation(): boolean {
+		return this.participantCount > 1;
+	}
+
+	/**
+	 * @description
 	 * Topic is set, turns are flowing. Active deliberation in progress.
 	 */
 	public get isDeliberating(): boolean {

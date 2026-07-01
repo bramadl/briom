@@ -3,7 +3,6 @@ export * from "./deliberation";
 export * from "./errors";
 export * from "./events";
 export * from "./participant";
-export * from "./transcriptor";
 export * from "./turn";
 
 // Direct modules

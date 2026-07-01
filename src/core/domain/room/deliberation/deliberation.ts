@@ -1,4 +1,4 @@
-import { type DomainError, type IResult, Result } from "@briom/libs/drimion";
+import { type IResult, Result } from "@briom/libs/drimion";
 
 import type { Room } from "../room";
 import { type Turn, TurnIntent } from "../turn";
@@ -65,7 +65,10 @@ export class DeliberationService {
 		turns: Turn[],
 		input: NextSequenceTurnInput,
 		random: () => number = Math.random,
-	): IResult<NextSequenceTurnOutput, DomainError> {
+	): IResult<
+		NextSequenceTurnOutput,
+		ParticipantNotFoundError | NoParticipantsAvailableError
+	> {
 		const { mentionedParticipantIds, multiDeliberation } = input;
 		if (mentionedParticipantIds.length > 0) {
 			const mentioned = room.findParticipantById(mentionedParticipantIds[0]);

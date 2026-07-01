@@ -1,3 +1,4 @@
+import type { Room } from "../room";
 import type { RoomId } from "../room.id";
 
 import type { Turn } from "./turn";
@@ -26,6 +27,12 @@ export interface TurnRepository {
 	 * Finds all turns within a room, ordered by sequence.
 	 */
 	findByRoomId(roomId: RoomId): Promise<Turn[]>;
+
+	/**
+	 * @description
+	 * Get the latest turn from the given room.
+	 */
+	getLatestTurnFrom(room: Room): Promise<Turn | null>;
 
 	/**
 	 * @description

@@ -1,6 +1,6 @@
 import { DomainError, ValueObject } from "@briom/libs/drimion";
 
-import { StreamError } from "../../llm/errors/stream.error";
+import { StreamError } from "./errors";
 
 interface TurnErrorProps {
 	/**
