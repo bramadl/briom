@@ -6,13 +6,14 @@ import {
 	validator as v,
 } from "@briom/libs/drimion";
 
-import { type BriomCredit, InsufficientCreditError } from "./credit";
+import { BriomCredit, InsufficientCreditError } from "./credit";
 
 import {
 	InsufficientNameError,
 	InvalidAvatarError,
 	InvalidEmailError,
 } from "./errors";
+import { ModeratorRegistered } from "./events";
 import type { ModeratorId } from "./moderator.id";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -72,6 +73,36 @@ export class Moderator extends Aggregate<ModeratorProps> {
 
 		if (!v.string(email).match(EMAIL_REGEX)) return new InvalidEmailError();
 		if (v.string(name).hasLengthLessThan(4)) return new InsufficientNameError();
+	}
+
+	/**
+	 * @description
+	 * Register a new moderator.
+	 *
+	 * Opens up a Briom Credit with initial balance.
+	 *
+	 * @emits ModeratorRegistered
+	 */
+	public static register(
+		props: Omit<ModeratorProps, "credit">,
+	): IResult<Moderator, DomainError> {
+		const fullProps: ModeratorProps = {
+			...props,
+			credit: BriomCredit.initial(),
+		};
+
+		const error = Moderator.isValidProps(fullProps);
+		if (error) return Result.error(error);
+
+		const moderator = new Moderator(fullProps);
+		moderator.emit(
+			new ModeratorRegistered(moderator.id.value(), {
+				moderatorId: moderator.id,
+				occurredAt: new Date(),
+			}),
+		);
+
+		return Result.success(moderator);
 	}
 
 	/**

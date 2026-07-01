@@ -1,4 +1,4 @@
-import type { ModeratorId } from "../moderator.id";
+import type { ModeratorId } from "../../moderator.id";
 
 import type { CreditMovement } from "./credit-movement";
 

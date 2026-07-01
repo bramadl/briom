@@ -27,7 +27,7 @@ export class ParticipantModel extends ValueObject<ParticipantModelProps> {
 	}
 
 	public static override isValidProps(
-		_props: unknown,
+		_props: ParticipantModelProps,
 	): DomainError | undefined {
 		return /** provider/model strings trusted from `Provider`. */ undefined;
 	}

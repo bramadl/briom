@@ -12,6 +12,13 @@ import type { ModeratorId } from "./moderator.id";
 export interface IModeratorRepository {
 	/**
 	 * @description
+	 * Returns the Moderator with the given email,
+	 * or null if not registered.
+	 */
+	findByEmail(email: string): Promise<Moderator | null>;
+
+	/**
+	 * @description
 	 * Returns the Moderator with the given ID,
 	 * or null if not registered.
 	 */

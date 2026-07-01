@@ -10,4 +10,5 @@ export * from "./turn";
 export * from "./room";
 export * from "./room.id";
 export * from "./room.repository";
+export * from "./room.state";
 export * from "./room.status";

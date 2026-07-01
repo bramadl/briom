@@ -7,7 +7,7 @@ import { DomainError } from "@briom/libs/drimion";
  */
 export class ParticipateAfterDeliberationError extends DomainError {
 	public constructor() {
-		super("Cannot invite participants after deliberation starts", {
+		super("Cannot invite or uninvite participants after deliberation starts", {
 			context: "Room",
 		});
 	}

@@ -15,7 +15,7 @@ import type { TurnId } from "./turn.id";
  * they have independent lifecycle events (stream, settle, fail, retry) that
  * don't require loading the entire Room aggregate.
  */
-export interface TurnRepository {
+export interface ITurnRepository {
 	/**
 	 * @description
 	 * Finds a turn by its unique identifier, fully reconstituted.

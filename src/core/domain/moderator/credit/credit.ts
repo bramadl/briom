@@ -35,7 +35,7 @@ export class BriomCredit extends ValueObject<BriomCreditProps> {
 
 	/**
 	 * @description
-	 * Starting balance for every new Moderator.
+	 * Opens up a new credit with starting balance for every new Moderator.
 	 */
 	public static initial(): BriomCredit {
 		return new BriomCredit({ balance: 0 });

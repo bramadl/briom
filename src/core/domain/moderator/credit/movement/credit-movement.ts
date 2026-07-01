@@ -1,6 +1,6 @@
 import { type DomainError, Entity, validator as v } from "@briom/libs/drimion";
 
-import type { ModeratorId } from "../moderator.id";
+import type { ModeratorId } from "../../moderator.id";
 
 import type { CreditMovementType } from "./credit-movement.type";
 import { EmptyMovementReasonError } from "./errors";

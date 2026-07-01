@@ -384,6 +384,15 @@ export class Turn extends Aggregate<TurnProps> {
 
 	/**
 	 * @description
+	 * True if this turn is in a PENDING or STREAMING state and can be
+	 * permanently retired via `abandon()`.
+	 */
+	public get canAbort(): boolean {
+		return this.isPending || this.isStreaming;
+	}
+
+	/**
+	 * @description
 	 * True if this turn is in a FAILED state and can be permanently
 	 * retired via `abandon()`. Distinct from `canRetry` — abandonment
 	 * doesn't require participant authorship, though in practice only

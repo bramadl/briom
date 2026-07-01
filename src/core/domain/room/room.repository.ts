@@ -1,3 +1,4 @@
+import type { Moderator } from "../moderator";
 import type { Room } from "./room";
 import type { RoomId } from "./room.id";
 
@@ -9,12 +10,18 @@ import type { RoomId } from "./room.id";
  * handle the actual database operations while the domain remains
  * ignorant of storage technology.
  */
-export interface RoomRepository {
+export interface IRoomRepository {
 	/**
 	 * @description
 	 * Removes a room and all its associated data from persistence.
 	 */
 	close(room: Room): Promise<void>;
+
+	/**
+	 * @description
+	 * Count room for the given moderator.
+	 */
+	countFor(moderator: Moderator): Promise<number>;
 
 	/**
 	 * @description
