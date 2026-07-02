@@ -4,6 +4,7 @@ export {
 	BaseDomainEvent,
 	BaseRepository,
 	BaseSpecification,
+	type Brand,
 	Entity,
 	ID,
 	Id,
@@ -24,10 +25,14 @@ export { Iterator } from "./helpers";
 
 // ── Libs ───────────────────────────────────────────────────────────────────
 export {
+	ApplicationError,
+	type ApplicationErrorType,
+	CommandBus,
 	ContainerBuilder,
 	DomainClasses,
 	DomainError,
 	InfraError,
+	QueryBus,
 	Result,
 	Utils,
 	UUID,

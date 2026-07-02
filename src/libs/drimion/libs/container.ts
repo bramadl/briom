@@ -12,6 +12,8 @@ type Resolved<Reg extends AnyTokenMap> = {
 	[K in keyof Reg]: ReturnType<Reg[K]>;
 };
 
+type Factory<Reg extends AnyTokenMap, T> = (resolved: Resolved<Reg>) => T;
+
 export class ContainerBuilder<
 	Reg extends Record<string, (resolved: AnyTokenMap) => unknown> = Record<
 		never,
@@ -30,9 +32,13 @@ export class ContainerBuilder<
 		return new ContainerBuilder([], []);
 	}
 
+	/**
+	 * @description
+	 * Register a dependency with eager resolution (default).
+	 */
 	add<K extends string, T>(
 		token: K,
-		factory: (resolved: Resolved<Reg>) => T,
+		factory: Factory<Reg, T>,
 	): ContainerBuilder<Reg & Record<K, (resolved: AnyTokenMap) => T>> {
 		return new ContainerBuilder<Reg & Record<K, (resolved: AnyTokenMap) => T>>(
 			[...this._entries, { factory: factory as (r: AnyTokenMap) => T, token }],
@@ -40,6 +46,45 @@ export class ContainerBuilder<
 		);
 	}
 
+	/**
+	 * @description
+	 * Compose with another builder. The other builder's entries are appended.
+	 * Both builders must be unbuilt (blueprint mode).
+	 */
+	extend<Ext extends Record<string, (resolved: AnyTokenMap) => unknown>>(
+		other: ContainerBuilder<Ext>,
+	): ContainerBuilder<Reg & Ext> {
+		return new ContainerBuilder<Reg & Ext>(
+			[...this._entries, ...other._entries],
+			[...this._eventHooks, ...other._eventHooks],
+		);
+	}
+
+	/**
+	 * @description
+	 * Merge a fully-resolved container into this builder.
+	 * All keys from the external container become available as factories
+	 * that return the already-resolved values (singleton behavior).
+	 */
+	from<Ext extends AnyTokenMap>(
+		external: Ext,
+	): ContainerBuilder<Reg & { [K in keyof Ext]: () => Ext[K] }> {
+		const externalEntries = Object.entries(external).map(([token, value]) => ({
+			factory: () => value,
+			token,
+		}));
+
+		return new ContainerBuilder(
+			[...this._entries, ...externalEntries],
+			this._eventHooks,
+		);
+	}
+
+	/**
+	 * @description
+	 * Register an event hook that runs after build(), receiving the fully
+	 * resolved container. Useful for wiring event subscribers.
+	 */
 	registerEvent(
 		hook: (resolved: Resolved<Reg>) => void,
 	): ContainerBuilder<Reg> {
@@ -49,44 +94,36 @@ export class ContainerBuilder<
 		]);
 	}
 
+	/**
+	 * @description
+	 * Resolve all registered factories in registration order.
+	 * Throws if a token is duplicated or a factory throws.
+	 */
 	build(): Resolved<Reg> {
 		const resolved: AnyTokenMap = {};
+
 		for (const { token, factory } of this._entries) {
 			if (token in resolved) {
 				throw new Error(
-					`[Container] Duplicate token "${token}". Each token must be registered exactly once.`,
+					`[Container] Duplicate token "${String(token)}". Each token must be registered exactly once.`,
 				);
 			}
 			try {
 				resolved[token] = factory(resolved);
 			} catch (err) {
 				throw new Error(
-					`[Container] Failed to resolve token "${token}": ${(err as Error).message}`,
+					`[Container] Failed to resolve token "${String(token)}": ${(err as Error).message}`,
 					{ cause: err },
 				);
 			}
 		}
 
 		const frozen = Object.freeze(resolved) as Resolved<Reg>;
+
 		for (const hook of this._eventHooks) {
 			hook(frozen);
 		}
 
 		return frozen;
-	}
-
-	from<ExternalReg extends AnyTokenMap>(
-		external: ExternalReg,
-		keys: (keyof ExternalReg)[],
-	): ContainerBuilder<Reg & Pick<ExternalReg, (typeof keys)[number]>> {
-		const pickedEntries = keys.map((key) => ({
-			factory: () => external[key],
-			token: key as string,
-		}));
-
-		return new ContainerBuilder(
-			[...this._entries, ...pickedEntries],
-			this._eventHooks,
-		);
 	}
 }
