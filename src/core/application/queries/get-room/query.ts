@@ -13,6 +13,12 @@ export interface GetRoomInput {
 	 * Format: UUID v4. Used
 	 */
 	moderatorId: string;
+
+	/**
+	 * @description
+	 * Room to get.
+	 */
+	roomId: string;
 }
 
 /**
@@ -20,7 +26,7 @@ export interface GetRoomInput {
  * Output from `GetRoomQuery`.
  */
 export interface GetRoomOutput {
-	room: RoomDTO[];
+	room: RoomDTO | null;
 }
 
 /**

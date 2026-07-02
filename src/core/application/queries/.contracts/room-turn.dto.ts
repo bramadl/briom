@@ -1,7 +1,7 @@
-import type { ParticipantDTO } from "@briom/app/bak";
 import type { TurnIntent } from "@briom/domain";
 
 import type { RoomAttachmentDTO } from "./room-attachment.dto";
+import type { RoomParticipantDTO } from "./room-participant.dto";
 
 /**
  * @description
@@ -52,7 +52,7 @@ export interface RoomTurnDTO {
 			 * @description
 			 * Null if this turn is from Moderator.
 			 */
-			participant: ParticipantDTO | null;
+			participant: RoomParticipantDTO | null;
 		};
 	};
 

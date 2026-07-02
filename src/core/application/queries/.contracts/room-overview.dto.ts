@@ -1,5 +1,7 @@
 import type { RoomStatus } from "@briom/domain";
 
+import type { RoomParticipantDTO } from "./room-participant.dto";
+
 /**
  * @description
  * `RoomOverviewDTO` — Lightweight room summary for list views.
@@ -30,27 +32,7 @@ export interface RoomOverviewDTO {
 	 * @description
 	 * Invited AI participants. Ordered by invite sequence.
 	 */
-	participants: Array<{
-		/**
-		 * @description
-		 * Unique participant identifier. Required for keying, proposals, and
-		 * participant-specific actions (e.g. synthesis selection).
-		 */
-		id: string;
-
-		/**
-		 * @description
-		 * Moderator-assigned display name (e.g. "Claude", "GPT-4").
-		 */
-		name: string;
-
-		/**
-		 * @description
-		 * Fully qualified model string in `{provider}/{model}` format.
-		 * Example: `"anthropic/claude-3.5-sonnet"`.
-		 */
-		model: string;
-	}>;
+	participants: Array<RoomParticipantDTO>;
 
 	/**
 	 * @description
