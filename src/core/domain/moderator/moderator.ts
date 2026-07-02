@@ -140,6 +140,20 @@ export class Moderator extends Aggregate<ModeratorProps> {
 
 	/**
 	 * @description
+	 * Determines whether this Moderator is currently unrestricted by
+	 * Free-tier limits — mirrors the same balance check ModeratorPolicy
+	 * uses to pick between BASIC and LIMITLESS. Exposed directly on the
+	 * aggregate (rather than only via ModeratorPolicy) because some
+	 * callers need a simple boolean decision — e.g. whether a room should
+	 * be frozen after its first checkpoint — without instantiating a full
+	 * policy object for one check.
+	 */
+	public get isPowerUser(): boolean {
+		return this.credit.balance > 0;
+	}
+
+	/**
+	 * @description
 	 * Spends BCr from the Moderator's balance.
 	 *
 	 * Fails if the balance cannot cover the requested amount.

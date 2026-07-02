@@ -6,23 +6,18 @@ import type { GetRoomsInput, GetRoomsOutput, GetRoomsQuery } from "./query";
  * @description
  * `GetRoomsHandler` — Query Handler
  *
- * Thin wrapper around `GetRoomsQuery` enforcing `IQuery` contract.
- * Returns all rooms as a `Result` for consistency with command handlers.
+ * Thin wrapper around `GetRoomsQuery` enforcing the `IQuery` contract.
+ * Converts raw query output into a `Result` for consistency with command
+ * handlers across the application layer.
  *
  * @see GetRoomsQuery — for data retrieval logic
+ * @see DrizzleGetRoomsQuery — infrastructure implementation
  */
 export class GetRoomsHandler
 	implements IQuery<GetRoomsInput, GetRoomsOutput, never>
 {
 	public constructor(private readonly query: GetRoomsQuery) {}
 
-	/**
-	 * @description
-	 * Executes the rooms list query.
-	 *
-	 * @param input - Empty criteria (reserved for future filtering)
-	 * @returns Result wrapping all rooms
-	 */
 	public async execute(
 		input: GetRoomsInput,
 	): Promise<IResult<GetRoomsOutput, never>> {

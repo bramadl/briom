@@ -10,7 +10,9 @@ import type { BaseRoomDomainEventPayload } from "./base.event";
  * FE listens for this to re-enable the moderator input, turn proposals,
  * and retry actions — the counterpart signal to `TurnSlotClaimed`.
  */
-export class TurnSlotReleased extends BaseDomainEvent<BaseRoomDomainEventPayload> {
+export interface TurnSlotReleasedPayload extends BaseRoomDomainEventPayload {}
+
+export class TurnSlotReleased extends BaseDomainEvent<TurnSlotReleasedPayload> {
 	public static readonly type = "room:turn-slot-released" as const;
 
 	public constructor(aggregateId: string, payload: BaseRoomDomainEventPayload) {

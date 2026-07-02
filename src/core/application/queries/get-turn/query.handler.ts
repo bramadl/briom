@@ -16,13 +16,6 @@ export class GetTurnHandler
 {
 	public constructor(private readonly query: GetTurnQuery) {}
 
-	/**
-	 * @description
-	 * Executes the single turn lookup query.
-	 *
-	 * @param input - Turn ID to retrieve
-	 * @returns Result wrapping the turn DTO
-	 */
 	public async execute(
 		input: GetTurnInput,
 	): Promise<IResult<GetTurnOutput, never>> {

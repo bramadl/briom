@@ -1,4 +1,4 @@
-import type { TurnDTO } from "@briom/app/contracts";
+import type { RoomTurnDTO } from "../.contracts";
 
 /**
  * @description
@@ -21,7 +21,7 @@ export interface GetTurnOutput {
 	 * @description
 	 * The requested turn.
 	 */
-	turn: TurnDTO | null;
+	turn: RoomTurnDTO | null;
 }
 
 /**
@@ -43,10 +43,6 @@ export interface GetTurnQuery {
 	/**
 	 * @description
 	 * Executes the query.
-	 *
-	 * @param input - Turn ID to look up
-	 * @returns Turn data
-	 * @throws Error if turn not found
 	 */
 	execute(input: GetTurnInput): Promise<GetTurnOutput>;
 }

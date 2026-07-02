@@ -6,28 +6,18 @@ import type { GetRoomInput, GetRoomOutput, GetRoomQuery } from "./query";
  * @description
  * `GetRoomHandler` — Query Handler
  *
- * Thin wrapper around `GetRoomQuery` that enforces the `IQuery` contract.
- * Converts raw query output into a `Result` for consistency with command handlers.
+ * Thin wrapper around `GetRoomQuery` enforcing the `IQuery` contract.
+ * Converts raw query output into a `Result` for consistency with command
+ * handlers across the application layer.
  *
- * **Why So Thin?**
- * Query handlers should be pass-through. Complex logic belongs in the query
- * implementation (infra layer) or the domain. The handler's only job is
- * standardizing the return shape (Result) and enabling dependency injection.
- *
- * @see GetRoomQuery — for the actual data retrieval logic
+ * @see GetRoomQuery — for data retrieval logic
+ * @see DrizzleGetRoomQuery — infrastructure implementation
  */
 export class GetRoomHandler
 	implements IQuery<GetRoomInput, GetRoomOutput, never>
 {
 	public constructor(private readonly query: GetRoomQuery) {}
 
-	/**
-	 * @description
-	 * Executes the room lookup query.
-	 *
-	 * @param input - Room ID to retrieve
-	 * @returns Result wrapping the room DTO
-	 */
 	public async execute(
 		input: GetRoomInput,
 	): Promise<IResult<GetRoomOutput, never>> {
