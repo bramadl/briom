@@ -1,6 +1,5 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import type { RoomId } from "../../room.id";
 import { Turn } from "../turn";
 import type { TurnError } from "../turn.error";
 
@@ -15,7 +14,6 @@ import type { BaseTurnEventPayload } from "./base.event";
  */
 export interface TurnFailedPayload extends BaseTurnEventPayload {
 	readonly error: TurnError;
-	readonly roomId: RoomId;
 }
 
 export class TurnFailed extends BaseDomainEvent<TurnFailedPayload> {

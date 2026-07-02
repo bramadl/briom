@@ -1,6 +1,5 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import type { RoomId } from "../../room.id";
 import { Turn } from "../turn";
 
 import type { BaseTurnEventPayload } from "./base.event";
@@ -13,9 +12,7 @@ import type { BaseTurnEventPayload } from "./base.event";
  * This is the terminal state for turns the moderator chooses not to retry —
  * typically after repeated failures on a free model under rate limits.
  */
-export interface TurnAbandonedPayload extends BaseTurnEventPayload {
-	readonly roomId: RoomId;
-}
+export interface TurnAbandonedPayload extends BaseTurnEventPayload {}
 
 export class TurnAbandoned extends BaseDomainEvent<TurnAbandonedPayload> {
 	public static readonly type = "turn:abandoned" as const;

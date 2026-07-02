@@ -1,12 +1,11 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import type { RoomId } from "../../room.id";
 import { Turn } from "../turn";
 
 import type { BaseTurnEventPayload } from "./base.event";
 
 /**
- *
+ * @description
  * Emitted when a turn completes streaming and finalizes its perspective.
  *
  * The turn is now available as shared context for subsequent turns.
@@ -14,7 +13,6 @@ import type { BaseTurnEventPayload } from "./base.event";
  */
 export interface TurnSettledPayload extends BaseTurnEventPayload {
 	readonly content: string;
-	readonly roomId: RoomId;
 }
 
 export class TurnSettled extends BaseDomainEvent<TurnSettledPayload> {

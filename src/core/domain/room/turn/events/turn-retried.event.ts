@@ -1,6 +1,5 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import type { RoomId } from "../../room.id";
 import { Turn } from "../turn";
 
 import type { BaseTurnEventPayload } from "./base.event";
@@ -12,9 +11,7 @@ import type { BaseTurnEventPayload } from "./base.event";
  * The turn returns to PENDING status, clearing all error state.
  * A subsequent TurnInitiated event follows immediately.
  */
-export interface TurnRetriedPayload extends BaseTurnEventPayload {
-	readonly roomId: RoomId;
-}
+export interface TurnRetriedPayload extends BaseTurnEventPayload {}
 
 export class TurnRetried extends BaseDomainEvent<TurnRetriedPayload> {
 	public static readonly type = "turn:retried" as const;

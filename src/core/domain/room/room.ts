@@ -201,6 +201,7 @@ export class Room extends Aggregate<RoomProps> {
 		room.emit(
 			new RoomFormed(room.id.value(), {
 				roomId: room.id,
+				moderatorId: props.moderatorId,
 				occurredAt: new Date(),
 			}),
 		);
@@ -474,6 +475,7 @@ export class Room extends Aggregate<RoomProps> {
 		this.emit(
 			new DeliberationStarted(this.id.value(), {
 				roomId: this.id,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -503,6 +505,7 @@ export class Room extends Aggregate<RoomProps> {
 			new RoomTopicGenerated(this.id.value(), {
 				roomId: this.id,
 				topic,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -547,6 +550,7 @@ export class Room extends Aggregate<RoomProps> {
 				new TurnSlotClaimed(this.id.value(), {
 					roomId: this.id,
 					turnId,
+					moderatorId: this.get("moderatorId"),
 					occurredAt: new Date(),
 				}),
 			);
@@ -574,6 +578,7 @@ export class Room extends Aggregate<RoomProps> {
 			this.emit(
 				new TurnSlotReleased(this.id.value(), {
 					roomId: this.id,
+					moderatorId: this.get("moderatorId"),
 					occurredAt: new Date(),
 				}),
 			);
@@ -615,6 +620,7 @@ export class Room extends Aggregate<RoomProps> {
 			new CheckpointInitiated(this.id.value(), {
 				roomId: this.id,
 				checkpointId,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -637,6 +643,7 @@ export class Room extends Aggregate<RoomProps> {
 			new CheckpointGenerated(this.id.value(), {
 				roomId: this.id,
 				checkpointId,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -660,6 +667,7 @@ export class Room extends Aggregate<RoomProps> {
 				roomId: this.id,
 				kind: "locked",
 				reason,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -682,6 +690,7 @@ export class Room extends Aggregate<RoomProps> {
 		this.emit(
 			new RoomUnlocked(this.id.value(), {
 				roomId: this.id,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -705,6 +714,7 @@ export class Room extends Aggregate<RoomProps> {
 				roomId: this.id,
 				kind: "frozen",
 				reason,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -728,6 +738,7 @@ export class Room extends Aggregate<RoomProps> {
 		this.emit(
 			new RoomUnfrozen(this.id.value(), {
 				roomId: this.id,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);
@@ -755,6 +766,7 @@ export class Room extends Aggregate<RoomProps> {
 		this.emit(
 			new DeliberationConcluded(this.id.value(), {
 				roomId: this.id,
+				moderatorId: this.get("moderatorId"),
 				occurredAt: new Date(),
 			}),
 		);

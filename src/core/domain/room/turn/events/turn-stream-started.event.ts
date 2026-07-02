@@ -1,6 +1,5 @@
 import { BaseDomainEvent } from "@briom/libs/drimion";
 
-import type { RoomId } from "../../room.id";
 import { Turn } from "../turn";
 
 import type { BaseTurnEventPayload } from "./base.event";
@@ -12,9 +11,7 @@ import type { BaseTurnEventPayload } from "./base.event";
  * Signals that the LLM connection is established and tokens will begin
  * flowing. Used by SSE subscribers to update UI from "thinking" to "streaming".
  */
-export interface TurnStreamStartedPayload extends BaseTurnEventPayload {
-	readonly roomId: RoomId;
-}
+export interface TurnStreamStartedPayload extends BaseTurnEventPayload {}
 
 export class TurnStreamStarted extends BaseDomainEvent<TurnStreamStartedPayload> {
 	public static readonly type = "turn:stream-started" as const;

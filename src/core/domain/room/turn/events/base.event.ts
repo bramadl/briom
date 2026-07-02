@@ -1,3 +1,4 @@
+import type { RoomId } from "../../room.id";
 import type { TurnId } from "../turn.id";
 
 /**
@@ -6,5 +7,6 @@ import type { TurnId } from "../turn.id";
  */
 export interface BaseTurnEventPayload {
 	readonly occurredAt?: Date;
+	readonly roomId: RoomId;
 	readonly turnId: TurnId;
 }
