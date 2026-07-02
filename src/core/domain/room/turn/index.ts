@@ -6,6 +6,7 @@ export * from "./proposals";
 // Direct modules
 
 export * from "./turn";
+export * from "./turn.abort-signal";
 export * from "./turn.author";
 export * from "./turn.error";
 export * from "./turn.id";
