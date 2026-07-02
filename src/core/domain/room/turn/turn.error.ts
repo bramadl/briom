@@ -71,10 +71,12 @@ export class TurnError extends ValueObject<TurnErrorProps> {
 	 * @description
 	 * Creates an error when the requested model is unavailable.
 	 */
-	public static modelNotFound(model: string): TurnError {
+	public static modelNotFound(model?: string): TurnError {
 		return new TurnError({
 			kind: StreamError.MODEL_NOT_FOUND,
-			message: `Model ${model} not found or unavailable.`,
+			message: model
+				? `Model ${model} not found or unavailable.`
+				: "Model not found or unavailable.",
 			occurredAt: new Date(),
 		});
 	}
