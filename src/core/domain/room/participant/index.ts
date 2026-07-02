@@ -1,4 +1,5 @@
 export * from "./errors";
+export * from "./instructions";
 export * from "./models";
 
 // Direct modules
