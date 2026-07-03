@@ -3,7 +3,7 @@
 import type {
 	RoomDeliberationParticipantDTO,
 	RoomDeliberationTurnDTO,
-} from "@briom/app";
+} from "@briom/app/bak";
 import {
 	HoverCard,
 	HoverCardContent,

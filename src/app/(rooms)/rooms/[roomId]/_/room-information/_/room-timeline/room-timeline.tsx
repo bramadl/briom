@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDeliberationTurnDTO } from "@briom/app";
+import type { RoomDeliberationTurnDTO } from "@briom/app/bak";
 import {
 	AccordionContent,
 	AccordionExpander,

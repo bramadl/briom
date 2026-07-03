@@ -1,7 +1,7 @@
 import type {
 	RoomDeliberationParticipantDTO,
 	RoomDeliberationTurnDTO,
-} from "@briom/app";
+} from "@briom/app/bak";
 import { useCallback, useMemo, useRef } from "react";
 
 import type { PARTICIPANT_THEMES } from "../../participant/config/theme";

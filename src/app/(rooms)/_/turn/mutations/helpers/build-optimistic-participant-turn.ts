@@ -1,7 +1,7 @@
 import type {
 	RoomDeliberationParticipantDTO,
 	RoomDeliberationTurnDTO,
-} from "@briom/app";
+} from "@briom/app/bak";
 
 export const OPTIMISTIC_PARTICIPANT_PREFIX = "optimistic-participant-" as const;
 

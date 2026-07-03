@@ -1,4 +1,4 @@
-import type { RoomDeliberationParticipantDTO } from "@briom/app";
+import type { RoomDeliberationParticipantDTO } from "@briom/app/bak";
 import { cn } from "@briom/libs/utils";
 import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";
 

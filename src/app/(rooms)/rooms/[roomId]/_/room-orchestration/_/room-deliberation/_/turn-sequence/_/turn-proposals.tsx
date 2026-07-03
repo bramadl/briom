@@ -1,6 +1,6 @@
 "use client";
 
-import type { TurnProposalDTO } from "@briom/app";
+import type { TurnProposalDTO } from "@briom/app/bak";
 import { Button } from "@briom/components/ui/button";
 import { Separator } from "@briom/components/ui/separator";
 import { Fragment } from "react/jsx-runtime";

@@ -1,4 +1,4 @@
-import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
+import { getQueryClient } from "@briom/libs/tanstack/query/query-client";
 import { prefetchModels } from "@briom/rooms/_/participant/queries/services/prefetch-models";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { RoomFormPage } from "./_/room-form-page";

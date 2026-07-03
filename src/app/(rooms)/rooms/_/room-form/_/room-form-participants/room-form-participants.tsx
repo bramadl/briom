@@ -1,4 +1,4 @@
-import type { ParticipantModelDTO } from "@briom/app";
+import type { ParticipantModelDTO } from "@briom/app/bak";
 import {
 	FieldDescription,
 	FieldLegend,

@@ -45,7 +45,7 @@ import {
 	StartDeliberationCommand,
 	type StartDeliberationHandler,
 	type StartDeliberationInput,
-} from "@briom/core/application";
+} from "@briom/app/bak";
 
 /**
  * @description

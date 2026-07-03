@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDeliberationDTO } from "@briom/app";
+import type { RoomDeliberationDTO } from "@briom/app/bak";
 import { cn } from "@briom/libs/utils";
 import { AttachmentButton } from "@briom/rooms/_/deliberation/attachments/attachment-button";
 import { AttachmentPreview } from "@briom/rooms/_/deliberation/attachments/attachment-preview";

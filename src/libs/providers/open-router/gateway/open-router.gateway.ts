@@ -7,7 +7,7 @@ import type {
 	ContentBlock,
 	Message,
 } from "@briom/domain/turn/transcriptor/message";
-import { type IResult, Result } from "@briom/libs/drimion";
+import { type IResult, Result } from "@briom/drimion";
 import type { OpenRouter } from "@openrouter/sdk";
 import type { ChatContentItems, ChatMessages } from "@openrouter/sdk/models";
 

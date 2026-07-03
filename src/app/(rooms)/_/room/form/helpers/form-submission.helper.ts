@@ -1,7 +1,7 @@
 import type {
 	InviteParticipantInput,
 	InviteParticipantOutput,
-} from "@briom/app";
+} from "@briom/app/bak";
 import {
 	isServerError,
 	type ServerActionResult,

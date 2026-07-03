@@ -1,6 +1,6 @@
 "use client";
 
-import type { ParticipantModelDTO } from "@briom/app";
+import type { ParticipantModelDTO } from "@briom/app/bak";
 import { Badge } from "@briom/components/ui/badge";
 import { Button } from "@briom/components/ui/button";
 import {

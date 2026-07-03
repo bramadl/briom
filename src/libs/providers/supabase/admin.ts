@@ -9,6 +9,8 @@ const { supabaseSecretKey, supabaseUrl } = getSupabaseServerEnvs();
  *
  * Used exclusively for publishing Realtime Broadcast events from the
  * backend. Never expose the secret key to the client.
+ *
+ * IDK WHY I HAVE THIS, udah ada `createSupabaseClient` dan `createSupabaseServerClient` lol.
  */
 export const supabaseAdmin = createClient(supabaseUrl, supabaseSecretKey, {
 	realtime: {

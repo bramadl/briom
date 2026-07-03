@@ -4,7 +4,7 @@ import type {
 	GetParticipantModelsQuery,
 	GroupedParticipantModelsDTO,
 	ParticipantModelDTO,
-} from "@briom/core/application";
+} from "@briom/app/bak";
 import type { OpenRouter } from "@openrouter/sdk";
 import type { ModelsListResponse, PublicPricing } from "@openrouter/sdk/models";
 

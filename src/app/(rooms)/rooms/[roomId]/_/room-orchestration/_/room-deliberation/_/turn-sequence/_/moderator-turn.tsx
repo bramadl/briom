@@ -1,6 +1,6 @@
 "use client";
 
-import type { RoomDeliberationTurnDTO } from "@briom/app";
+import type { RoomDeliberationTurnDTO } from "@briom/app/bak";
 import { TurnPerspective } from "@briom/rooms/_/turn/ui/turn-perspective";
 import { TurnPerspectiveActions } from "@briom/rooms/_/turn/ui/turn-perspective-actions";
 import { TurnPerspectiveExpander } from "@briom/rooms/_/turn/ui/turn-perspective-expander";

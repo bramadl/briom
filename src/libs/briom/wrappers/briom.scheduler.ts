@@ -1,4 +1,4 @@
-import type { IScheduler } from "@briom/core/application";
+import type { IScheduler } from "@briom/app/bak";
 
 /**
  * @description

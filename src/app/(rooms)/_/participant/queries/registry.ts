@@ -1,4 +1,4 @@
-import type { GetParticipantModelsInput } from "@briom/app";
+import type { GetParticipantModelsInput } from "@briom/app/bak";
 import { isServerError } from "@briom/libs/server-action";
 import { queryOptions } from "@tanstack/react-query";
 

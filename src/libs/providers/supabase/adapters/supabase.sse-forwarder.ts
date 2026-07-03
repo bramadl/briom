@@ -1,4 +1,4 @@
-import type { ISseForwarder, SseEvent } from "@briom/core/application";
+import type { ISseForwarder, SseEvent } from "@briom/app/bak";
 import { supabaseAdmin } from "@briom/supabase/admin";
 
 /**

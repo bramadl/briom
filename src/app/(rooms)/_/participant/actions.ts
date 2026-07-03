@@ -6,7 +6,7 @@ import type {
 	GetParticipantModelsOutput,
 	InviteParticipantInput,
 	InviteParticipantOutput,
-} from "@briom/app";
+} from "@briom/app/bak";
 import {
 	handleActionError,
 	parseError,

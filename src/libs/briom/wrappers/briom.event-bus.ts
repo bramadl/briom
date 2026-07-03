@@ -2,7 +2,7 @@ import type {
 	DomainEvent,
 	EventSubscriber,
 	IEventBus as IDrimionEventBus,
-} from "@briom/libs/drimion";
+} from "@briom/drimion";
 
 /**
  * @description

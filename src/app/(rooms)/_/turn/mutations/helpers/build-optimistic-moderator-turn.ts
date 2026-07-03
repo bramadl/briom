@@ -2,7 +2,7 @@ import type {
 	AttachmentInput,
 	RoomDeliberationTurnAttachmentDTO,
 	RoomDeliberationTurnDTO,
-} from "@briom/app";
+} from "@briom/app/bak";
 
 interface BuildOptimisticModeratorTurnInput {
 	attachments?: AttachmentInput[];

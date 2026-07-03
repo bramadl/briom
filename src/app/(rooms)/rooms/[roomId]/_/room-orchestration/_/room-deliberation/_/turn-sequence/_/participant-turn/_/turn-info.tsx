@@ -1,7 +1,7 @@
 import type {
 	RoomDeliberationParticipantDTO,
 	RoomDeliberationTurnDTO,
-} from "@briom/app";
+} from "@briom/app/bak";
 import { Badge } from "@briom/components/ui/badge";
 import { cn } from "@briom/libs/utils";
 import { getParticipantTheme } from "@briom/rooms/_/participant/config/theme";

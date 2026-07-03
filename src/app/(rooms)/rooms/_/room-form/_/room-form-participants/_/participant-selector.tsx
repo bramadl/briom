@@ -1,4 +1,4 @@
-import type { ParticipantModelDTO } from "@briom/app";
+import type { ParticipantModelDTO } from "@briom/app/bak";
 import { Badge } from "@briom/components/ui/badge";
 import { cn } from "@briom/libs/utils";
 import { useCallback, useMemo, useState } from "react";

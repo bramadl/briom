@@ -1,4 +1,4 @@
-import type { TurnProposalDTO } from "@briom/app";
+import type { TurnProposalDTO } from "@briom/app/bak";
 import { roomQueries } from "@briom/rooms/_/room/queries/registry";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo, useRef } from "react";

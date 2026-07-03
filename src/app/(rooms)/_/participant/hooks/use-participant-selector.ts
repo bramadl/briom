@@ -1,4 +1,4 @@
-import type { ParticipantModelDTO } from "@briom/app";
+import type { ParticipantModelDTO } from "@briom/app/bak";
 import { useCallback, useDeferredValue, useMemo } from "react";
 
 import { useParticipantModels } from "./use-participant-models";

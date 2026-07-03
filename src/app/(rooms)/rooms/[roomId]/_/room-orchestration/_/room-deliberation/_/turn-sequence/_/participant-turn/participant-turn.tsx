@@ -3,7 +3,7 @@
 import type {
 	RoomDeliberationParticipantDTO,
 	RoomDeliberationTurnDTO,
-} from "@briom/app";
+} from "@briom/app/bak";
 import { cn } from "@briom/libs/utils";
 import { useDeliberation } from "@briom/rooms/_/deliberation/hooks/use-deliberation";
 import { useStreamingTurn } from "@briom/rooms/_/deliberation/hooks/use-streaming-turn";

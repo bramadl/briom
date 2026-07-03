@@ -1,4 +1,4 @@
-import type { RoomDeliberationParticipantDTO } from "@briom/app";
+import type { RoomDeliberationParticipantDTO } from "@briom/app/bak";
 
 interface EmptySequenceProps {
 	participants?: RoomDeliberationParticipantDTO[];

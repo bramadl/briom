@@ -1,4 +1,4 @@
-import type { RoomDeliberationDTO } from "@briom/app";
+import type { RoomDeliberationDTO } from "@briom/app/bak";
 import { Button } from "@briom/components/ui/button";
 import {
 	Popover,

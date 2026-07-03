@@ -1,4 +1,4 @@
-import type { IAbortRegistry } from "@briom/app";
+import type { IAbortRegistry } from "@briom/app/bak";
 
 /**
  * @description

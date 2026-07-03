@@ -1,4 +1,4 @@
-import type { RoomOverviewDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app/bak";
 import { Separator } from "@briom/components/ui/separator";
 
 import { RoomCreationDate } from "./_/room-creation-date";

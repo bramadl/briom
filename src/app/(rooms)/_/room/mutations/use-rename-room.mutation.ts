@@ -2,7 +2,7 @@ import type {
 	GetRoomDeliberationOutput,
 	GetRoomsOverviewOutput,
 	RenameRoomInput,
-} from "@briom/app";
+} from "@briom/app/bak";
 import { type ServerResponse, unwrapOrThrow } from "@briom/libs/server-action";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";

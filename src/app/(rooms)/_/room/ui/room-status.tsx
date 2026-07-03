@@ -1,4 +1,4 @@
-import type { RoomOverviewDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app/bak";
 import { cn } from "@briom/libs/utils";
 import { ROOM_THEME } from "@briom/rooms/_/room/config/theme";
 

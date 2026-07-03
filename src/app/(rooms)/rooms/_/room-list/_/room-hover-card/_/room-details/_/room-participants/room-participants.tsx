@@ -1,4 +1,4 @@
-import type { RoomOverviewDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app/bak";
 import { ParticipantCount } from "./_/participant-count";
 import { ParticipantEmpty } from "./_/participant-empty";
 import { ParticipantInfo } from "./_/participant-info";

@@ -1,5 +1,3 @@
-import type { GetTurnProposalsInput } from "@briom/app/queries/get-turn-proposals/query";
-import type { GetTurnProposalsHandler } from "@briom/app/queries/get-turn-proposals/query.handler";
 import {
 	AbandonTurnCommand,
 	type AbandonTurnHandler,
@@ -35,7 +33,9 @@ import {
 	StartStreamCommand,
 	type StartStreamHandler,
 	type StartStreamInput,
-} from "@briom/core/application";
+} from "@briom/app/bak";
+import type { GetTurnProposalsInput } from "@briom/app/bak/queries/get-turn-proposals/query";
+import type { GetTurnProposalsHandler } from "@briom/app/bak/queries/get-turn-proposals/query.handler";
 
 /**
  * @description

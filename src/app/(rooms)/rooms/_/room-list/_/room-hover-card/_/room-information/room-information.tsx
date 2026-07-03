@@ -1,4 +1,4 @@
-import type { RoomOverviewDTO } from "@briom/app";
+import type { RoomOverviewDTO } from "@briom/app/bak";
 import { AnchorLink } from "@briom/components/ui/anchor-link";
 import { Separator } from "@briom/components/ui/separator";
 import { useSidebar } from "@briom/components/ui/sidebar";

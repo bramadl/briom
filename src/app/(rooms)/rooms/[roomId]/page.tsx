@@ -1,5 +1,5 @@
 import { SidebarTrigger } from "@briom/components/ui/sidebar";
-import { getQueryClient } from "@briom/libs/next/tanstack/query/query-client";
+import { getQueryClient } from "@briom/libs/tanstack/query/query-client";
 import { prefetchRoom } from "@briom/rooms/_/room/queries/services/prefetch-room";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 

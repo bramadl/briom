@@ -1,4 +1,4 @@
-import type { RoomDTO } from "@briom/app";
+import type { RoomDTO } from "@briom/app/bak";
 
 export const ROOM_THEME = {
 	status: {

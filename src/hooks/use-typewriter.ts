@@ -1,4 +1,4 @@
-import { gsap } from "@briom/libs/next/gsap/register";
+import { gsap } from "@briom/libs/gsap/register";
 import { useGSAP } from "@gsap/react";
 import { useRef, useState } from "react";
 
