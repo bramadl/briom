@@ -12,6 +12,7 @@ export function AppProviders({ children }: React.PropsWithChildren) {
 				defaultTheme="system"
 				disableTransitionOnChange
 				enableSystem
+				forcedTheme="dark"
 			>
 				<ProgressProvider>
 					<TooltipProvider>{children}</TooltipProvider>

@@ -1,4 +1,4 @@
-import { cn } from "@briom/libs/utils";
+import { cn } from "@briom/utils";
 
 export function AnimatedOrnament({
 	className,

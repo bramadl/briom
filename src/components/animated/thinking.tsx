@@ -1,4 +1,4 @@
-import { cn } from "@briom/libs/utils";
+import { cn } from "@briom/utils";
 import { cva, type VariantProps } from "class-variance-authority";
 
 const thinkingVariants = cva(
