@@ -3,7 +3,7 @@
 import { useAuthModal } from "@briom/auth/modal/auth-modal-provider";
 import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";
-import { gsap, registerGsap } from "@briom/libs/gsap/register";
+import { gsap, registerGsap } from "@briom/libs/providers/gsap/register";
 import { useGSAP } from "@gsap/react";
 import { ArrowRight } from "lucide-react";
 import { useRef } from "react";

@@ -1,4 +1,7 @@
-import { ATTACHMENT_SIZE_LIMIT, RoomAttachmentPolicy } from "@briom/domain";
+import {
+	ATTACHMENT_SIZE_LIMIT,
+	RoomAttachmentPolicy,
+} from "@briom/core/domain";
 import { SUPABASE_STORAGE } from "@briom/libs/providers/supabase/config/storage";
 import type { RegisterableHotkey } from "@tanstack/react-hotkeys";
 

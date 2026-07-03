@@ -1,6 +1,6 @@
 import { AnimatedOrnament } from "@briom/components/animated/ornament";
 
-import { LenisProvider } from "@briom/libs/lenis/provider";
+import { LenisProvider } from "@briom/libs/providers/lenis/provider";
 
 export default function LandingLayout({
 	children,

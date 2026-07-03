@@ -1,4 +1,4 @@
-import { getQueryClient } from "@briom/libs/tanstack/query/query-client";
+import { getQueryClient } from "@briom/libs/providers/tanstack/query/query-client";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 import { getModerator } from "../_/moderator/get-moderator";

@@ -1,7 +1,7 @@
 "use client";
 
 import { Container } from "@briom/components/ui/container";
-import { gsap, registerGsap } from "@briom/libs/gsap/register";
+import { gsap, registerGsap } from "@briom/libs/providers/gsap/register";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
 
