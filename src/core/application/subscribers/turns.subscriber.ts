@@ -18,14 +18,14 @@ import {
 	TurnStreamStarted,
 	type TurnStreamStartedPayload,
 	TurnTokenAccumulated,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import type {
 	DomainEvent,
 	IEventSubscriberRegistry,
 } from "@briom/libs/drimion/types/event.types";
 import { after } from "next/server";
 
-import type { IRealtimeBroadcaster } from "../ports";
+import type { IRealtimeBroadcaster } from "../ports/broadcasters/realtime.broadcaster";
 
 interface RealtimeSignal {
 	data: Record<string, unknown>;
@@ -130,9 +130,12 @@ export class TurnsEventSubscriber {
 				const room = await this.roomRepository.findById(roomId);
 				if (!room) return;
 
+				// all turns are in the following format: `turn:{entity}`.
+				const [scope, entity] = signal.event.split(":");
 				const moderatorId = room.get("moderatorId").value();
+
 				await this.broadcaster.broadcast(
-					`moderator:${moderatorId}`,
+					`${scope}:${moderatorId}:${entity}`,
 					signal.event,
 					signal.data,
 				);

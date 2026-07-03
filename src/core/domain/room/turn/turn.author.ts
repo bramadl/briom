@@ -1,9 +1,9 @@
-import { type DomainError, ValueObject } from "@briom/libs/drimion";
+import { ValueObject } from "@drimion";
 
 import type { ModeratorId } from "../../moderator/moderator.id";
 import type { ParticipantId } from "../participant/participant.id";
 
-import { InvalidAuthorError } from "./errors";
+import { InvalidAuthorError } from "./errors/invalid-author.error";
 
 type ModeratorAuthorProps = { from: "moderator"; id: ModeratorId };
 type ParticipantAuthorProps = { from: "participant"; id: ParticipantId };
@@ -26,7 +26,7 @@ export class TurnAuthor extends ValueObject<TurnAuthorProps> {
 
 	public static override isValidProps(
 		props: TurnAuthorProps,
-	): DomainError | undefined {
+	): InvalidAuthorError | undefined {
 		const { from } = props;
 		if (from !== "moderator" && from !== "participant") {
 			return new InvalidAuthorError(`Unknown author type: ${from}`);

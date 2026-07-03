@@ -1,12 +1,7 @@
-import {
-	Entity,
-	type IResult,
-	Result,
-	validator as v,
-} from "@briom/libs/drimion";
+import { Entity, type IResult, Result, validator as v } from "@drimion";
 
-import { EmptyDisplayNameError } from "./errors";
-import type { ParticipantModel } from "./models";
+import { EmptyDisplayNameError } from "./errors/empty-display-name.error";
+import type { ParticipantModel } from "./models/participant.model";
 import type { ParticipantId } from "./participant.id";
 
 interface ParticipantProps {

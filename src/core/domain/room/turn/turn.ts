@@ -1,32 +1,23 @@
-import {
-	Aggregate,
-	type DomainError,
-	type IResult,
-	Result,
-} from "@briom/libs/drimion";
+import { Aggregate, type DomainError, type IResult, Result } from "@drimion";
 
 import type { CreditUsage } from "../../moderator/credit/credit.usage";
 import type { ModeratorId } from "../../moderator/moderator.id";
 import type { ParticipantId } from "../participant/participant.id";
 import type { RoomId } from "../room.id";
 
-import type { Attachment } from "./attachment";
-import {
-	EmptyPerspectiveError,
-	InvalidAuthorError,
-	InvalidStateTransitionError,
-	MissingIntentError,
-	NegativeSequenceError,
-} from "./errors";
-import {
-	TurnAbandoned,
-	TurnFailed,
-	TurnInitiated,
-	TurnRetried,
-	TurnSettled,
-	TurnStreamStarted,
-	TurnTokenAccumulated,
-} from "./events";
+import type { Attachment } from "./attachment/attachment";
+import { EmptyPerspectiveError } from "./errors/empty-perspective.error";
+import { InvalidAuthorError } from "./errors/invalid-author.error";
+import { InvalidStateTransitionError } from "./errors/invalid-state-transition.error";
+import { MissingIntentError } from "./errors/missing-intent.error";
+import { NegativeSequenceError } from "./errors/negative-sequence.error";
+import { TurnAbandoned } from "./events/turn-abandoned.event";
+import { TurnFailed } from "./events/turn-failed.event";
+import { TurnInitiated } from "./events/turn-initiated.event";
+import { TurnRetried } from "./events/turn-retried.event";
+import { TurnSettled } from "./events/turn-settled.event";
+import { TurnStreamStarted } from "./events/turn-stream-started.event";
+import { TurnTokenAccumulated } from "./events/turn-token-accumulated.event";
 import { TurnAuthor } from "./turn.author";
 import type { TurnError } from "./turn.error";
 import type { TurnId } from "./turn.id";
@@ -122,7 +113,11 @@ export class Turn extends Aggregate<TurnProps> {
 
 	public static override isValidProps(
 		props: TurnProps,
-	): DomainError | undefined {
+	):
+		| NegativeSequenceError
+		| InvalidAuthorError
+		| MissingIntentError
+		| undefined {
 		if (props.sequence.get("value") < 1) return new NegativeSequenceError();
 
 		if (props.author.isModerator && props.intent !== null) {
@@ -155,7 +150,13 @@ export class Turn extends Aggregate<TurnProps> {
 		moderatorId: ModeratorId;
 		content: string;
 		attachments?: Attachment[];
-	}): IResult<Turn, DomainError> {
+	}): IResult<
+		Turn,
+		| NegativeSequenceError
+		| InvalidAuthorError
+		| MissingIntentError
+		| EmptyPerspectiveError
+	> {
 		if (!props.content || props.content.trim().length === 0) {
 			return Result.error(new EmptyPerspectiveError());
 		}
@@ -213,7 +214,10 @@ export class Turn extends Aggregate<TurnProps> {
 		participantId: ParticipantId;
 		intent: TurnIntent;
 		previousTurnId?: TurnId;
-	}): IResult<Turn, DomainError> {
+	}): IResult<
+		Turn,
+		NegativeSequenceError | InvalidAuthorError | MissingIntentError
+	> {
 		const result = Turn.create({
 			id: props.id,
 			roomId: props.roomId,

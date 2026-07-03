@@ -1,4 +1,4 @@
-import type { Participant } from "../../participant";
+import type { Participant } from "../../participant/participant";
 import type { Room } from "../../room";
 import type { Turn } from "../turn";
 

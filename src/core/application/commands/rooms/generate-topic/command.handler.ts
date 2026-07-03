@@ -2,16 +2,17 @@ import {
 	type IRoomRepository,
 	RoomId,
 	TopicGenerationPrompt,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IEventBus,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
-import { type ILLMGateway, type Message, Role } from "../../../ports";
+import type { ILLMGateway } from "../../../ports/gateways/llm/llm.gateway";
+import { type Message, Role } from "../../../ports/gateways/llm/llm.ref";
 
 import type { GenerateTopicCommand, GenerateTopicOutput } from "./command";
 

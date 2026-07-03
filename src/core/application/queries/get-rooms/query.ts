@@ -1,8 +1,8 @@
-import type { RoomOverviewDTO } from "../.contracts";
+import type { RoomOverviewDTO } from "../.contracts/room-overview.dto";
 
 /**
  * @description
- * Input for `GetRoomsQuery`.
+ * Input for `IGetRoomsQuery`.
  */
 export interface GetRoomsInput {
 	/**
@@ -17,7 +17,7 @@ export interface GetRoomsInput {
 
 /**
  * @description
- * Output from `GetRoomsQuery`.
+ * Output from `IGetRoomsQuery`.
  */
 export interface GetRoomsOutput {
 	rooms: RoomOverviewDTO[];
@@ -25,7 +25,7 @@ export interface GetRoomsOutput {
 
 /**
  * @description
- * `GetRoomsQuery` — Application Query Port
+ * `IGetRoomsQuery` — Application Query Port
  *
  * Retrieves all rooms in the system with their relations.
  * Read-only, no side effects.
@@ -33,10 +33,22 @@ export interface GetRoomsOutput {
  * @see DrizzleGetRoomsQuery — infrastructure implementation
  * @see GetRoomsHandler — application handler
  */
-export interface GetRoomsQuery {
+export interface IGetRoomsQuery {
 	/**
 	 * @description
 	 * Executes the query.
 	 */
 	execute(input: GetRoomsInput): Promise<GetRoomsOutput>;
+}
+
+/**
+ * @description
+ * `GetRoomsQuery` — Message class routed through `QueryBus`.
+ *
+ * Mirrors the Command pattern used across the application layer
+ * (`.input` wrapper) so every read and write operation has a single,
+ * consistent entry point via `CommandBus`/`QueryBus`.
+ */
+export class GetRoomsQuery {
+	public constructor(public readonly input: GetRoomsInput) {}
 }

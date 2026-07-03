@@ -1,4 +1,4 @@
-import type { ParticipantId } from "../../participant";
+import type { ParticipantId } from "../../participant/participant.id";
 import type { TurnIntent } from "../turn.intent";
 
 /**

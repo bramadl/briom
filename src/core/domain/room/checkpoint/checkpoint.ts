@@ -1,10 +1,10 @@
-import { type DomainError, Entity, validator as v } from "@briom/libs/drimion";
+import { Entity, validator as v } from "@drimion";
 
 import type { CreditUsage } from "../../moderator/credit/credit.usage";
 import type { RoomId } from "../room.id";
 
 import type { CheckpointId } from "./checkpoint.id";
-import { EmptyCheckpointError } from "./errors";
+import { EmptyCheckpointError } from "./errors/empty-checkpoint.error";
 
 interface CheckpointProps {
 	/**
@@ -104,7 +104,7 @@ export class Checkpoint extends Entity<CheckpointProps> {
 
 	public static override isValidProps(
 		props: CheckpointProps,
-	): DomainError | undefined {
+	): EmptyCheckpointError | undefined {
 		if (v.string(props.content).isEmpty()) return new EmptyCheckpointError();
 	}
 

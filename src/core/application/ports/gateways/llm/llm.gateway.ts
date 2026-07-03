@@ -1,13 +1,13 @@
-import type { StreamError } from "@briom/domain";
-import type { IResult } from "@briom/libs/drimion";
+import type { StreamError } from "@briom/core/domain";
+import type { IResult } from "@drimion";
 
-import type { Message, UsageInfo } from "../interfaces";
+import type { Message, UsageInfo } from "./llm.ref";
 
 /**
  * @description
  * Input for a single streaming completion request to an LLM provider.
  */
-interface GenerateInput {
+export interface GenerateInput {
 	/**
 	 * @description
 	 * Conversation history formatted as provider-agnostic messages.
@@ -60,7 +60,7 @@ interface WithUsage {
  * Full non-streaming completion result: the whole response content
  * plus its usage, both available immediately.
  */
-interface CompleteOutput extends WithUsage {
+export interface CompleteOutput extends WithUsage {
 	/**
 	 * @description
 	 * The complete generated text.
@@ -74,7 +74,7 @@ interface CompleteOutput extends WithUsage {
  * `stream`, while `usage` resolves separately once the provider has
  * finished reporting — usually after the last content delta.
  */
-interface StreamOutput extends WithUsage {
+export interface StreamOutput extends WithUsage {
 	/**
 	 * @description
 	 * Incremental text deltas as they arrive from the provider.

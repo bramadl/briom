@@ -1,6 +1,6 @@
-import { BaseDomainEvent } from "@briom/libs/drimion";
+import { BaseDomainEvent } from "@drimion";
 
-import type { TurnId } from "../turn";
+import type { TurnId } from "../turn/turn.id";
 
 import type { BaseRoomDomainEventPayload } from "./base.event";
 

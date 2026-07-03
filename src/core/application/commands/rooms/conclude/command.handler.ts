@@ -3,14 +3,14 @@ import {
 	ModeratorId,
 	type Room,
 	RoomId,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IEventBus,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
 import type { ConcludeRoomCommand, ConcludeRoomOutput } from "./command";
 

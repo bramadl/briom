@@ -11,13 +11,13 @@ import {
 	ParticipantModelProvider,
 	type Room,
 	RoomId,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
 import type {
 	InviteParticipantCommand,

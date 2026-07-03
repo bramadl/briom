@@ -1,4 +1,4 @@
-import { DomainError } from "@briom/libs/drimion";
+import { DomainError } from "@drimion";
 
 /**
  * @description

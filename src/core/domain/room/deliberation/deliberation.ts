@@ -1,16 +1,15 @@
-import { type IResult, Result } from "@briom/libs/drimion";
+import { type IResult, Result } from "@drimion";
 
 import type { Room } from "../room";
-import { type Turn, TurnIntent } from "../turn";
+import type { Turn } from "../turn/turn";
+import { TurnIntent } from "../turn/turn.intent";
 
 import type {
 	NextSequenceTurnInput,
 	NextSequenceTurnOutput,
 } from "./deliberation.sequence-turn";
-import {
-	NoParticipantsAvailableError,
-	ParticipantNotFoundError,
-} from "./errors";
+import { NoParticipantsAvailableError } from "./errors/no-participants-available.error";
+import { ParticipantNotFoundError } from "./errors/participant-not-found.error";
 
 /**
  * @description

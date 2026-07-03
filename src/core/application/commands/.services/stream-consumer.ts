@@ -1,5 +1,7 @@
-import type { UsageInfo } from "@briom/app/commands/_services";
-import type { ITurnAbortSignal, ITurnRepository, Turn } from "@briom/domain";
+import type { ITurnRepository, Turn } from "@briom/core/domain";
+
+import type { UsageInfo } from "../../ports/gateways/llm/llm.ref";
+import type { ITurnAbortSignal } from "../../ports/signals/turn-abort.signal";
 
 /**
  * @description

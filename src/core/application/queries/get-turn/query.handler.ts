@@ -1,24 +1,25 @@
-import { type IQuery, type IResult, Result } from "@briom/libs/drimion";
+import { type IQuery, type IResult, Result } from "@drimion";
 
-import type { GetTurnInput, GetTurnOutput, GetTurnQuery } from "./query";
+import type { GetTurnOutput, GetTurnQuery, IGetTurnQuery } from "./query";
 
 /**
  * @description
  * `GetTurnHandler` — Query Handler
  *
- * Thin wrapper around `GetTurnQuery` enforcing `IQuery` contract.
- * Returns a single turn as a Result for consistency with command handlers.
+ * Thin wrapper around `IGetTurnQuery` enforcing `IQuery` contract.
+ * Unwraps the `GetTurnQuery` message's `.input` and returns a single
+ * turn as a `Result`, for consistency with command handlers.
  *
- * @see GetTurnQuery — for data retrieval logic
+ * @see IGetTurnQuery — for data retrieval logic
  */
 export class GetTurnHandler
-	implements IQuery<GetTurnInput, GetTurnOutput, never>
+	implements IQuery<GetTurnQuery, GetTurnOutput, never>
 {
-	public constructor(private readonly query: GetTurnQuery) {}
+	public constructor(private readonly query: IGetTurnQuery) {}
 
-	public async execute(
-		input: GetTurnInput,
-	): Promise<IResult<GetTurnOutput, never>> {
+	public async execute({
+		input,
+	}: GetTurnQuery): Promise<IResult<GetTurnOutput, never>> {
 		const output = await this.query.execute(input);
 		return Result.success(output);
 	}

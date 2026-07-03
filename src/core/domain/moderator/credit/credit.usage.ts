@@ -1,10 +1,6 @@
-import {
-	type DomainError,
-	ValueObject,
-	validator as v,
-} from "@briom/libs/drimion";
+import { type DomainError, ValueObject, validator as v } from "@drimion";
 
-import { InvalidUsageError } from "./errors";
+import { InvalidUsageError } from "./errors/invalid-usage.error";
 
 interface CreditUsageProps {
 	/**
@@ -43,7 +39,7 @@ export class CreditUsage extends ValueObject<CreditUsageProps> {
 
 	public static override isValidProps(
 		props: CreditUsageProps,
-	): DomainError | undefined {
+	): InvalidUsageError | undefined {
 		if (v.number(props.promptTokens).isNegative()) {
 			return new InvalidUsageError("promptTokens cannot be negative");
 		}

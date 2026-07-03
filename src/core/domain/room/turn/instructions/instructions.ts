@@ -1,4 +1,4 @@
-import { TurnIntent } from "@briom/domain";
+import { TurnIntent } from "../turn.intent";
 
 /**
  * @description

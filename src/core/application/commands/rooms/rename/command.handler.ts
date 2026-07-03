@@ -1,10 +1,10 @@
-import { type IRoomRepository, ModeratorId, RoomId } from "@briom/domain";
+import { type IRoomRepository, ModeratorId, RoomId } from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
 import type { RenameRoomCommand, RenameRoomOutput } from "./command";
 

@@ -1,4 +1,4 @@
-import { type DomainError, ValueObject } from "@briom/libs/drimion";
+import { ValueObject } from "@drimion";
 
 import type { ParticipantModelAi } from "./participant-model.ai";
 import type { ParticipantModelProvider } from "./participant-model.provider";
@@ -28,8 +28,8 @@ export class ParticipantModel extends ValueObject<ParticipantModelProps> {
 
 	public static override isValidProps(
 		_props: ParticipantModelProps,
-	): DomainError | undefined {
-		return /** provider/model strings trusted from `Provider`. */ undefined;
+	): undefined {
+		return /** `provider/model` strings trusted from `Provider`. */ undefined;
 	}
 
 	/**

@@ -1,26 +1,27 @@
-import { type IQuery, type IResult, Result } from "@briom/libs/drimion";
+import { type IQuery, type IResult, Result } from "@drimion";
 
-import type { GetRoomsInput, GetRoomsOutput, GetRoomsQuery } from "./query";
+import type { GetRoomsOutput, GetRoomsQuery, IGetRoomsQuery } from "./query";
 
 /**
  * @description
  * `GetRoomsHandler` — Query Handler
  *
- * Thin wrapper around `GetRoomsQuery` enforcing the `IQuery` contract.
- * Converts raw query output into a `Result` for consistency with command
- * handlers across the application layer.
+ * Thin wrapper around `IGetRoomsQuery` enforcing the `IQuery` contract.
+ * Unwraps the `GetRoomsQuery` message's `.input` and converts raw query
+ * output into a `Result`, for consistency with command handlers across
+ * the application layer.
  *
- * @see GetRoomsQuery — for data retrieval logic
+ * @see IGetRoomsQuery — for data retrieval logic
  * @see DrizzleGetRoomsQuery — infrastructure implementation
  */
 export class GetRoomsHandler
-	implements IQuery<GetRoomsInput, GetRoomsOutput, never>
+	implements IQuery<GetRoomsQuery, GetRoomsOutput, never>
 {
-	public constructor(private readonly query: GetRoomsQuery) {}
+	public constructor(private readonly query: IGetRoomsQuery) {}
 
-	public async execute(
-		input: GetRoomsInput,
-	): Promise<IResult<GetRoomsOutput, never>> {
+	public async execute({
+		input,
+	}: GetRoomsQuery): Promise<IResult<GetRoomsOutput, never>> {
 		const output = await this.query.execute(input);
 		return Result.success(output);
 	}

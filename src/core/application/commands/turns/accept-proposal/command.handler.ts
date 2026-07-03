@@ -8,16 +8,18 @@ import {
 	Turn,
 	type TurnId,
 	type TurnIntent,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IEventBus,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
-import type { ILogger, IRoomUnitOfWork, ITurnGenerator } from "../../../ports";
+import type { ITurnGenerator } from "../../../ports/generators/turn.generator";
+import type { ILogger } from "../../../ports/logger/logger";
+import type { IRoomUnitOfWork } from "../../../ports/unit-of-works/room.unit-of-work";
 
 import type { AcceptProposalCommand, AcceptProposalOutput } from "./command";
 

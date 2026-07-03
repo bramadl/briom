@@ -1,4 +1,4 @@
-import { Id, type UID } from "@briom/libs/drimion";
+import { Id, type UID } from "@drimion";
 
 /**
  * @description

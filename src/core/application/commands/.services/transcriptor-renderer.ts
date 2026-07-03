@@ -1,15 +1,16 @@
 import {
-	type ContentBlock,
-	type Message,
-	Role,
-} from "@briom/app/commands/_services";
-import {
 	type Checkpoint,
 	NarrativePrompt,
 	type Participant,
 	type Turn,
 	type TurnIntent,
-} from "@briom/domain";
+} from "@briom/core/domain";
+
+import {
+	type ContentBlock,
+	type Message,
+	Role,
+} from "../../ports/gateways/llm/llm.ref";
 
 interface RenderInput {
 	/**

@@ -1,4 +1,4 @@
-import type { Brand } from "@briom/libs/drimion";
+import type { Brand } from "@drimion";
 
 /**
  * @description

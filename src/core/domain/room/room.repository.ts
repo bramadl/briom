@@ -1,4 +1,4 @@
-import type { Moderator } from "../moderator";
+import type { Moderator } from "../moderator/moderator";
 
 import type { Room } from "./room";
 import type { RoomId } from "./room.id";

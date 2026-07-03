@@ -1,9 +1,9 @@
-import { type DomainError, Entity, validator as v } from "@briom/libs/drimion";
+import { Entity, validator as v } from "@drimion";
 
 import type { ModeratorId } from "../../moderator.id";
 
 import type { CreditMovementType } from "./credit-movement.type";
-import { EmptyMovementReasonError } from "./errors";
+import { EmptyMovementReasonError } from "./errors/empty-movement-reason.error";
 
 interface CreditMovementProps {
 	/**
@@ -46,7 +46,7 @@ export class CreditMovement extends Entity<CreditMovementProps> {
 
 	public static override isValidProps(
 		props: CreditMovementProps,
-	): DomainError | undefined {
+	): EmptyMovementReasonError | undefined {
 		if (v.string(props.reason).isEmpty()) return new EmptyMovementReasonError();
 	}
 

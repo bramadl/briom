@@ -1,4 +1,4 @@
-import { type DomainError, ValueObject } from "@briom/libs/drimion";
+import { ValueObject } from "@drimion";
 
 type RoomStateKind = "frozen" | "locked";
 
@@ -51,9 +51,7 @@ export class RoomState extends ValueObject<RoomStateProps> {
 		super(props);
 	}
 
-	public static override isValidProps(
-		_props: RoomStateProps,
-	): DomainError | undefined {
+	public static override isValidProps(_props: RoomStateProps): undefined {
 		// No structural invariant beyond what the type system already
 		// enforces — `kind` is a closed union and `reason`/`occurredAt`
 		// are always supplied by the static factories below.

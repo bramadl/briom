@@ -1,39 +1,29 @@
-import {
-	Aggregate,
-	type DomainError,
-	type IResult,
-	Result,
-	validator as v,
-} from "@briom/libs/drimion";
+import { Aggregate, type IResult, Result, validator as v } from "@drimion";
 
 import type { ModeratorId } from "../moderator/moderator.id";
 
-import { CheckpointId } from "./checkpoint";
-import {
-	CannotConcludeRoomError,
-	CannotFreezeRoomError,
-	CannotLockRoomError,
-	CannotStartDeliberationError,
-	EmptyTitleError,
-	EmptyTopicError,
-	NotAcceptingTurnsError,
-	ParticipantAlreadyInvitedError,
-	ParticipateAfterDeliberationError,
-} from "./errors";
-import {
-	CheckpointGenerated,
-	CheckpointInitiated,
-	DeliberationConcluded,
-	DeliberationStarted,
-	RoomFormed,
-	RoomFrozen,
-	RoomLocked,
-	RoomTopicGenerated,
-	RoomUnfrozen,
-	RoomUnlocked,
-	TurnSlotClaimed,
-	TurnSlotReleased,
-} from "./events";
+import { CheckpointId } from "./checkpoint/checkpoint.id";
+import { CannotConcludeRoomError } from "./errors/cannot-conclude-room.error";
+import { CannotFreezeRoomError } from "./errors/cannot-freeze-room.error";
+import { CannotLockRoomError } from "./errors/cannot-lock-room.error";
+import { CannotStartDeliberationError } from "./errors/cannot-start-deliberation.error";
+import { EmptyTitleError } from "./errors/empty-title.error";
+import { EmptyTopicError } from "./errors/empty-topic.error";
+import { NotAcceptingTurnsError } from "./errors/not-accepting-turns.error";
+import { ParticipantAlreadyInvitedError } from "./errors/participant-already-invited.error";
+import { ParticipateAfterDeliberationError } from "./errors/participate-after-deliberation.error";
+import { CheckpointGenerated } from "./events/checkpoint-generated.event";
+import { CheckpointInitiated } from "./events/checkpoint-initiated.event";
+import { DeliberationConcluded } from "./events/deliberation-concluded.event";
+import { DeliberationStarted } from "./events/deliberation-started.event";
+import { RoomFormed } from "./events/room-formed.event";
+import { RoomFrozen } from "./events/room-frozen.event";
+import { RoomLocked } from "./events/room-locked.event";
+import { RoomUnfrozen } from "./events/room-unfrozen.event";
+import { RoomUnlocked } from "./events/room-unlocked.event";
+import { RoomTopicGenerated } from "./events/topic-generated.event";
+import { TurnSlotClaimed } from "./events/turn-slot-claimed.event";
+import { TurnSlotReleased } from "./events/turn-slot-released.event";
 import type { Participant } from "./participant/participant";
 import type { ParticipantId } from "./participant/participant.id";
 import type { RoomId } from "./room.id";
@@ -161,7 +151,7 @@ export class Room extends Aggregate<RoomProps> {
 
 	public static override isValidProps(
 		props: RoomProps,
-	): DomainError | undefined {
+	): EmptyTitleError | undefined {
 		if (v.string(props.title).isEmpty()) return new EmptyTitleError();
 	}
 
@@ -182,7 +172,7 @@ export class Room extends Aggregate<RoomProps> {
 			| "checkpointIds"
 			| "state"
 		>,
-	): IResult<Room, DomainError> {
+	): IResult<Room, EmptyTitleError> {
 		const fullProps: RoomProps = {
 			...props,
 			activeTurnId: null,
@@ -419,7 +409,7 @@ export class Room extends Aggregate<RoomProps> {
 	 */
 	public uninviteParticipant(
 		participantId: ParticipantId,
-	): IResult<void, DomainError> {
+	): IResult<void, ParticipateAfterDeliberationError> {
 		if (!this.isForming) {
 			return Result.error(new ParticipateAfterDeliberationError());
 		}

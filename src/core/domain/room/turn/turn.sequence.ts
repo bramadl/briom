@@ -1,6 +1,6 @@
-import { ValueObject } from "@briom/libs/drimion";
+import { ValueObject } from "@drimion";
 
-import { NegativeSequenceError } from "./errors";
+import { NegativeSequenceError } from "./errors/negative-sequence.error";
 
 /**
  * @description

@@ -1,13 +1,9 @@
-import {
-	type DomainError,
-	ValueObject,
-	validator as v,
-} from "@briom/libs/drimion";
+import { ValueObject, validator as v } from "@drimion";
 
-import { resolveMediaType, SIZE_LIMIT } from "./attachment.constraints";
 import type { AttachmentContent } from "./attachment.content";
 import { AttachmentMediaType } from "./attachment.media-type";
-import { AttachmentValidationError } from "./errors";
+import { resolveMediaType, SIZE_LIMIT } from "./attachment.policy";
+import { AttachmentValidationError } from "./errors/attachment-validation.error";
 
 interface AttachmentProps {
 	/**
@@ -67,7 +63,7 @@ export class Attachment extends ValueObject<AttachmentProps> {
 
 	public static override isValidProps(
 		props: AttachmentProps,
-	): DomainError | undefined {
+	): AttachmentValidationError | undefined {
 		const resolved = resolveMediaType(props.mimeType);
 
 		if (!resolved) {

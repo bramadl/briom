@@ -1,4 +1,4 @@
-import type { RoomStatus } from "@briom/domain";
+import type { RoomStatus } from "@briom/core/domain";
 
 import type { RoomAttachmentDTO } from "./room-attachment.dto";
 import type { RoomParticipantDTO } from "./room-participant.dto";

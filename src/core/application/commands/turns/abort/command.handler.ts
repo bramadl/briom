@@ -1,18 +1,19 @@
 import {
 	type IRoomRepository,
-	type ITurnAbortSignal,
 	type ITurnRepository,
 	ModeratorId,
 	RoomId,
 	type Turn,
 	TurnId,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
+
+import type { ITurnAbortSignal } from "../../../ports/signals/turn-abort.signal";
 
 import type { AbortTurnCommand, AbortTurnOutput } from "./command";
 

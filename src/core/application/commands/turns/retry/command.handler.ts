@@ -5,16 +5,16 @@ import {
 	RoomId,
 	type Turn,
 	TurnId,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IEventBus,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
-import type { ITurnGenerator } from "../../../ports";
+import type { ITurnGenerator } from "../../../ports/generators/turn.generator";
 
 import type { RetryTurnCommand, RetryTurnOutput } from "./command";
 

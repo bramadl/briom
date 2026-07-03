@@ -23,14 +23,14 @@ import {
 	type TurnSlotClaimedPayload,
 	TurnSlotReleased,
 	type TurnSlotReleasedPayload,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import type {
 	DomainEvent,
 	IEventSubscriberRegistry,
 } from "@briom/libs/drimion/types/event.types";
 import { after } from "next/server";
 
-import type { IRealtimeBroadcaster } from "../ports";
+import type { IRealtimeBroadcaster } from "../ports/broadcasters/realtime.broadcaster";
 
 /**
  * @description
@@ -172,9 +172,12 @@ export class RoomsEventSubscriber {
 			const signal = translate(event);
 			if (!signal) return;
 
+			// all turns are in the following format: `room:{entity}`.
+			const [scope, entity] = signal.event.split(":");
+
 			after(() =>
 				this.broadcaster.broadcast(
-					`moderator:${signal.moderatorId}`,
+					`${scope}:${signal.moderatorId}:${entity}`,
 					signal.event,
 					signal.data,
 				),
@@ -206,7 +209,7 @@ export class RoomsEventSubscriber {
 
 			return {
 				moderatorId: moderatorId.value(),
-				event: "room:checkpoint-initiated",
+				event: this.registry.checkpoint.initiated,
 				data: { roomId: roomId.value(), checkpointId: checkpointId.value() },
 			};
 		};
@@ -218,7 +221,7 @@ export class RoomsEventSubscriber {
 
 			return {
 				moderatorId: moderatorId.value(),
-				event: "room:checkpoint-generated",
+				event: this.registry.checkpoint.generated,
 				data: { roomId: roomId.value(), checkpointId: checkpointId.value() },
 			};
 		};
@@ -230,7 +233,7 @@ export class RoomsEventSubscriber {
 
 			return {
 				moderatorId: moderatorId.value(),
-				event: "room:deliberation-started",
+				event: this.registry.deliberation.started,
 				data: { roomId: roomId.value() },
 			};
 		};
@@ -242,7 +245,7 @@ export class RoomsEventSubscriber {
 
 			return {
 				moderatorId: moderatorId.value(),
-				event: "room:deliberation-concluded",
+				event: this.registry.deliberation.concluded,
 				data: { roomId: roomId.value() },
 			};
 		};

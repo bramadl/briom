@@ -1,10 +1,6 @@
-import {
-	type DomainError,
-	type IResult,
-	ValueObject,
-} from "@briom/libs/drimion";
+import { type IResult, ValueObject } from "@drimion";
 
-import { EmptyPerspectiveError } from "./errors";
+import { EmptyPerspectiveError } from "./errors/empty-perspective.error";
 import type { TurnError } from "./turn.error";
 
 type PendingState = { status: "pending" };
@@ -45,7 +41,7 @@ export class TurnState extends ValueObject<TurnStateProps> {
 
 	public static override isValidProps(
 		props: TurnStateProps,
-	): DomainError | undefined {
+	): EmptyPerspectiveError | undefined {
 		if (props.status === "settled") {
 			if (!props.content || props.content.trim().length === 0) {
 				return new EmptyPerspectiveError();

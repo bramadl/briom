@@ -2,7 +2,7 @@ import type { RoomDTO } from "../.contracts/room.dto";
 
 /**
  * @description
- * Input for `GetRoomQuery`.
+ * Input for `IGetRoomQuery`.
  */
 export interface GetRoomInput {
 	/**
@@ -23,7 +23,7 @@ export interface GetRoomInput {
 
 /**
  * @description
- * Output from `GetRoomQuery`.
+ * Output from `IGetRoomQuery`.
  */
 export interface GetRoomOutput {
 	room: RoomDTO | null;
@@ -31,7 +31,7 @@ export interface GetRoomOutput {
 
 /**
  * @description
- * `GetTurnProposalsQuery` — Application Query Port
+ * `IGetRoomQuery` — Application Query Port
  *
  * Returns the complete denormalized view of a room's
  * deliberation in a single round-trip.
@@ -39,10 +39,23 @@ export interface GetRoomOutput {
  * @see DrizzleGetRoomQuery — infrastructure implementation
  * @see GetRoomHandler — application handler
  */
-export interface GetRoomQuery {
+export interface IGetRoomQuery {
 	/**
 	 * @description
 	 * Executes the query.
 	 */
 	execute(input: GetRoomInput): Promise<GetRoomOutput>;
+}
+
+/**
+ * @description
+ * `GetRoomQuery` — Message class routed through `QueryBus`.
+ *
+ * Mirrors the Command pattern used across the application layer
+ * (`.input` wrapper) so every read and write operation has a single,
+ * consistent entry point via `CommandBus`/`QueryBus` — no handler is
+ * ever called directly by the facade.
+ */
+export class GetRoomQuery {
+	public constructor(public readonly input: GetRoomInput) {}
 }

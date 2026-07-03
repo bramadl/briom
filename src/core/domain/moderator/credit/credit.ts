@@ -1,9 +1,4 @@
-import {
-	type DomainError,
-	type IResult,
-	ValueObject,
-	validator as v,
-} from "@briom/libs/drimion";
+import { type IResult, ValueObject, validator as v } from "@drimion";
 
 import { NegativeCreditError } from "./errors/negative-credit.error";
 
@@ -29,7 +24,7 @@ export class BriomCredit extends ValueObject<BriomCreditProps> {
 
 	public static override isValidProps(
 		props: BriomCreditProps,
-	): DomainError | undefined {
+	): NegativeCreditError | undefined {
 		if (v.number(props.balance).isNegative()) return new NegativeCreditError();
 	}
 
@@ -65,7 +60,7 @@ export class BriomCredit extends ValueObject<BriomCreditProps> {
 	 * Caller must verify `canDeduct()` first,
 	 * or handle `NegativeCreditError`.
 	 */
-	public deduct(amount: number): IResult<BriomCredit, DomainError> {
+	public deduct(amount: number): IResult<BriomCredit, NegativeCreditError> {
 		return BriomCredit.create({ balance: this.balance - amount });
 	}
 
@@ -73,7 +68,7 @@ export class BriomCredit extends ValueObject<BriomCreditProps> {
 	 * @description
 	 * Returns a new BriomCredit with `amount` added.
 	 */
-	public topUp(amount: number): IResult<BriomCredit, DomainError> {
+	public topUp(amount: number): IResult<BriomCredit, NegativeCreditError> {
 		return BriomCredit.create({ balance: this.balance + amount });
 	}
 }

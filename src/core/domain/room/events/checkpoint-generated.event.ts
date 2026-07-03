@@ -1,4 +1,4 @@
-import { BaseDomainEvent } from "@briom/libs/drimion";
+import { BaseDomainEvent } from "@drimion";
 
 import type { CheckpointId } from "../checkpoint/checkpoint.id";
 

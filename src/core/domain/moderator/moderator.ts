@@ -1,19 +1,12 @@
-import {
-	Aggregate,
-	type DomainError,
-	type IResult,
-	Result,
-	validator as v,
-} from "@briom/libs/drimion";
+import { Aggregate, type IResult, Result, validator as v } from "@drimion";
 
-import { BriomCredit, InsufficientCreditError } from "./credit";
-
-import {
-	InsufficientNameError,
-	InvalidAvatarError,
-	InvalidEmailError,
-} from "./errors";
-import { ModeratorRegistered } from "./events";
+import { BriomCredit } from "./credit/credit";
+import { InsufficientCreditError } from "./credit/errors/insufficient-credit.error";
+import type { NegativeCreditError } from "./credit/errors/negative-credit.error";
+import { InsufficientNameError } from "./errors/insufficient-name.error";
+import { InvalidAvatarError } from "./errors/invalid-avatar.error";
+import { InvalidEmailError } from "./errors/invalid-email.error";
+import { ModeratorRegistered } from "./events/moderator-registered.event";
 import type { ModeratorId } from "./moderator.id";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -65,7 +58,11 @@ export class Moderator extends Aggregate<ModeratorProps> {
 
 	public static override isValidProps(
 		props: ModeratorProps,
-	): DomainError | undefined {
+	):
+		| InvalidAvatarError
+		| InvalidEmailError
+		| InsufficientNameError
+		| undefined {
 		const { avatar, email, name } = props;
 		if (v.isString(avatar) && !v.string(avatar).match(URL_REGEX)) {
 			return new InvalidAvatarError();
@@ -85,7 +82,10 @@ export class Moderator extends Aggregate<ModeratorProps> {
 	 */
 	public static register(
 		props: Omit<ModeratorProps, "credit">,
-	): IResult<Moderator, DomainError> {
+	): IResult<
+		Moderator,
+		InvalidAvatarError | InvalidEmailError | InsufficientNameError
+	> {
 		const fullProps: ModeratorProps = {
 			...props,
 			credit: BriomCredit.initial(),
@@ -159,7 +159,9 @@ export class Moderator extends Aggregate<ModeratorProps> {
 	 * Fails if the balance cannot cover the requested amount.
 	 * For free models, `amount` is always 0 — this will always succeed.
 	 */
-	public deductCredit(amount: number): IResult<true, DomainError> {
+	public deductCredit(
+		amount: number,
+	): IResult<true, InsufficientCreditError | NegativeCreditError> {
 		if (!this.credit.canDeduct(amount)) {
 			return Result.error(new InsufficientCreditError());
 		}
@@ -175,7 +177,7 @@ export class Moderator extends Aggregate<ModeratorProps> {
 	 * @description
 	 * Adds BCr to the Moderator's balance after a successful top-up.
 	 */
-	public topUpCredit(amount: number): IResult<true, DomainError> {
+	public topUpCredit(amount: number): IResult<true, NegativeCreditError> {
 		const updated = this.credit.topUp(amount);
 		if (updated.isError()) return Result.error(updated.error());
 

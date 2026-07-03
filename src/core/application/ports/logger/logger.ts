@@ -14,11 +14,6 @@ export type LogContext = Record<string, unknown>;
  * states, provider failures); IAnalyticsTracker is for understanding
  * *user* behavior. They will likely point at different tools even
  * though both eventually route through observability infra.
- *
- * Implementations should be effectively synchronous / non-blocking
- * from the caller's perspective (e.g. pino writes to stdout immediately;
- * Sentry's SDK queues internally) — unlike IAnalyticsTracker, callers
- * are not expected to schedule these via after().
  */
 export interface ILogger {
 	/**

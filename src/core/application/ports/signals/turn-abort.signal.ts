@@ -1,4 +1,4 @@
-import type { TurnId } from "./turn.id";
+import type { TurnId } from "@briom/core/domain";
 
 /**
  * @description
@@ -6,11 +6,6 @@ import type { TurnId } from "./turn.id";
  * participant turn. Deliberately NOT part of `ITurnRepository` — this
  * is infra-level cross-process signaling (App Layer command → running
  * Inngest job), not aggregate persistence.
- *
- * Also NOT a `TurnProps` field — `TurnState`'s discriminated union has
- * no "aborting" variant; only `ExecuteParticipantTurn` (which owns the
- * loop) is authorized to call `turn.fail(TurnError.aborted())` once it
- * observes this signal.
  */
 export interface ITurnAbortSignal {
 	/**

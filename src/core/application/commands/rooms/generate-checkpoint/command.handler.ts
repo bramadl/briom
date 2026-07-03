@@ -13,17 +13,18 @@ import {
 	type Room,
 	RoomId,
 	type Turn,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IEventBus,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
-import type { ILLMGateway, Message, UsageInfo } from "../../../ports";
-import type { TranscriptorRenderer } from "../../.services";
+import type { ILLMGateway } from "../../../ports/gateways/llm/llm.gateway";
+import type { Message, UsageInfo } from "../../../ports/gateways/llm/llm.ref";
+import type { TranscriptorRenderer } from "../../.services/transcriptor-renderer";
 
 import type {
 	GenerateCheckpointCommand,

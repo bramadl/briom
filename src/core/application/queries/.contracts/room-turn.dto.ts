@@ -1,4 +1,4 @@
-import type { TurnIntent } from "@briom/domain";
+import type { TurnIntent } from "@briom/core/domain";
 
 import type { RoomAttachmentDTO } from "./room-attachment.dto";
 import type { RoomParticipantDTO } from "./room-participant.dto";

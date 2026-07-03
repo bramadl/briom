@@ -1,4 +1,4 @@
-import type { RoomId } from "@briom/domain";
+import type { RoomId } from "@briom/core/domain";
 
 /**
  * @description

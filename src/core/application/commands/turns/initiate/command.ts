@@ -1,4 +1,4 @@
-import type { AttachmentContent, TurnIntent } from "@briom/domain";
+import type { AttachmentContent, TurnIntent } from "@briom/core/domain";
 
 /**
  * @description

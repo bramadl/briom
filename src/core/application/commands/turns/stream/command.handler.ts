@@ -19,24 +19,22 @@ import {
 	TurnId,
 	type TurnIntent,
 	TurnTokenAccumulator,
-} from "@briom/domain";
+} from "@briom/core/domain";
 import {
 	ApplicationError,
 	type ICommand,
 	type IEventBus,
 	type IResult,
 	Result,
-} from "@briom/libs/drimion";
+} from "@drimion";
 
-import type {
-	ICheckpointGenerator,
-	IFxRateGateway,
-	ILLMGateway,
-	ILogger,
-	Message,
-	UsageInfo,
-} from "../../../ports";
-import type { StreamConsumer, TranscriptorRenderer } from "../../.services";
+import type { IFxRateGateway } from "../../../ports/gateways/fx-rate/fx-rate.gateway";
+import type { ILLMGateway } from "../../../ports/gateways/llm/llm.gateway";
+import type { Message, UsageInfo } from "../../../ports/gateways/llm/llm.ref";
+import type { ICheckpointGenerator } from "../../../ports/generators/checkpoint.generator";
+import type { ILogger } from "../../../ports/logger/logger";
+import type { StreamConsumer } from "../../.services/stream-consumer";
+import type { TranscriptorRenderer } from "../../.services/transcriptor-renderer";
 
 import type { StreamTurnCommand, StreamTurnOutput } from "./command";
 
@@ -307,7 +305,7 @@ export class StreamTurnHandler
 	): Promise<IResult<void, ApplicationError>> {
 		const deductionAmount = CreditDeductionPolicy.calculate(
 			usage.costUsd,
-			this.fxRateGateway.convert("USD", "IDR"),
+			await this.fxRateGateway.convert("USD", "IDR"),
 		);
 
 		const moderator = await this.moderatorRepository.findById(

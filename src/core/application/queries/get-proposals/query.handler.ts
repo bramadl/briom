@@ -3,8 +3,8 @@ import {
 	type ITurnRepository,
 	ProposalGenerator,
 	RoomId,
-} from "@briom/domain";
-import { type IQuery, type IResult, Result } from "@briom/libs/drimion";
+} from "@briom/core/domain";
+import { type IQuery, type IResult, Result } from "@drimion";
 
 import type { GetProposalsOutput, GetProposalsQuery } from "./query";
 

@@ -1,12 +1,13 @@
 import type {
 	BaseRoomDomainEventPayload,
 	BaseTurnEventPayload,
-} from "@briom/domain";
-import type { DomainEvent, EventSubscriber } from "@briom/libs/drimion";
+} from "@briom/core/domain";
 import type { IEventSubscriberRegistry } from "@briom/libs/drimion/types/event.types";
+import type { DomainEvent, EventSubscriber } from "@drimion";
 import { after } from "next/server";
 
-import type { AnalyticsEvent, IAnalyticsTracker } from "../ports/analytics";
+import type { AnalyticsEvent } from "../ports/analytics/analytics.event";
+import type { IAnalyticsTracker } from "../ports/analytics/analytics.tracker";
 
 /**
  * @description
