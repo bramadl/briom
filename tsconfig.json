@@ -30,6 +30,9 @@
 			"@drimion": ["./src/libs/drimion"],
 			"@drimion/*": ["./src/libs/drimion/*"],
 
+			// Front End: Scoped Modules
+			"@briom/(auth)/*": ["./src/app/(auth)/*"],
+
 			// Front End: Generic
 			"@briom/animated/*": ["./src/components/animated/*"],
 			"@briom/components/*": ["./src/components/*"],
