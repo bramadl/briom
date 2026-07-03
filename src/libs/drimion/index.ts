@@ -27,6 +27,7 @@ export { Iterator } from "./helpers";
 export {
 	ApplicationError,
 	type ApplicationErrorType,
+	assertBus,
 	CommandBus,
 	ContainerBuilder,
 	DomainClasses,

@@ -14,6 +14,10 @@ type Constructor = new (...args: any[]) => any;
  * Thin message router for commands.
  */
 export class CommandBus {
+	has(CommandOrQueryClass: Constructor): boolean {
+		return this.handlers.has(CommandOrQueryClass);
+	}
+
 	private readonly handlers = new Map<Constructor, ICommand<any, any, any>>();
 
 	/**

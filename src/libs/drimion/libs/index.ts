@@ -2,6 +2,7 @@ export {
 	ApplicationError,
 	type ApplicationErrorType,
 } from "./application-error";
+export { assertBus } from "./bus-assertion";
 export { CommandBus } from "./command-bus";
 export { ContainerBuilder } from "./container";
 export { UUID } from "./crypto";
