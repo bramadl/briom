@@ -1,9 +1,11 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Unknown-type ahead. */
 
-import { DomainError } from "../libs/domain-error";
+import type { AnyObject } from "@drimion/types";
+
 import { Result } from "../libs/result";
 import type { ICommand } from "../types/command.types";
 import type { IResult } from "../types/result.types";
+import { ApplicationError } from "./application-error";
 
 type Constructor = new (...args: any[]) => any;
 
@@ -18,7 +20,7 @@ export class CommandBus {
 	 * @description
 	 * Register a handler for a specific command class.
 	 */
-	register<TCommand, TOutput, E = DomainError>(
+	register<TCommand, TOutput, E = ApplicationError>(
 		CommandClass: Constructor,
 		handler: ICommand<TCommand, TOutput, E>,
 	): this {
@@ -30,33 +32,33 @@ export class CommandBus {
 	 * @description
 	 * Route a command instance to its registered handler.
 	 */
-	async execute<TOutput, E = DomainError>(
+	async execute<TOutput, E = ApplicationError, M = AnyObject>(
 		command: any,
-	): Promise<IResult<TOutput, E>> {
+	): Promise<IResult<TOutput, E, M>> {
 		if (command === null || typeof command !== "object") {
 			return Result.error(
-				new DomainError("Command must be an object instance") as unknown as E,
-			) as IResult<TOutput, E>;
+				ApplicationError.unexpected(
+					"Command must be an object instance",
+				) as unknown as E,
+			) as IResult<TOutput, E, M>;
 		}
 
 		const Handler = this.handlers.get(command.constructor as Constructor);
 
 		if (!Handler) {
 			return Result.error(
-				new DomainError(
+				ApplicationError.unexpected(
 					`No handler registered for "${command.constructor?.name ?? "Unknown"}"`,
 				) as unknown as E,
-			) as IResult<TOutput, E>;
+			) as IResult<TOutput, E, M>;
 		}
 
 		try {
-			return (await Handler.execute(command)) as IResult<TOutput, E>;
+			return (await Handler.execute(command)) as IResult<TOutput, E, M>;
 		} catch (err) {
 			return Result.error(
-				new DomainError("Command execution failed", {
-					cause: err,
-				}) as unknown as E,
-			) as IResult<TOutput, E>;
+				ApplicationError.unexpected((err as Error).message) as unknown as E,
+			) as IResult<TOutput, E, M>;
 		}
 	}
 }
