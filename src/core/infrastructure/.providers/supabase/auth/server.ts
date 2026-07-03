@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cookies } from "next/headers";
 import { type NextRequest, NextResponse } from "next/server";
 
 /**
@@ -10,10 +11,16 @@ import { type NextRequest, NextResponse } from "next/server";
  * request cookies, not from the key itself, so RLS policies still
  * evaluate against `authenticated` for a signed-in user.
  */
+export async function createAuthServerClient(): Promise<SupabaseClient>;
 export async function createAuthServerClient(
 	request: NextRequest,
 	response: NextResponse,
-): Promise<[SupabaseClient, NextResponse]> {
+): Promise<[SupabaseClient, NextResponse]>;
+
+export async function createAuthServerClient(
+	request?: NextRequest,
+	response?: NextResponse,
+): Promise<SupabaseClient | [SupabaseClient, NextResponse]> {
 	const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 	const supabasePublishableKey =
 		process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -24,6 +31,23 @@ export async function createAuthServerClient(
 		);
 	}
 
+	if (!request || !response) {
+		const cookieStore = await cookies();
+		return createServerClient(supabaseUrl, supabasePublishableKey, {
+			cookies: {
+				getAll: () => cookieStore.getAll(),
+				setAll(cookiesToSet) {
+					try {
+						cookiesToSet.forEach(({ name, value, options }) => {
+							void cookieStore.set(name, value, options);
+						});
+					} catch {}
+				},
+			},
+		});
+	}
+
+	let activeResponse = response;
 	const supabase = createServerClient(supabaseUrl, supabasePublishableKey, {
 		cookies: {
 			getAll: () => request.cookies.getAll(),
@@ -32,17 +56,17 @@ export async function createAuthServerClient(
 					request.cookies.set(name, value);
 				});
 
-				response = NextResponse.next({ request });
+				activeResponse = NextResponse.next({ request });
 				cookiesToSet.forEach(({ name, value, options }) => {
-					response.cookies.set(name, value, options);
+					activeResponse.cookies.set(name, value, options);
 				});
 
 				Object.entries(headers).forEach(([key, value]) => {
-					response.headers.set(key, value);
+					activeResponse.headers.set(key, value);
 				});
 			},
 		},
 	});
 
-	return [supabase, response];
+	return [supabase, activeResponse];
 }

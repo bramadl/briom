@@ -6,6 +6,7 @@ import {
 	FormRoomHandler,
 	GenerateCheckpointHandler,
 	GenerateTopicHandler,
+	GetModeratorHandler,
 	GetProposalsHandler,
 	GetRoomHandler,
 	GetRoomsHandler,
@@ -207,6 +208,11 @@ export const handlersSlice = servicesSlice
 	// Queries
 	// =========================================================================
 
+	.add("handler:query:get-moderator", (r) => {
+		const query = r["query:get-moderator"];
+		return new GetModeratorHandler(query);
+	})
+
 	.add("handler:query:get-proposals", (r) => {
 		const roomRepository = r["repository:room"];
 		const turnRepository = r["repository:turn"];
@@ -221,7 +227,9 @@ export const handlersSlice = servicesSlice
 
 	.add("handler:query:get-rooms", (r) => {
 		const query = r["query:get-rooms"];
-		return new GetRoomsHandler(query);
+		const moderatorRepository = r["repository:moderator"];
+
+		return new GetRoomsHandler(query, moderatorRepository);
 	})
 
 	.add("handler:query:get-turn", (r) => {

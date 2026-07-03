@@ -75,12 +75,16 @@ export * from "./ports/unit-of-works/room.unit-of-work";
 // Queries (& contracts)
 // =====================================================================
 
+export * from "./queries/.contracts/moderator.dto";
 export * from "./queries/.contracts/room.dto";
 export * from "./queries/.contracts/room-attachment.dto";
 export * from "./queries/.contracts/room-overview.dto";
 export * from "./queries/.contracts/room-participant.dto";
 export * from "./queries/.contracts/room-turn.dto";
 export * from "./queries/.contracts/turn-proposal.dto";
+
+export * from "./queries/get-moderator/query";
+export * from "./queries/get-moderator/query.handler";
 
 export * from "./queries/get-proposals/query";
 export * from "./queries/get-proposals/query.handler";

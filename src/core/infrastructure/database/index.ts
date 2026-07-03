@@ -1,3 +1,4 @@
+export * from "./queries/drizzle.get-moderator.query";
 export * from "./queries/drizzle.get-room.query";
 export * from "./queries/drizzle.get-rooms.query";
 export * from "./queries/drizzle.get-turn.query";

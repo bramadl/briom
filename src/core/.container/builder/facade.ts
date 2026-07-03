@@ -1,34 +1,53 @@
 import {
 	AbortTurnCommand,
 	type AbortTurnInput,
+	type AbortTurnOutput,
 	AcceptProposalCommand,
 	type AcceptProposalInput,
+	type AcceptProposalOutput,
 	CloseRoomCommand,
 	type CloseRoomInput,
+	type CloseRoomOutput,
 	ConcludeRoomCommand,
 	type ConcludeRoomInput,
+	type ConcludeRoomOutput,
 	FormRoomCommand,
 	type FormRoomInput,
+	type FormRoomOutput,
+	type GetModeratorInput,
+	type GetModeratorOutput,
+	GetModeratorQuery,
 	type GetProposalsInput,
+	type GetProposalsOutput,
 	GetProposalsQuery,
 	type GetRoomInput,
+	type GetRoomOutput,
 	GetRoomQuery,
 	type GetRoomsInput,
+	type GetRoomsMetadata,
+	type GetRoomsOutput,
 	GetRoomsQuery,
 	type GetTurnInput,
+	type GetTurnOutput,
 	GetTurnQuery,
 	InitiateTurnCommand,
 	type InitiateTurnInput,
+	type InitiateTurnOutput,
 	InviteParticipantCommand,
 	type InviteParticipantInput,
+	type InviteParticipantOutput,
 	RegisterModeratorCommand,
 	type RegisterModeratorInput,
+	type RegisterModeratorOutput,
 	RenameRoomCommand,
 	type RenameRoomInput,
+	type RenameRoomOutput,
 	RetryTurnCommand,
 	type RetryTurnInput,
+	type RetryTurnOutput,
 	UninviteParticipantCommand,
 	type UninviteParticipantInput,
+	type UninviteParticipantOutput,
 } from "@briom/core/app";
 
 import { busesSlice } from "./slices/buses.slice";
@@ -59,53 +78,73 @@ export function facadeBriom(container: typeof resolvedContainer) {
 
 	return {
 		moderators: {
+			profile: (input: GetModeratorInput) =>
+				queryBus.execute<GetModeratorOutput, never>(
+					new GetModeratorQuery(input),
+				),
+
 			register: (input: RegisterModeratorInput) =>
-				commandBus.execute(new RegisterModeratorCommand(input)),
+				commandBus.execute<RegisterModeratorOutput>(
+					new RegisterModeratorCommand(input),
+				),
 		},
 
 		rooms: {
 			close: (input: CloseRoomInput) =>
-				commandBus.execute(new CloseRoomCommand(input)),
+				commandBus.execute<CloseRoomOutput>(new CloseRoomCommand(input)),
 
 			conclude: (input: ConcludeRoomInput) =>
-				commandBus.execute(new ConcludeRoomCommand(input)),
+				commandBus.execute<ConcludeRoomOutput>(new ConcludeRoomCommand(input)),
 
 			form: (input: FormRoomInput) =>
-				commandBus.execute(new FormRoomCommand(input)),
+				commandBus.execute<FormRoomOutput>(new FormRoomCommand(input)),
 
 			participants: {
 				invite: (input: InviteParticipantInput) =>
-					commandBus.execute(new InviteParticipantCommand(input)),
+					commandBus.execute<InviteParticipantOutput>(
+						new InviteParticipantCommand(input),
+					),
 
 				uninvite: (input: UninviteParticipantInput) =>
-					commandBus.execute(new UninviteParticipantCommand(input)),
+					commandBus.execute<UninviteParticipantOutput>(
+						new UninviteParticipantCommand(input),
+					),
 			},
 
 			rename: (input: RenameRoomInput) =>
-				commandBus.execute(new RenameRoomCommand(input)),
+				commandBus.execute<RenameRoomOutput>(new RenameRoomCommand(input)),
 
-			get: (input: GetRoomInput) => queryBus.execute(new GetRoomQuery(input)),
+			get: (input: GetRoomInput) =>
+				queryBus.execute<GetRoomOutput, never>(new GetRoomQuery(input)),
 
-			all: (input: GetRoomsInput) => queryBus.execute(new GetRoomsQuery(input)),
+			all: (input: GetRoomsInput) =>
+				queryBus.execute<GetRoomsOutput, never, GetRoomsMetadata>(
+					new GetRoomsQuery(input),
+				),
 		},
 
 		turns: {
 			abort: (input: AbortTurnInput) =>
-				commandBus.execute(new AbortTurnCommand(input)),
+				commandBus.execute<AbortTurnOutput>(new AbortTurnCommand(input)),
 
 			acceptProposal: (input: AcceptProposalInput) =>
-				commandBus.execute(new AcceptProposalCommand(input)),
+				commandBus.execute<AcceptProposalOutput>(
+					new AcceptProposalCommand(input),
+				),
 
 			initiate: (input: InitiateTurnInput) =>
-				commandBus.execute(new InitiateTurnCommand(input)),
+				commandBus.execute<InitiateTurnOutput>(new InitiateTurnCommand(input)),
 
 			retry: (input: RetryTurnInput) =>
-				commandBus.execute(new RetryTurnCommand(input)),
+				commandBus.execute<RetryTurnOutput>(new RetryTurnCommand(input)),
 
-			get: (input: GetTurnInput) => queryBus.execute(new GetTurnQuery(input)),
+			get: (input: GetTurnInput) =>
+				queryBus.execute<GetTurnOutput, never>(new GetTurnQuery(input)),
 
 			proposals: (input: GetProposalsInput) =>
-				queryBus.execute(new GetProposalsQuery(input)),
+				queryBus.execute<GetProposalsOutput, never>(
+					new GetProposalsQuery(input),
+				),
 		},
 	} as const;
 }

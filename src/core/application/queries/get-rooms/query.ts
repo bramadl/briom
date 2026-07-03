@@ -9,8 +9,7 @@ export interface GetRoomsInput {
 	 * @description
 	 * The ID of the moderator requesting this resource.
 	 *
-	 * Used for authorization (Auth-Z) checks.
-	 * Format: UUID v4. Used
+	 * Format: UUID v4. Used for authorization (Auth-Z) checks.
 	 */
 	moderatorId: string;
 }
@@ -21,6 +20,16 @@ export interface GetRoomsInput {
  */
 export interface GetRoomsOutput {
 	rooms: RoomOverviewDTO[];
+}
+
+/**
+ * @description
+ * Additional metadata information of the output.
+ */
+export interface GetRoomsMetadata {
+	canOpenMoreRoom: boolean;
+	quotaLeft: number;
+	total: number;
 }
 
 /**

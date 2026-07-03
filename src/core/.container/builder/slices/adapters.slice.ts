@@ -13,6 +13,7 @@ import {
 import {
 	DrizzleCheckpointRepository,
 	DrizzleCreditMovementRepository,
+	DrizzleGetModeratorQuery,
 	DrizzleGetRoomQuery,
 	DrizzleGetRoomsQuery,
 	DrizzleGetTurnQuery,
@@ -115,6 +116,11 @@ export const adaptersSlice = providersSlice
 	// ==========================================================================
 	// Database: Queries
 	// ==========================================================================
+
+	.add("query:get-moderator", (r) => {
+		const db = r.drizzle;
+		return new DrizzleGetModeratorQuery(db);
+	})
 
 	.add("query:get-room", (r) => {
 		const db = r.drizzle;
