@@ -4,13 +4,14 @@
  * Future-enablement: Some events are currently being turned off (unused).
  */
 import {
-	type BaseRoomDomainEventPayload,
 	CheckpointGenerated,
 	type CheckpointGeneratedPayload,
 	CheckpointInitiated,
 	type CheckpointInitiatedPayload,
 	DeliberationConcluded,
+	type DeliberationConcludedPayload,
 	DeliberationStarted,
+	type DeliberationStartedPayload,
 	RoomFrozen,
 	type RoomFrozenPayload,
 	RoomLocked,
@@ -18,7 +19,9 @@ import {
 	RoomTopicGenerated,
 	type RoomTopicGeneratedPayload,
 	RoomUnfrozen,
+	type RoomUnfrozenPayload,
 	RoomUnlocked,
+	type RoomUnlockedPayload,
 	TurnSlotClaimed,
 	type TurnSlotClaimedPayload,
 	TurnSlotReleased,
@@ -226,7 +229,7 @@ export class RoomsEventSubscriber {
 			};
 		};
 
-	private onDeliberationStarted: RealtimeTranslator<BaseRoomDomainEventPayload> =
+	private onDeliberationStarted: RealtimeTranslator<DeliberationStartedPayload> =
 		(event) => {
 			if (!event.payload) return null;
 			const { moderatorId, roomId } = event.payload;
@@ -238,7 +241,7 @@ export class RoomsEventSubscriber {
 			};
 		};
 
-	private onDeliberationConcluded: RealtimeTranslator<BaseRoomDomainEventPayload> =
+	private onDeliberationConcluded: RealtimeTranslator<DeliberationConcludedPayload> =
 		(event) => {
 			if (!event.payload) return null;
 			const { moderatorId, roomId } = event.payload;
@@ -261,9 +264,7 @@ export class RoomsEventSubscriber {
 		};
 	};
 
-	private onRoomUnfrozen: RealtimeTranslator<BaseRoomDomainEventPayload> = (
-		event,
-	) => {
+	private onRoomUnfrozen: RealtimeTranslator<RoomUnfrozenPayload> = (event) => {
 		if (!event.payload) return null;
 		const { moderatorId, roomId } = event.payload;
 
@@ -285,7 +286,7 @@ export class RoomsEventSubscriber {
 		};
 	};
 
-	private onRoomUnlocked: RealtimeTranslator<RoomLockedPayload> = (event) => {
+	private onRoomUnlocked: RealtimeTranslator<RoomUnlockedPayload> = (event) => {
 		if (!event.payload) return null;
 		const { moderatorId, roomId } = event.payload;
 

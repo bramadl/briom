@@ -11,10 +11,13 @@ import type { BaseRoomDomainEventPayload } from "./base.event";
  * metadata (see `RoomTopicGenerated`) that describes an already-started
  * deliberation, not a precondition for starting one.
  */
-export class DeliberationStarted extends BaseDomainEvent<BaseRoomDomainEventPayload> {
+export interface DeliberationStartedPayload
+	extends BaseRoomDomainEventPayload {}
+
+export class DeliberationStarted extends BaseDomainEvent<DeliberationStartedPayload> {
 	public static readonly type = "room:deliberation-started" as const;
 
-	public constructor(aggregateId: string, payload: BaseRoomDomainEventPayload) {
+	public constructor(aggregateId: string, payload: DeliberationStartedPayload) {
 		super(DeliberationStarted.type, aggregateId, "Room", payload);
 	}
 }

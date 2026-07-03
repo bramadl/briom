@@ -1,6 +1,26 @@
-import type {
-	BaseRoomDomainEventPayload,
-	BaseTurnEventPayload,
+import {
+	CheckpointGenerated,
+	CheckpointInitiated,
+	DeliberationConcluded,
+	DeliberationStarted,
+	RoomFrozen,
+	type RoomFrozenPayload,
+	RoomLocked,
+	RoomTopicGenerated,
+	type RoomTopicGeneratedPayload,
+	RoomUnfrozen,
+	RoomUnlocked,
+	TurnAbandoned,
+	TurnFailed,
+	type TurnFailedPayload,
+	TurnInitiated,
+	TurnRetried,
+	TurnSettled,
+	type TurnSettledPayload,
+	TurnSlotClaimed,
+	TurnSlotReleased,
+	TurnStreamStarted,
+	TurnTokenAccumulated,
 } from "@briom/core/domain";
 import type { IEventSubscriberRegistry } from "@briom/libs/drimion/types/event.types";
 import type { DomainEvent, EventSubscriber } from "@drimion";
@@ -33,6 +53,42 @@ type AnalyticsTranslator<TPayload> = (
 export class AnalyticsEventSubscriber {
 	public constructor(private readonly tracker: IAnalyticsTracker) {}
 
+	private registry = {
+		topicGenerated: RoomTopicGenerated.type,
+
+		checkpoint: {
+			initiated: CheckpointInitiated.type,
+			generated: CheckpointGenerated.type,
+		},
+
+		deliberation: {
+			started: DeliberationStarted.type,
+			concluded: DeliberationConcluded.type,
+		},
+
+		room: {
+			frozen: RoomFrozen.type,
+			unfrozen: RoomUnfrozen.type,
+			locked: RoomLocked.type,
+			unlocked: RoomUnlocked.type,
+		},
+
+		turnSlot: {
+			claimed: TurnSlotClaimed.type,
+			released: TurnSlotReleased.type,
+		},
+
+		turns: {
+			abandoned: TurnAbandoned.type,
+			failed: TurnFailed.type,
+			initiated: TurnInitiated.type,
+			retried: TurnRetried.type,
+			settled: TurnSettled.type,
+			streamStarted: TurnStreamStarted.type,
+			tokenAccumulated: TurnTokenAccumulated.type,
+		},
+	} as const;
+
 	/**
 	 * @description
 	 * Registers every translator this subscriber knows about against the
@@ -40,14 +96,16 @@ export class AnalyticsEventSubscriber {
 	 * might publish these event types runs.
 	 */
 	public register(eventBus: IEventSubscriberRegistry): void {
-		eventBus.subscribe(
-			"room:topic-generated",
-			this.forward(this.translateRoomTopicGenerated),
-		);
+		const {
+			topicGenerated,
+			room: { frozen },
+			turns: { settled, failed },
+		} = this.registry;
 
-		eventBus.subscribe("room:frozen", this.forward(this.translateRoomFrozen));
-		eventBus.subscribe("turn:settled", this.forward(this.translateTurnSettled));
-		eventBus.subscribe("turn:failed", this.forward(this.translateTurnFailed));
+		eventBus.subscribe(topicGenerated, this.forward(this.onTopicGenerated));
+		eventBus.subscribe(frozen, this.forward(this.onRoomFrozen));
+		eventBus.subscribe(settled, this.forward(this.onTurnSettled));
+		eventBus.subscribe(failed, this.forward(this.onTurnFailed));
 	}
 
 	/**
@@ -75,17 +133,18 @@ export class AnalyticsEventSubscriber {
 	 * translator's generic to that specific payload type once it exists,
 	 * to pull in properties worth tracking beyond the base shape.
 	 */
-	private translateRoomTopicGenerated: AnalyticsTranslator<BaseRoomDomainEventPayload> =
-		(event) => {
-			if (!event.payload) return null;
+	private onTopicGenerated: AnalyticsTranslator<RoomTopicGeneratedPayload> = (
+		event,
+	) => {
+		if (!event.payload) return null;
 
-			return {
-				name: "room_topic_generated",
-				distinctId: event.payload.moderatorId.value(),
-				properties: { roomId: event.payload.roomId.value() },
-				occurredAt: event.occurredAt,
-			};
+		return {
+			name: this.registry.topicGenerated,
+			distinctId: event.payload.moderatorId.value(),
+			properties: { roomId: event.payload.roomId.value() },
+			occurredAt: event.occurredAt,
 		};
+	};
 
 	/**
 	 * @description
@@ -94,30 +153,27 @@ export class AnalyticsEventSubscriber {
 	 * ends up carrying a `reason` field, add it to properties once that
 	 * type exists.
 	 */
-	private translateRoomFrozen: AnalyticsTranslator<BaseRoomDomainEventPayload> =
-		(event) => {
-			if (!event.payload) return null;
+	private onRoomFrozen: AnalyticsTranslator<RoomFrozenPayload> = (event) => {
+		if (!event.payload) return null;
 
-			return {
-				name: "room_frozen",
-				distinctId: event.payload.moderatorId.value(),
-				properties: { roomId: event.payload.roomId.value() },
-				occurredAt: event.occurredAt,
-			};
+		return {
+			name: this.registry.room.frozen,
+			distinctId: event.payload.moderatorId.value(),
+			properties: { roomId: event.payload.roomId.value() },
+			occurredAt: event.occurredAt,
 		};
+	};
 
 	/**
 	 * @description
 	 * Turn-level — attributed by roomId, not moderatorId, since Turn
 	 * doesn't carry moderator identity by design (see class doc).
 	 */
-	private translateTurnSettled: AnalyticsTranslator<BaseTurnEventPayload> = (
-		event,
-	) => {
+	private onTurnSettled: AnalyticsTranslator<TurnSettledPayload> = (event) => {
 		if (!event.payload) return null;
 
 		return {
-			name: "turn_settled",
+			name: this.registry.turns.settled,
 			distinctId: event.payload.roomId.value(),
 			properties: { turnId: event.payload.turnId.value() },
 			occurredAt: event.occurredAt,
@@ -125,15 +181,14 @@ export class AnalyticsEventSubscriber {
 	};
 
 	/**
-	 * @description Same attribution reasoning as translateTurnSettled.
+	 * @description
+	 * Same attribution reasoning as onTurnSettled.
 	 */
-	private translateTurnFailed: AnalyticsTranslator<BaseTurnEventPayload> = (
-		event,
-	) => {
+	private onTurnFailed: AnalyticsTranslator<TurnFailedPayload> = (event) => {
 		if (!event.payload) return null;
 
 		return {
-			name: "turn_failed",
+			name: this.registry.turns.failed,
 			distinctId: event.payload.roomId.value(),
 			properties: { turnId: event.payload.turnId.value() },
 			occurredAt: event.occurredAt,

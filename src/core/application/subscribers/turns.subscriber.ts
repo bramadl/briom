@@ -164,7 +164,7 @@ export class TurnsEventSubscriber {
 		const { roomId, turnId, error } = event.payload;
 
 		return {
-			event: this.registry.failed,
+			event: this.registry.abandoned,
 			data: {
 				roomId: roomId.value(),
 				turnId: turnId.value(),
@@ -182,7 +182,7 @@ export class TurnsEventSubscriber {
 		if (authorType === "moderator") return null;
 
 		return {
-			event: this.registry.failed,
+			event: this.registry.initiated,
 			data: {
 				roomId: roomId.value(),
 				turnId: turnId.value(),
@@ -208,7 +208,7 @@ export class TurnsEventSubscriber {
 		const { roomId, turnId } = event.payload;
 
 		return {
-			event: this.registry.failed,
+			event: this.registry.streamStarted,
 			data: { roomId: roomId.value(), turnId: turnId.value() },
 		};
 	};
