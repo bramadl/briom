@@ -23,14 +23,14 @@ export * from "./commands/rooms/generate-checkpoint/command.handler";
 export * from "./commands/rooms/generate-topic/command";
 export * from "./commands/rooms/generate-topic/command.handler";
 
-export * from "./commands/rooms/participant/invite/command";
-export * from "./commands/rooms/participant/invite/command.handler";
-
-export * from "./commands/rooms/participant/uninvite/command";
-export * from "./commands/rooms/participant/uninvite/command.handler";
+export * from "./commands/rooms/invite-participant/command";
+export * from "./commands/rooms/invite-participant/command.handler";
 
 export * from "./commands/rooms/rename/command";
 export * from "./commands/rooms/rename/command.handler";
+
+export * from "./commands/rooms/uninvite-participant/command";
+export * from "./commands/rooms/uninvite-participant/command.handler";
 
 export * from "./commands/turns/abort/command";
 export * from "./commands/turns/abort/command.handler";
