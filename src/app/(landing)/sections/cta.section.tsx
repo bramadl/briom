@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuthModal } from "@briom/(auth)/auth-modal-provider";
+import { useAuthModal } from "@briom/(auth)";
 import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";
 import { gsap, registerGsap } from "@briom/libs/providers/gsap/register";
