@@ -13,50 +13,47 @@
 		"isolatedModules": true,
 		"jsx": "react-jsx",
 		"incremental": true,
-		"plugins": [
-			{
-				"name": "next"
-			}
-		],
+		"plugins": [{ "name": "next" }],
 		"paths": {
-			// Next.js
+			// Back End: Core
+			"@briom/core/app": ["./src/core/application/index.ts"],
+			"@briom/core/domain": ["./src/core/domain/index.ts"],
+			"@briom/core/infra/auth": ["./src/core/infrastructure/auth/index.ts"],
+			"@briom/core/infra/adapters": [
+				"./src/core/infrastructure/adapters/index.ts"
+			],
+			"@briom/core/infra/database": [
+				"./src/core/infrastructure/database/index.ts"
+			],
+
+			// Core Library: Drimion
+			"@drimion": ["./src/libs/drimion"],
+			"@drimion/*": ["./src/libs/drimion/*"],
+
+			// Front End: Generic
 			"@briom/animated/*": ["./src/components/animated/*"],
 			"@briom/components/*": ["./src/components/*"],
 			"@briom/ui/*": ["./src/components/ui/*"],
 			"@briom/hooks/*": ["./src/hooks/*"],
 
-			// Submodule FE
-			"@briom/auth/*": ["./src/app/(auth)/*"],
-			"@briom/rooms/*": ["./src/app/(rooms)/*"],
+			// Back End: Providers
+			"@briom/drizzle/*": ["./src/core/infrastructure/.providers/drizzle/*"],
+			"@briom/inngest/*": ["./src/core/infrastructure/.providers/inngest/*"],
+			"@briom/posthog/*": ["./src/core/infrastructure/.providers/posthog/*"],
+			"@briom/supabase/*": ["./src/core/infrastructure/.providers/supabase/*"],
+			"@briom/openrouter/*": [
+				"./src/core/infrastructure/.providers/openrouter/*"
+			],
 
-			// Client
-			"@briom": ["./src/container"],
-			"@briom/client": ["./src/libs/briom/client.ts"],
-
-			// Core
-			"@briom/app": ["./src/core/application"],
-			"@briom/app/*": ["./src/core/application/*"],
-			"@briom/domain": ["./src/core/domain"],
-			"@briom/domain/*": ["./src/core/domain/*"],
-			"@briom/shared": ["./src/core/shared"],
-			"@briom/shared/*": ["./src/core/shared/*"],
-
-			// Libs
+			// Generic: Libraries (mostly FE needs)
 			"@briom/libs/*": ["./src/libs/*"],
+
+			// Shadcn: Required by them
 			"@briom/utils": ["./src/libs/utils.ts"],
-			"@briom/drimion": ["./src/libs/drimion"],
-			"@briom/drimion/*": ["./src/libs/drimion/*"],
+			"@briom/*": ["./src/*"],
 
-			// Providers
-			"@briom/supabase": ["./src/libs/providers/supabase"],
-			"@briom/supabase/*": ["./src/libs/providers/supabase/*"],
-			"@briom/drizzle": ["./src/libs/providers/drizzle"],
-			"@briom/drizzle/*": ["./src/libs/providers/drizzle/*"],
-			"@briom/open-router": ["./src/libs/providers/open-router"],
-			"@briom/open-router/*": ["./src/libs/providers/open-router/*"],
-
-			// Shadcn
-			"@briom/*": ["./src/*"]
+			// Main: Briom Facade
+			"@briom": ["./src/core/.container/index.ts"]
 		}
 	},
 	"include": [
@@ -65,7 +62,11 @@
 		"**/*.tsx",
 		".next/types/**/*.ts",
 		".next/dev/types/**/*.ts",
-		"**/*.mts"
+		"**/*.mts",
+
+		// A special directory containing (.)-prefix
+		"src/core/infrastructure/.providers/**/*.ts",
+		"src/core/.container/**/*.ts"
 	],
 	"exclude": ["node_modules"]
 }
