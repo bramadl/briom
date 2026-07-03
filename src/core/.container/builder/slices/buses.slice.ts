@@ -1,3 +1,4 @@
+import * as ApplicationLayer from "@briom/core/app";
 import {
 	AbortTurnCommand,
 	AcceptProposalCommand,
@@ -7,6 +8,7 @@ import {
 	FormRoomCommand,
 	GenerateCheckpointCommand,
 	GenerateTopicCommand,
+	GetModeratorQuery,
 	GetProposalsQuery,
 	GetRoomQuery,
 	GetRoomsQuery,
@@ -21,7 +23,7 @@ import {
 	TurnsEventSubscriber,
 	UninviteParticipantCommand,
 } from "@briom/core/app";
-import { CommandBus, QueryBus } from "@drimion";
+import { assertBus, CommandBus, QueryBus } from "@drimion";
 
 import { handlersSlice } from "./handlers.slice";
 
@@ -59,6 +61,7 @@ export const busesSlice = handlersSlice
 		const retryTurnHandler = r["handler:turns:retry"];
 		const streamTurnHandler = r["handler:turns:stream"];
 
+		const getModerator = r["handler:query:get-moderator"];
 		const getProposalsHandler = r["handler:query:get-proposals"];
 		const getRoomHandler = r["handler:query:get-room"];
 		const getRoomsHandler = r["handler:query:get-rooms"];
@@ -92,10 +95,28 @@ export const busesSlice = handlersSlice
 		// Query Bus
 		// ====================================================================
 		r.queryBus
+			.register(GetModeratorQuery, getModerator)
 			.register(GetProposalsQuery, getProposalsHandler)
 			.register(GetRoomQuery, getRoomHandler)
 			.register(GetRoomsQuery, getRoomsHandler)
 			.register(GetTurnQuery, getTurnHandler);
+
+		// ====================================================================
+		// Assertions: Throws error on runtime when buses missing registration.
+		// ====================================================================
+		(
+			[
+				[r.commandBus, "commandBus", "Command"],
+				[r.queryBus, "queryBus", "Query"],
+			] as const
+		).forEach(([bus, name, suffix]) => {
+			assertBus({
+				bus,
+				busName: name,
+				module: ApplicationLayer,
+				suffix,
+			});
+		});
 	})
 
 	.registerEvent((r) => {
