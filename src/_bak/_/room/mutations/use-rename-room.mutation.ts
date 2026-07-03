@@ -1,0 +1,71 @@
+import type {
+	GetRoomDeliberationOutput,
+	GetRoomsOverviewOutput,
+	RenameRoomInput,
+} from "@briom/app/bak";
+import { type ServerResponse, unwrapOrThrow } from "@briom/libs/server-action";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+import { renameRoom } from "../actions";
+import { roomQueryKeys } from "../queries/keys";
+import { roomQueries } from "../queries/registry";
+
+type RenameRoomContext = {
+	previousRooms?: GetRoomsOverviewOutput;
+	previousRoom?: GetRoomDeliberationOutput;
+	roomId: string;
+	roomKey: ReturnType<typeof roomQueryKeys.deliberation>;
+};
+
+export function useRenameRoomMutation() {
+	const queryClient = useQueryClient();
+	const roomsKey = roomQueries.getRoomsOverview().queryKey;
+
+	return useMutation<
+		ServerResponse<void>,
+		Error,
+		RenameRoomInput,
+		RenameRoomContext
+	>({
+		mutationFn: unwrapOrThrow(renameRoom),
+
+		onMutate: async ({ roomId, newTitle: title }) => {
+			await queryClient.cancelQueries({ queryKey: roomQueryKeys.all });
+
+			const roomKey = roomQueries.getRoomDeliberation({ roomId }).queryKey;
+			const previousRoom = queryClient.getQueryData(roomKey);
+			const previousRooms = queryClient.getQueryData(roomsKey);
+
+			if (previousRooms) {
+				queryClient.setQueryData(roomsKey, (old) => ({
+					...old,
+					rooms:
+						old?.rooms?.map((r) => (r.id === roomId ? { ...r, title } : r)) ??
+						[],
+				}));
+			}
+
+			if (previousRoom) {
+				queryClient.setQueryData(roomKey, (old) => {
+					if (old?.room) return { ...old, room: { ...old.room, title } };
+					return old;
+				});
+			}
+
+			return { previousRooms, previousRoom, roomId, roomKey };
+		},
+
+		onError: (error, _, context) => {
+			toast.error("Rename failed", { description: error.message });
+			if (context) {
+				queryClient.setQueryData(roomsKey, context.previousRooms);
+				queryClient.setQueryData(context.roomKey, context.previousRoom);
+			}
+		},
+
+		onSettled: () => {
+			queryClient.invalidateQueries({ queryKey: roomQueryKeys.all });
+		},
+	});
+}

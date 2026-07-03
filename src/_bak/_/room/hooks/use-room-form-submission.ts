@@ -1,0 +1,74 @@
+import type { SubmitHandler } from "@formisch/react";
+import { toast } from "sonner";
+
+import { useInviteParticipantMutation } from "../../participant/mutations/use-invite-participant.mutation";
+import { inviteSequentially } from "../form/helpers/form-submission.helper";
+import type { RoomFormSchema } from "../form/schema";
+import { useFormRoomMutation } from "../mutations/use-form-room.mutation";
+import { useRoomsInvalidation } from "../queries/invalidations/use-rooms.invalidation";
+
+interface UseRoomFormSubmissionOptions {
+	onRoomFormed?: (roomId: string) => void;
+}
+
+export function useRoomFormSubmission({
+	onRoomFormed,
+}: UseRoomFormSubmissionOptions) {
+	const { invalidate: invalidateRooms } = useRoomsInvalidation();
+
+	const formRoomMutation = useFormRoomMutation();
+	const inviteMutation = useInviteParticipantMutation();
+
+	const isForming = formRoomMutation.isPending;
+	const isInviting = inviteMutation.isPending;
+	const isProcessing = isForming || isInviting;
+
+	const handleSubmit: SubmitHandler<typeof RoomFormSchema> = async (output) => {
+		try {
+			const roomResult = await formRoomMutation.mutateAsync({
+				title: output.title,
+			});
+
+			const roomId = roomResult.data.roomId;
+			toast.success("Room formed", { description: "Inviting participants..." });
+
+			const { summary } = await inviteSequentially({
+				roomId,
+				participants: output.participants,
+				invite: inviteMutation.mutateAsync,
+			});
+
+			if (summary.hasPartialFailure) {
+				toast.warning("Room ready with partial perspectives", {
+					description: `${summary.success} of ${summary.total} participants connected.`,
+				});
+			} else {
+				toast.success("Room ready", {
+					description: `${summary.success} participants invited.`,
+				});
+			}
+
+			if (summary.failed.length > 0) {
+				toast.error("Some participants failed", {
+					description: summary.failed
+						.map((f) => `${f.name}: ${f.error}`)
+						.join("\n"),
+				});
+			}
+
+			invalidateRooms();
+			onRoomFormed?.(roomId);
+		} catch (error) {
+			return toast.error("Couldn't form room", {
+				description: (error as Error).message,
+			});
+		}
+	};
+
+	return {
+		handleSubmit,
+		isForming,
+		isInviting,
+		isProcessing,
+	};
+}
