@@ -27,8 +27,22 @@ export interface GetRoomsOutput {
  * Additional metadata information of the output.
  */
 export interface GetRoomsMetadata {
+	/**
+	 * @description
+	 * Wether the moderator can open more room.
+	 */
 	canOpenMoreRoom: boolean;
+
+	/**
+	 * @description
+	 * How many rooms left that the moderator can open.
+	 */
 	quotaLeft: number;
+
+	/**
+	 * @description
+	 * Total number of rooms that the moderator opened.
+	 */
 	total: number;
 }
 
