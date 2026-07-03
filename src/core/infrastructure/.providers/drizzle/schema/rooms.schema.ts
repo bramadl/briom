@@ -1,12 +1,13 @@
 import * as pg from "drizzle-orm/pg-core";
 
 import { moderatorsTable } from "./moderators.schema";
+import { roomSchema } from "./schema";
 
 /**
  * @description
  * Database schema for `Room` aggregate persistence.
  */
-export const roomsTable = pg.snakeCase.table(
+export const roomsTable = roomSchema.table(
 	"rooms",
 	{
 		/**

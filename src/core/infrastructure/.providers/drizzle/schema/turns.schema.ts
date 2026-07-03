@@ -1,12 +1,13 @@
 import * as pg from "drizzle-orm/pg-core";
 
 import { roomsTable } from "./rooms.schema";
+import { roomSchema } from "./schema";
 
 /**
  * @description
  * Database schema for `Turn` aggregate persistence.
  */
-export const turnsTable = pg.snakeCase.table(
+export const turnsTable = roomSchema.table(
 	"turns",
 	{
 		/**

@@ -1,52 +1,64 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "1d48e557-2fa3-4f2f-9f1b-407b0ca9e0d1",
+  "id": "9bbb6924-a4b3-47db-b150-e9f689cae0ff",
   "prevIds": [
-    "ea2251eb-7ea8-45be-8a70-dd7f2d730e93"
+    "00000000-0000-0000-0000-000000000000"
   ],
   "ddl": [
+    {
+      "name": "meta",
+      "entityType": "schemas"
+    },
+    {
+      "name": "moderator",
+      "entityType": "schemas"
+    },
+    {
+      "name": "rooms",
+      "entityType": "schemas"
+    },
     {
       "isRlsEnabled": false,
       "name": "checkpoints",
       "entityType": "tables",
-      "schema": "public"
+      "schema": "rooms"
     },
     {
       "isRlsEnabled": false,
       "name": "credit_movements",
       "entityType": "tables",
-      "schema": "public"
+      "schema": "moderator"
     },
     {
       "isRlsEnabled": false,
       "name": "fx_rates",
       "entityType": "tables",
-      "schema": "public"
+      "schema": "meta"
     },
     {
       "isRlsEnabled": false,
       "name": "moderators",
       "entityType": "tables",
-      "schema": "public"
+      "schema": "moderator"
     },
     {
       "isRlsEnabled": false,
       "name": "participants",
       "entityType": "tables",
-      "schema": "public"
+      "schema": "rooms"
     },
     {
       "isRlsEnabled": false,
       "name": "rooms",
       "entityType": "tables",
-      "schema": "public"
+      "schema": "rooms"
     },
     {
       "isRlsEnabled": false,
       "name": "turns",
       "entityType": "tables",
-      "schema": "public"
+      "schema": "rooms"
     },
     {
       "type": "uuid",
@@ -58,7 +70,7 @@
       "identity": null,
       "name": "id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -71,7 +83,7 @@
       "identity": null,
       "name": "room_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -84,7 +96,7 @@
       "identity": null,
       "name": "content",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -97,7 +109,7 @@
       "identity": null,
       "name": "cover_sequences",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -110,7 +122,7 @@
       "identity": null,
       "name": "iteration",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -123,7 +135,7 @@
       "identity": null,
       "name": "generated_by",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -136,7 +148,7 @@
       "identity": null,
       "name": "previous_checkpoint_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -149,7 +161,7 @@
       "identity": null,
       "name": "usage_prompt_tokens",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -162,7 +174,7 @@
       "identity": null,
       "name": "usage_completion_tokens",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -175,7 +187,7 @@
       "identity": null,
       "name": "usage_cost_usd",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -188,7 +200,7 @@
       "identity": null,
       "name": "created_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -201,7 +213,7 @@
       "identity": null,
       "name": "id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -214,7 +226,7 @@
       "identity": null,
       "name": "moderator_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -227,7 +239,7 @@
       "identity": null,
       "name": "amount",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -240,7 +252,7 @@
       "identity": null,
       "name": "type",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -253,7 +265,7 @@
       "identity": null,
       "name": "reason",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -266,7 +278,7 @@
       "identity": null,
       "name": "created_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -279,7 +291,7 @@
       "identity": null,
       "name": "id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "meta",
       "table": "fx_rates"
     },
     {
@@ -292,7 +304,7 @@
       "identity": null,
       "name": "from_currency",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "meta",
       "table": "fx_rates"
     },
     {
@@ -305,7 +317,7 @@
       "identity": null,
       "name": "to_currency",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "meta",
       "table": "fx_rates"
     },
     {
@@ -318,7 +330,7 @@
       "identity": null,
       "name": "rate",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "meta",
       "table": "fx_rates"
     },
     {
@@ -331,7 +343,7 @@
       "identity": null,
       "name": "fetched_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "meta",
       "table": "fx_rates"
     },
     {
@@ -344,7 +356,7 @@
       "identity": null,
       "name": "id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators"
     },
     {
@@ -357,7 +369,7 @@
       "identity": null,
       "name": "email",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators"
     },
     {
@@ -370,7 +382,7 @@
       "identity": null,
       "name": "name",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators"
     },
     {
@@ -383,7 +395,7 @@
       "identity": null,
       "name": "avatar",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators"
     },
     {
@@ -396,7 +408,7 @@
       "identity": null,
       "name": "credit_balance",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators"
     },
     {
@@ -409,7 +421,7 @@
       "identity": null,
       "name": "created_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators"
     },
     {
@@ -422,7 +434,7 @@
       "identity": null,
       "name": "updated_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators"
     },
     {
@@ -435,7 +447,7 @@
       "identity": null,
       "name": "id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -448,7 +460,7 @@
       "identity": null,
       "name": "room_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -461,7 +473,7 @@
       "identity": null,
       "name": "display_name",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -474,7 +486,7 @@
       "identity": null,
       "name": "model",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -487,7 +499,7 @@
       "identity": null,
       "name": "provider",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -500,7 +512,7 @@
       "identity": null,
       "name": "created_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -513,7 +525,7 @@
       "identity": null,
       "name": "updated_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -526,7 +538,7 @@
       "identity": null,
       "name": "id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -539,7 +551,7 @@
       "identity": null,
       "name": "moderator_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -552,7 +564,7 @@
       "identity": null,
       "name": "title",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -565,7 +577,7 @@
       "identity": null,
       "name": "status",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -578,7 +590,7 @@
       "identity": null,
       "name": "topic",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -591,7 +603,7 @@
       "identity": null,
       "name": "state_kind",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -604,7 +616,7 @@
       "identity": null,
       "name": "state_reason",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -617,7 +629,7 @@
       "identity": null,
       "name": "state_occurred_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -630,7 +642,7 @@
       "identity": null,
       "name": "active_turn_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -643,7 +655,7 @@
       "identity": null,
       "name": "attachment_count",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -656,7 +668,7 @@
       "identity": null,
       "name": "turn_ids",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -669,7 +681,7 @@
       "identity": null,
       "name": "checkpoint_ids",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -682,7 +694,7 @@
       "identity": null,
       "name": "created_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -695,7 +707,7 @@
       "identity": null,
       "name": "updated_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -708,7 +720,7 @@
       "identity": null,
       "name": "id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -721,7 +733,7 @@
       "identity": null,
       "name": "room_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -734,7 +746,7 @@
       "identity": null,
       "name": "sequence",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -747,7 +759,7 @@
       "identity": null,
       "name": "author_type",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -760,7 +772,7 @@
       "identity": null,
       "name": "author_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -773,7 +785,7 @@
       "identity": null,
       "name": "intent",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -786,7 +798,7 @@
       "identity": null,
       "name": "previous_turn_id",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -799,7 +811,7 @@
       "identity": null,
       "name": "status",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -812,7 +824,7 @@
       "identity": null,
       "name": "content",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -825,7 +837,7 @@
       "identity": null,
       "name": "settled_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -838,7 +850,7 @@
       "identity": null,
       "name": "error_kind",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -851,7 +863,7 @@
       "identity": null,
       "name": "error_message",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -864,7 +876,7 @@
       "identity": null,
       "name": "error_retry_after",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -877,7 +889,7 @@
       "identity": null,
       "name": "failed_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -890,7 +902,7 @@
       "identity": null,
       "name": "attachments",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -903,7 +915,7 @@
       "identity": null,
       "name": "usage_prompt_tokens",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -916,7 +928,7 @@
       "identity": null,
       "name": "usage_completion_tokens",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -929,7 +941,7 @@
       "identity": null,
       "name": "usage_cost_usd",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -942,7 +954,7 @@
       "identity": null,
       "name": "abort_requested",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -955,7 +967,7 @@
       "identity": null,
       "name": "created_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -968,7 +980,7 @@
       "identity": null,
       "name": "updated_at",
       "entityType": "columns",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -996,7 +1008,7 @@
       "concurrently": false,
       "name": "checkpoint_room_latest_idx",
       "entityType": "indexes",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -1024,7 +1036,7 @@
       "concurrently": false,
       "name": "credit_movement_moderator_audit_idx",
       "entityType": "indexes",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -1052,7 +1064,7 @@
       "concurrently": false,
       "name": "fx_rates_pair_unique",
       "entityType": "indexes",
-      "schema": "public",
+      "schema": "meta",
       "table": "fx_rates"
     },
     {
@@ -1073,7 +1085,7 @@
       "concurrently": false,
       "name": "room_id_idx",
       "entityType": "indexes",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -1101,7 +1113,7 @@
       "concurrently": false,
       "name": "rooms_moderator_updated_idx",
       "entityType": "indexes",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -1129,7 +1141,7 @@
       "concurrently": false,
       "name": "turn_room_sequence_idx",
       "entityType": "indexes",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -1137,7 +1149,7 @@
       "columns": [
         "room_id"
       ],
-      "schemaTo": "public",
+      "schemaTo": "rooms",
       "tableTo": "rooms",
       "columnsTo": [
         "id"
@@ -1146,7 +1158,7 @@
       "onDelete": "CASCADE",
       "name": "checkpoints_room_id_rooms_id_fkey",
       "entityType": "fks",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints"
     },
     {
@@ -1154,7 +1166,7 @@
       "columns": [
         "moderator_id"
       ],
-      "schemaTo": "public",
+      "schemaTo": "moderator",
       "tableTo": "moderators",
       "columnsTo": [
         "id"
@@ -1163,7 +1175,7 @@
       "onDelete": "CASCADE",
       "name": "credit_movements_moderator_id_moderators_id_fkey",
       "entityType": "fks",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements"
     },
     {
@@ -1171,16 +1183,16 @@
       "columns": [
         "room_id"
       ],
-      "schemaTo": "public",
+      "schemaTo": "rooms",
       "tableTo": "rooms",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "participants_room_id_rooms_id_fk",
+      "name": "participants_room_id_rooms_id_fkey",
       "entityType": "fks",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants"
     },
     {
@@ -1188,7 +1200,7 @@
       "columns": [
         "moderator_id"
       ],
-      "schemaTo": "public",
+      "schemaTo": "moderator",
       "tableTo": "moderators",
       "columnsTo": [
         "id"
@@ -1197,7 +1209,7 @@
       "onDelete": "CASCADE",
       "name": "rooms_moderator_id_moderators_id_fkey",
       "entityType": "fks",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms"
     },
     {
@@ -1205,16 +1217,16 @@
       "columns": [
         "room_id"
       ],
-      "schemaTo": "public",
+      "schemaTo": "rooms",
       "tableTo": "rooms",
       "columnsTo": [
         "id"
       ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
-      "name": "turns_room_id_rooms_id_fk",
+      "name": "turns_room_id_rooms_id_fkey",
       "entityType": "fks",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns"
     },
     {
@@ -1223,7 +1235,7 @@
       ],
       "nameExplicit": false,
       "name": "checkpoints_pkey",
-      "schema": "public",
+      "schema": "rooms",
       "table": "checkpoints",
       "entityType": "pks"
     },
@@ -1233,7 +1245,7 @@
       ],
       "nameExplicit": false,
       "name": "credit_movements_pkey",
-      "schema": "public",
+      "schema": "moderator",
       "table": "credit_movements",
       "entityType": "pks"
     },
@@ -1243,7 +1255,7 @@
       ],
       "nameExplicit": false,
       "name": "fx_rates_pkey",
-      "schema": "public",
+      "schema": "meta",
       "table": "fx_rates",
       "entityType": "pks"
     },
@@ -1253,7 +1265,7 @@
       ],
       "nameExplicit": false,
       "name": "moderators_pkey",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators",
       "entityType": "pks"
     },
@@ -1263,7 +1275,7 @@
       ],
       "nameExplicit": false,
       "name": "participants_pkey",
-      "schema": "public",
+      "schema": "rooms",
       "table": "participants",
       "entityType": "pks"
     },
@@ -1273,7 +1285,7 @@
       ],
       "nameExplicit": false,
       "name": "rooms_pkey",
-      "schema": "public",
+      "schema": "rooms",
       "table": "rooms",
       "entityType": "pks"
     },
@@ -1283,7 +1295,7 @@
       ],
       "nameExplicit": false,
       "name": "turns_pkey",
-      "schema": "public",
+      "schema": "rooms",
       "table": "turns",
       "entityType": "pks"
     },
@@ -1294,7 +1306,7 @@
       ],
       "nullsNotDistinct": false,
       "name": "moderators_email_key",
-      "schema": "public",
+      "schema": "moderator",
       "table": "moderators",
       "entityType": "uniques"
     }

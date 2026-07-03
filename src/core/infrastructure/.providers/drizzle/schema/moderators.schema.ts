@@ -1,10 +1,12 @@
 import * as pg from "drizzle-orm/pg-core";
 
+import { moderatorSchema } from "./schema";
+
 /**
  * @description
  * Database schema for `Moderator` aggregate persistence.
  */
-export const moderatorsTable = pg.snakeCase.table("moderators", {
+export const moderatorsTable = moderatorSchema.table("moderators", {
 	/**
 	 * @description
 	 * Unique moderator identifier (UUID). Mirrors the Supabase Auth UID.

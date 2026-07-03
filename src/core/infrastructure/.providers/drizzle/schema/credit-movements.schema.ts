@@ -1,12 +1,13 @@
 import * as pg from "drizzle-orm/pg-core";
 
 import { moderatorsTable } from "./moderators.schema";
+import { moderatorSchema } from "./schema";
 
 /**
  * @description
  * Database schema for `CreditMovement` entity persistence.
  */
-export const creditMovementsTable = pg.snakeCase.table(
+export const creditMovementsTable = moderatorSchema.table(
 	"credit_movements",
 	{
 		/**

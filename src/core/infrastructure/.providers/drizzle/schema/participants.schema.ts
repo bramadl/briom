@@ -1,12 +1,13 @@
 import * as pg from "drizzle-orm/pg-core";
 
 import { roomsTable } from "./rooms.schema";
+import { roomSchema } from "./schema";
 
 /**
  * @description
  * Database schema for `Participant` entity persistence.
  */
-export const participantsTable = pg.snakeCase.table(
+export const participantsTable = roomSchema.table(
 	"participants",
 	{
 		/**

@@ -1,12 +1,13 @@
 import * as pg from "drizzle-orm/pg-core";
 
 import { roomsTable } from "./rooms.schema";
+import { roomSchema } from "./schema";
 
 /**
  * @description
  * Database schema for `Checkpoint` entity persistence.
  */
-export const checkpointsTable = pg.snakeCase.table(
+export const checkpointsTable = roomSchema.table(
 	"checkpoints",
 	{
 		/**

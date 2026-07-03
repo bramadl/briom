@@ -1,5 +1,7 @@
 import * as pg from "drizzle-orm/pg-core";
 
+import { metaSchema } from "./schema";
+
 /**
  * @description
  * Database schema for cached FX conversion rates.
@@ -17,7 +19,7 @@ import * as pg from "drizzle-orm/pg-core";
  * changes becomes necessary later, that's a separate concern from
  * this cache table.
  */
-export const fxRatesTable = pg.snakeCase.table(
+export const fxRatesTable = metaSchema.table(
 	"fx_rates",
 	{
 		/**
