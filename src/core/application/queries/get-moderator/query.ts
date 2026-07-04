@@ -24,6 +24,36 @@ export interface GetModeratorOutput {
 
 /**
  * @description
+ * Additional metadata information of the output.
+ */
+export interface GetModeratorMetadata {
+	/**
+	 * @description
+	 * Limit applied to the current moderator.
+	 */
+	limit: {
+		/**
+		 * @description
+		 * Total of room this moderator can open.
+		 */
+		maximumRoom: number;
+
+		/**
+		 * @description
+		 * How many participants can be invited in single room.
+		 */
+		maximumParticipantPerRoom: number;
+
+		/**
+		 * @description
+		 * How many attachments can be uploaded in single room.
+		 */
+		maximumAttachmentPerRoom: number;
+	};
+}
+
+/**
+ * @description
  * `IGetModeratorQuery` — Application Query Port
  *
  * Retrieve a moderator useful for rendering profile.

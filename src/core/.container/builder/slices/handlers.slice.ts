@@ -210,7 +210,9 @@ export const handlersSlice = servicesSlice
 
 	.add("handler:query:get-moderator", (r) => {
 		const query = r["query:get-moderator"];
-		return new GetModeratorHandler(query);
+		const moderatorRepository = r["repository:moderator"];
+
+		return new GetModeratorHandler(query, moderatorRepository);
 	})
 
 	.add("handler:query:get-proposals", (r) => {

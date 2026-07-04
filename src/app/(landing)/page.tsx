@@ -1,4 +1,4 @@
-import { AuthModalProvider } from "@briom/(auth)";
+import { AuthModalProvider } from "@briom/app/_/auth";
 
 import { Footer } from "./_/ui/footer";
 import { Navigation } from "./_/ui/navigation";

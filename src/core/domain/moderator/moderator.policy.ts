@@ -27,9 +27,9 @@ export class ModeratorPolicy {
 	} as const;
 
 	private static readonly LIMITLESS = {
-		rooms: Infinity,
-		participantsPerRoom: Infinity,
-		attachmentsPerRoom: Infinity,
+		rooms: 10,
+		participantsPerRoom: 10,
+		attachmentsPerRoom: 10,
 	} as const;
 
 	private readonly tier: "BASIC" | "LIMITLESS";
@@ -46,6 +46,15 @@ export class ModeratorPolicy {
 			this.tier = "BASIC";
 			this.limits = ModeratorPolicy.BASIC;
 		}
+	}
+
+	/**
+	 * @description
+	 * Default BASIC limits, useful if some fallbacks are
+	 * needed due to any reasons.
+	 */
+	public static get default() {
+		return ModeratorPolicy.BASIC;
 	}
 
 	/**

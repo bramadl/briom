@@ -15,6 +15,7 @@ import {
 	type FormRoomInput,
 	type FormRoomOutput,
 	type GetModeratorInput,
+	type GetModeratorMetadata,
 	type GetModeratorOutput,
 	GetModeratorQuery,
 	type GetProposalsInput,
@@ -79,7 +80,7 @@ export function facadeBriom(container: typeof resolvedContainer) {
 	return {
 		moderators: {
 			profile: (input: GetModeratorInput) =>
-				queryBus.execute<GetModeratorOutput, never>(
+				queryBus.execute<GetModeratorOutput, never, GetModeratorMetadata>(
 					new GetModeratorQuery(input),
 				),
 
