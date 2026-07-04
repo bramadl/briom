@@ -44,6 +44,7 @@ export class RenameRoomHandler
 			);
 		}
 
+		await this.roomRepository.persist(room);
 		return Result.success({ title } satisfies RenameRoomOutput);
 	}
 }

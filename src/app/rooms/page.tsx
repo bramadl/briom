@@ -1,7 +1,8 @@
-import { RoomFormHotkey, RoomFormTrigger } from "@briom/app/_/room";
 import { Logo } from "@briom/components/logo";
 import { Button } from "@briom/components/ui/button";
 import { SidebarTrigger } from "@briom/components/ui/sidebar";
+import { RoomFormHotkey } from "@briom/room/form/ui/RoomFormHotkey";
+import { RoomFormTrigger } from "@briom/room/form/ui/RoomFormTrigger";
 
 export default function RoomsPage() {
 	return (

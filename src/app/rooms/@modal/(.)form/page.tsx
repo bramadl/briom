@@ -1,4 +1,4 @@
-import { RoomFormModal } from "@briom/app/_/room";
+import { RoomFormModal } from "@briom/room/form/ui/RoomFormModal";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 

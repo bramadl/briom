@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "@bprogress/next/app";
-import { RoomForm } from "@briom/app/_/room";
+import { RoomForm } from "@briom/room/form/ui/RoomForm";
 
 export default function RoomsFormPage() {
 	const router = useRouter();

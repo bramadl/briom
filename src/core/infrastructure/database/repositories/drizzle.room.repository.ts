@@ -47,7 +47,6 @@ export class DrizzleRoomRepository
 				checkpointIds: true,
 				id: true,
 				moderatorId: true,
-				participants: true,
 				stateKind: true,
 				stateOccurredAt: true,
 				stateReason: true,
