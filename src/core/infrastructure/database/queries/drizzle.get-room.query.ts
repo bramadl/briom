@@ -17,7 +17,7 @@ export class DrizzleGetRoomQuery implements IGetRoomQuery {
 		roomId,
 	}: GetRoomInput): Promise<GetRoomOutput> {
 		const roomData = await this.db.query.roomsTable.findFirst({
-			where: { moderatorId, roomId },
+			where: { moderatorId, id: roomId },
 			columns: {
 				id: true,
 				title: true,
