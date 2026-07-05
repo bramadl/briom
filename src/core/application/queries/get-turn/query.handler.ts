@@ -11,6 +11,7 @@ import type { GetTurnOutput, GetTurnQuery, IGetTurnQuery } from "./query";
  * turn as a `Result`, for consistency with command handlers.
  *
  * @see IGetTurnQuery — for data retrieval logic
+ * @see DrizzleGetTurnQuery — infrastructure implementation
  */
 export class GetTurnHandler
 	implements IQuery<GetTurnQuery, GetTurnOutput, never>

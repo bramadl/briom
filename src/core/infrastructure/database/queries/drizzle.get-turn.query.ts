@@ -11,9 +11,16 @@ import type { DrizzleConn } from "@briom/drizzle/db";
 export class DrizzleGetTurnQuery implements IGetTurnQuery {
 	public constructor(private readonly db: DrizzleConn) {}
 
-	public async execute({ turnId }: GetTurnInput): Promise<GetTurnOutput> {
+	public async execute({
+		turnId,
+		moderatorId,
+	}: GetTurnInput): Promise<GetTurnOutput> {
 		const turnData = await this.db.query.turnsTable.findFirst({
-			where: { id: turnId },
+			where: {
+				id: turnId,
+				status: { NOT: "abandoned" },
+				room: { moderatorId },
+			},
 			columns: {
 				id: true,
 				content: true,
@@ -75,8 +82,8 @@ export class DrizzleGetTurnQuery implements IGetTurnQuery {
 
 		const turnDTO: RoomTurnDTO = {
 			id: turnData.id,
-			content: turnData.content || "...",
-			status: turnData.status,
+			content: turnData.content || "",
+			status: turnData.status as "pending" | "streaming" | "settled" | "failed",
 			intent: turnData.intent,
 			createdAt: turnData.createdAt.toISOString(),
 			settledAt: turnData.settledAt ? turnData.settledAt.toISOString() : null,

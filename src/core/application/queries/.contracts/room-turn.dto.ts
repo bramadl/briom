@@ -129,7 +129,6 @@ export interface RoomTurnDTO {
 	 * - `streaming`: actively receiving tokens
 	 * - `settled`: complete
 	 * - `failed`: errored (may be retried)
-	 * - `abandoned`: permanently dismissed
 	 */
-	status: "pending" | "streaming" | "settled" | "failed" | "abandoned";
+	status: "pending" | "streaming" | "settled" | "failed";
 }

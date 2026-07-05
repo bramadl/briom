@@ -53,8 +53,8 @@ export interface GetRoomsMetadata {
  * Retrieves all rooms in the system with their relations.
  * Read-only, no side effects.
  *
- * @see DrizzleGetRoomsQuery — infrastructure implementation
  * @see GetRoomsHandler — application handler
+ * @see DrizzleGetRoomsQuery — infrastructure implementation
  */
 export interface IGetRoomsQuery {
 	/**

@@ -1,6 +1,6 @@
 import { SIDEBAR_COOKIE_NAME } from "@briom/components/ui/sidebar.constants";
 import { getQueryClient } from "@briom/libs/providers/tanstack/query/query-client";
-import { prefetchRooms } from "@briom/room/queries/prefetch-rooms";
+import { prefetchRooms } from "@briom/room/actions/prefetch/prefetch-rooms";
 import { RoomSidebar } from "@briom/room/sidebar/ui/RoomSidebar";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { cookies } from "next/headers";

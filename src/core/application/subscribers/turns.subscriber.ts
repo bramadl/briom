@@ -1,23 +1,15 @@
-/**
- * @ignore
- * biome-ignore-all lint/correctness/noUnusedPrivateClassMembers: ignore.
- * Future-enablement: Some events are currently being turned off (unused).
- */
 import {
 	type BaseTurnEventPayload,
-	type IRoomRepository,
 	TurnAbandoned,
 	type TurnAbandonedPayload,
 	TurnFailed,
 	type TurnFailedPayload,
 	TurnInitiated,
 	type TurnInitiatedPayload,
-	TurnRetried,
 	TurnSettled,
 	type TurnSettledPayload,
 	TurnStreamStarted,
 	type TurnStreamStartedPayload,
-	TurnTokenAccumulated,
 } from "@briom/core/domain";
 import type {
 	DomainEvent,
@@ -25,76 +17,38 @@ import type {
 } from "@briom/libs/drimion/types/event.types";
 import { after } from "next/server";
 
-import type { IRealtimeBroadcaster } from "../ports/broadcasters/realtime.broadcaster";
-
-interface RealtimeSignal {
-	data: Record<string, unknown>;
-	event: string;
-}
-
-type RealtimeTranslator<TPayload> = (
-	event: DomainEvent<TPayload>,
-) => RealtimeSignal | null;
+import type { ITurnRealtimePublisher } from "../ports/publishers/turn-realtime.publisher";
 
 /**
  * @description
- * Forwards Turn terminal-state events (settled, failed) to Supabase
- * Realtime. Deliberately narrow — `turn:stream-started` and, above all,
- * `turn:token-accumulated` are NEVER forwarded here. Per-token content
- * lives entirely on the Streaming plane (Inngest execution → throttled
- * write to `turns.content` → FE polling via `TurnStreamProjection`).
- * Realtime only carries the two moments FE needs to react to instantly:
- * a turn reached SETTLED or FAILED, so it can stop polling.
+ * Forwards Turn lifecycle events to Inngest Realtime, one publish per
+ * event on the `turn:{roomId}` channel (see `turnChannel`). Every
+ * event here carries `roomId` directly in its own payload, so — unlike
+ * the old Supabase-backed version of this subscriber — there is no
+ * Room lookup needed to resolve which channel to publish on. This also
+ * means the `after()` callback below never awaits I/O beyond the
+ * publish itself, so subscriber registration no longer needs
+ * `IRoomRepository` as a dependency at all.
  *
- * Turn aggregates don't carry `moderatorId` by design (see Turn's class
- * doc) — this subscriber resolves it via a Room lookup before picking
- * the `moderator:{id}` channel to broadcast on.
+ * `TurnRetried` and `TurnTokenAccumulated` are NOT subscribed here.
+ * `TurnRetried` — FE doesn't need it yet (unchanged from before).
+ * `TurnTokenAccumulated` is deliberately absent from this event-bus
+ * path too: it's published directly from `StreamConsumer.consume()`
+ * instead, at the same cadence as its DB flush, rather than being
+ * pulled through a domain event round-trip. Routing it through here
+ * would mean firing a domain event per flush just to immediately
+ * forward it — `StreamConsumer` already has the throttled buffer and
+ * the publisher in hand, so it publishes directly.
  */
 export class TurnsEventSubscriber {
-	public constructor(
-		private readonly broadcaster: IRealtimeBroadcaster,
-		private readonly roomRepository: IRoomRepository,
-	) {}
+	public constructor(private readonly publisher: ITurnRealtimePublisher) {}
 
 	private registry = {
-		/**
-		 * @description
-		 * FE needs this: remove failed turn (immediately) from turn sequences.
-		 */
 		abandoned: TurnAbandoned.type,
-		/**
-		 * @description
-		 * FE needs this: automatically render failed turn component.
-		 */
 		failed: TurnFailed.type,
-		/**
-		 * @description
-		 * FE needs this–but only interested in participant turn.
-		 */
 		initiated: TurnInitiated.type,
-		/**
-		 * @description
-		 * FE does not need this yet.
-		 */
-		retried: TurnRetried.type,
-		/**
-		 * @description
-		 * FE needs this: (re-)invalidate query cache.
-		 */
 		settled: TurnSettled.type,
-		/**
-		 * @description
-		 * FE needs this: signal to start polling.
-		 */
 		streamStarted: TurnStreamStarted.type,
-		/**
-		 * @description
-		 * FE does not need this yet.
-		 *
-		 * Streaming happens in a background process.
-		 * FE would prefer a polling to get the projection per-n ms.
-		 */
-		tokenAccumulated: TurnTokenAccumulated.type,
 	};
 
 	public register(eventBus: IEventSubscriberRegistry): void {
@@ -110,106 +64,79 @@ export class TurnsEventSubscriber {
 
 	/**
 	 * @description
-	 * Wraps a translator into the EventSubscriber shape IEventBus expects.
-	 * Unlike RoomsEventSubscriber, this must resolve `moderatorId` async
-	 * via the Room before it knows which channel to broadcast on — so the
-	 * repository lookup happens inside `after()` too, never blocking the
-	 * request that triggered the underlying domain event.
+	 * Wraps a translator into the EventSubscriber shape IEventBus
+	 * expects. The publish happens inside `after()` so it never blocks
+	 * the request that triggered the underlying domain event — but
+	 * unlike the old version, nothing here needs to `await` a
+	 * repository lookup first.
 	 */
 	private forward<TPayload extends BaseTurnEventPayload>(
-		translate: RealtimeTranslator<TPayload>,
+		translate: (event: DomainEvent<TPayload>) => (() => Promise<void>) | null,
 	) {
 		return (event: DomainEvent<TPayload>) => {
 			if (!event.payload) return;
-			const signal = translate(event);
-			if (!signal) return;
+			const publish = translate(event);
+			if (!publish) return;
 
-			const { roomId } = event.payload;
-
-			after(async () => {
-				const room = await this.roomRepository.findById(roomId);
-				if (!room) return;
-
-				// all turns are in the following format: `turn:{entity}`.
-				const [scope, entity] = signal.event.split(":");
-				const moderatorId = room.get("moderatorId").value();
-
-				await this.broadcaster.broadcast(
-					`${scope}:${moderatorId}:${entity}`,
-					signal.event,
-					signal.data,
-				);
-			});
+			after(publish);
 		};
 	}
 
 	// ===================================================================
-	// Broadcaster
+	// Publisher
 	// ===================================================================
 
-	private onTurnAbandoned: RealtimeTranslator<TurnAbandonedPayload> = (
-		event,
-	) => {
+	private onTurnAbandoned = (event: DomainEvent<TurnAbandonedPayload>) => {
 		if (!event.payload) return null;
 		const { roomId, turnId } = event.payload;
 
-		return {
-			event: this.registry.failed,
-			data: { roomId: roomId.value(), turnId: turnId.value() },
-		};
+		return () =>
+			this.publisher.publishAbandoned(roomId.value(), {
+				turnId: turnId.value(),
+			});
 	};
 
-	private onTurnFailed: RealtimeTranslator<TurnFailedPayload> = (event) => {
+	private onTurnFailed = (event: DomainEvent<TurnFailedPayload>) => {
 		if (!event.payload) return null;
 		const { roomId, turnId, error } = event.payload;
 
-		return {
-			event: this.registry.abandoned,
-			data: {
-				roomId: roomId.value(),
+		return () =>
+			this.publisher.publishFailed(roomId.value(), {
 				turnId: turnId.value(),
 				errorKind: error.kind,
-			},
-		};
+			});
 	};
 
-	private onTurnInitiated: RealtimeTranslator<TurnInitiatedPayload> = (
-		event,
-	) => {
+	private onTurnInitiated = (event: DomainEvent<TurnInitiatedPayload>) => {
 		if (!event.payload) return null;
 		const { roomId, turnId, authorType, sequence } = event.payload;
 
 		if (authorType === "moderator") return null;
 
-		return {
-			event: this.registry.initiated,
-			data: {
-				roomId: roomId.value(),
+		return () =>
+			this.publisher.publishInitiated(roomId.value(), {
 				turnId: turnId.value(),
 				sequence: sequence.get("value"),
-			},
-		};
+			});
 	};
 
-	private onTurnSettled: RealtimeTranslator<TurnSettledPayload> = (event) => {
+	private onTurnSettled = (event: DomainEvent<TurnSettledPayload>) => {
 		if (!event.payload) return null;
 		const { roomId, turnId } = event.payload;
 
-		return {
-			event: this.registry.settled,
-			data: { roomId: roomId.value(), turnId: turnId.value() },
-		};
+		return () =>
+			this.publisher.publishSettled(roomId.value(), {
+				turnId: turnId.value(),
+			});
 	};
 
-	private onStreamStarted: RealtimeTranslator<TurnStreamStartedPayload> = (
-		event,
-	) => {
+	private onStreamStarted = (event: DomainEvent<TurnStreamStartedPayload>) => {
 		if (!event.payload) return null;
 		const { roomId, turnId } = event.payload;
 
-		return {
-			event: this.registry.streamStarted,
-			data: { roomId: roomId.value(), turnId: turnId.value() },
-		};
+		return () =>
+			this.publisher.publishStreamStarted(roomId.value(), {
+				turnId: turnId.value(),
+			});
 	};
 }

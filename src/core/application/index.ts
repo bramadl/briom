@@ -54,10 +54,7 @@ export * from "./commands/turns/stream/command.handler";
 export * from "./ports/analytics/analytics.event";
 export * from "./ports/analytics/analytics.tracker";
 
-export * from "./ports/broadcasters/realtime.broadcaster";
-
 export * from "./ports/gateways/fx-rate/fx-rate.gateway";
-
 export * from "./ports/gateways/llm/llm.gateway";
 export * from "./ports/gateways/llm/llm.ref";
 
@@ -66,6 +63,9 @@ export * from "./ports/generators/topic.generator";
 export * from "./ports/generators/turn.generator";
 
 export * from "./ports/logger/logger";
+
+export * from "./ports/publishers/room-realtime.publisher";
+export * from "./ports/publishers/turn-realtime.publisher";
 
 export * from "./ports/signals/turn-abort.signal";
 

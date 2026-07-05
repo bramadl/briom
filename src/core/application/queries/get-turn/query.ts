@@ -7,6 +7,14 @@ import type { RoomTurnDTO } from "../.contracts/room-turn.dto";
 export interface GetTurnInput {
 	/**
 	 * @description
+	 * The ID of the moderator requesting this resource.
+	 *
+	 * Format: UUID v4. Used for authorization (Auth-Z) checks.
+	 */
+	moderatorId: string;
+
+	/**
+	 * @description
 	 * The turn ID to retrieve.
 	 */
 	turnId: string;

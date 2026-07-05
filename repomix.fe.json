@@ -35,7 +35,7 @@
     "customPatterns": [
       "docs/**",
       "public/**",
-      "src/app/_bak/**",
+      "src/_bak/**",
       "src/core/**",
       "src/libs/drimion/**",
       "biome.json",

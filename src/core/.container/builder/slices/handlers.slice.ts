@@ -224,7 +224,9 @@ export const handlersSlice = servicesSlice
 
 	.add("handler:query:get-room", (r) => {
 		const query = r["query:get-room"];
-		return new GetRoomHandler(query);
+		const moderatorRepository = r["repository:moderator"];
+
+		return new GetRoomHandler(query, moderatorRepository);
 	})
 
 	.add("handler:query:get-rooms", (r) => {

@@ -22,6 +22,7 @@ import {
 	type GetProposalsOutput,
 	GetProposalsQuery,
 	type GetRoomInput,
+	type GetRoomMetadata,
 	type GetRoomOutput,
 	GetRoomQuery,
 	type GetRoomsInput,
@@ -116,7 +117,9 @@ export function facadeBriom(container: typeof resolvedContainer) {
 				commandBus.execute<RenameRoomOutput>(new RenameRoomCommand(input)),
 
 			get: (input: GetRoomInput) =>
-				queryBus.execute<GetRoomOutput, never>(new GetRoomQuery(input)),
+				queryBus.execute<GetRoomOutput, never, GetRoomMetadata>(
+					new GetRoomQuery(input),
+				),
 
 			all: (input: GetRoomsInput) =>
 				queryBus.execute<GetRoomsOutput, never, GetRoomsMetadata>(

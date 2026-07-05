@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuthModal } from "@briom/auth/components/AuthModalProvider";
+import { useAuthModal } from "@briom/app/auth/components/AuthModalProvider";
 import { Logo } from "@briom/components/logo";
 import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";

@@ -5,10 +5,11 @@ import {
 	InngestCheckpointGenerator,
 	InngestTopicGenerator,
 	InngestTurnGenerator,
+	InngestTurnRealtimePublisher,
 	OpenRouterLLMGateway,
 	PinoLogger,
 	PostHogAnalyticsTracker,
-	SupabaseRealtimeBroadcaster,
+	SupabaseRoomRealtimePublisher,
 } from "@briom/core/infra/adapters";
 import {
 	DrizzleCheckpointRepository,
@@ -47,11 +48,16 @@ export const adaptersSlice = providersSlice
 		return new PostHogAnalyticsTracker(client);
 	})
 
-	.add("broadcaster:supabase-realtime", (r) => {
-		const supabase = r.supabase;
+	.add("publisher:room-realtime:supabase", (r) => {
+		const client = r.supabase;
 		const logger = r["logger:pino"];
 
-		return new SupabaseRealtimeBroadcaster(supabase, logger);
+		return new SupabaseRoomRealtimePublisher(client, logger);
+	})
+
+	.add("publisher:turn-realtime:inngest", (r) => {
+		const client = r.inngest;
+		return new InngestTurnRealtimePublisher(client);
 	})
 
 	.add("signal:turn-abort:drizzle", (r) => {

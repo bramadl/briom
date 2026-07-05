@@ -38,8 +38,8 @@ export class GetRoomsHandler
 		const output = await this.query.execute(input);
 		const total = output.rooms.length;
 
-		let canOpenMoreRoom = true;
-		let quotaLeft = Infinity;
+		let canOpenMoreRoom = false;
+		let quotaLeft = 0;
 
 		const moderator = await this.moderatorRepository.findById(
 			ModeratorId(input.moderatorId),

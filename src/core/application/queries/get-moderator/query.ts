@@ -58,8 +58,8 @@ export interface GetModeratorMetadata {
  *
  * Retrieve a moderator useful for rendering profile.
  *
- * @see DrizzleGetModeratorQuery — infrastructure implementation
  * @see GetModeratorHandler — application handler
+ * @see DrizzleGetModeratorQuery — infrastructure implementation
  */
 export interface IGetModeratorQuery {
 	/**

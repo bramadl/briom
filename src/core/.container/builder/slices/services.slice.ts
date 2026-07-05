@@ -12,8 +12,13 @@ export const servicesSlice = adaptersSlice
 	.add("service:streamConsumer", (r) => {
 		const turnRepository = r["repository:turn"];
 		const turnAbortSignal = r["signal:turn-abort:drizzle"];
+		const turnRealtimePublisher = r["publisher:turn-realtime:inngest"];
 
-		return new StreamConsumer(turnRepository, turnAbortSignal);
+		return new StreamConsumer(
+			turnRepository,
+			turnAbortSignal,
+			turnRealtimePublisher,
+		);
 	})
 
 	.add("service:transcriptorRenderer", () => new TranscriptorRenderer());

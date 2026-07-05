@@ -33,7 +33,7 @@ import type {
 } from "@briom/libs/drimion/types/event.types";
 import { after } from "next/server";
 
-import type { IRealtimeBroadcaster } from "../ports/broadcasters/realtime.broadcaster";
+import type { IRoomRealtimePublisher } from "../ports/publishers/room-realtime.publisher";
 
 /**
  * @description
@@ -63,84 +63,26 @@ type RealtimeTranslator<TPayload> = (
  * Realtime connection; FE filters by `roomId` inside the payload.
  */
 export class RoomsEventSubscriber {
-	public constructor(private readonly broadcaster: IRealtimeBroadcaster) {}
+	public constructor(private readonly publisher: IRoomRealtimePublisher) {}
 
 	private registry = {
-		/**
-		 * @description
-		 * FE needs this: run typewriter effect automatically.
-		 */
 		topicGenerated: RoomTopicGenerated.type,
-
 		checkpoint: {
-			/**
-			 * @description
-			 * FE does not need this yet.
-			 */
 			initiated: CheckpointInitiated.type,
-
-			/**
-			 * @description
-			 * FE does not need this yet.
-			 */
 			generated: CheckpointGenerated.type,
 		},
-
 		deliberation: {
-			/**
-			 * @description
-			 * FE needs this: hide invite participant button, change room's menu actions,
-			 * update query cache for this room's status, etc.
-			 */
 			started: DeliberationStarted.type,
-
-			/**
-			 * @description
-			 * FE needs this: make the page read-only.
-			 * e.g.: disables moderator input, hides proposal, hides retry buttons, etc.
-			 */
 			concluded: DeliberationConcluded.type,
 		},
-
 		room: {
-			/**
-			 * @description
-			 * FE needs this: render a frozen-notice banner.
-			 * Also, inherits some of `onDeliberationConcluded` UI events.
-			 */
 			frozen: RoomFrozen.type,
-
-			/**
-			 * @description
-			 * FE needs this: remove the frozen-notice banner.
-			 * Might as well enable functionality on the room.
-			 */
 			unfrozen: RoomUnfrozen.type,
-
-			/**
-			 * @description
-			 * FE needs this: similar behavior with `onRoomFrozen`–but different message.
-			 */
 			locked: RoomLocked.type,
-
-			/**
-			 * @description
-			 * FE needs this: same behavior with `onRoomUnfrozen` traits.
-			 */
 			unlocked: RoomUnlocked.type,
 		},
-
 		turnSlot: {
-			/**
-			 * @description
-			 * FE needs this: disable input, hide proposals (& retry button), etc.
-			 */
 			claimed: TurnSlotClaimed.type,
-
-			/**
-			 * @description
-			 * FE needs this: enable input, show proposals (& retry button), etc.
-			 */
 			released: TurnSlotReleased.type,
 		},
 	};
@@ -179,7 +121,7 @@ export class RoomsEventSubscriber {
 			const [scope, entity] = signal.event.split(":");
 
 			after(() =>
-				this.broadcaster.broadcast(
+				this.publisher.broadcast(
 					`${scope}:${signal.moderatorId}:${entity}`,
 					signal.event,
 					signal.data,

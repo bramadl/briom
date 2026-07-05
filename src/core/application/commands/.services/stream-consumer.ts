@@ -1,6 +1,7 @@
 import type { ITurnRepository, Turn } from "@briom/core/domain";
 
 import type { UsageInfo } from "../../ports/gateways/llm/llm.ref";
+import type { ITurnRealtimePublisher } from "../../ports/publishers/turn-realtime.publisher";
 import type { ITurnAbortSignal } from "../../ports/signals/turn-abort.signal";
 
 /**
@@ -10,11 +11,22 @@ import type { ITurnAbortSignal } from "../../ports/signals/turn-abort.signal";
  * is NOT a use case on its own — it's the streaming mechanics
  * extracted out, so that method stays readable as a sequence of
  * business steps, not stream-processing plumbing.
+ *
+ * Each DB flush is now paired with a realtime publish of the same
+ * accumulated content, on the same cadence (`flushIntervalMs`) — this
+ * is what lets FE render live tokens via `useRealtime` instead of
+ * polling `getTurn`. The publish is fire-and-forget from this class's
+ * perspective: it's `await`ed so the underlying Promise settles before
+ * the next read, but a failed publish never fails the stream — only a
+ * failed *persist* does, since content durability matters and realtime
+ * delivery doesn't (a dropped publish just means FE catches up on the
+ * next flush's fuller content, or on `getTurn` at settle time).
  */
 export class StreamConsumer {
 	public constructor(
 		private readonly turnRepository: ITurnRepository,
 		private readonly turnAbortSignal: ITurnAbortSignal,
+		private readonly turnRealtimePublisher: ITurnRealtimePublisher,
 		private readonly flushIntervalMs: number = 1000,
 	) {}
 
@@ -67,6 +79,7 @@ export class StreamConsumer {
 					const accResult = turn.accumulate(buffer);
 					if (accResult.isSuccess()) {
 						await this.turnRepository.persist(turn);
+						await this.publishAccumulated(turn);
 					}
 
 					buffer = "";
@@ -74,7 +87,10 @@ export class StreamConsumer {
 				}
 			}
 
-			if (buffer.length > 0) turn.accumulate(buffer);
+			if (buffer.length > 0) {
+				turn.accumulate(buffer);
+				await this.publishAccumulated(turn);
+			}
 
 			const resolvedUsage = await usage;
 			return { outcome: "completed", usage: resolvedUsage };
@@ -103,6 +119,26 @@ export class StreamConsumer {
 			}
 
 			return { outcome: "failed", error };
+		}
+	}
+
+	/**
+	 * @description
+	 * Publishes the turn's current accumulated content to the realtime
+	 * channel. Swallows its own errors — a broadcast failure is not a
+	 * streaming failure, see this class's doc comment.
+	 */
+	private async publishAccumulated(turn: Turn): Promise<void> {
+		try {
+			await this.turnRealtimePublisher.publishTokenAccumulated(
+				turn.get("roomId").value(),
+				{
+					turnId: turn.id.value(),
+					content: turn.currentContent,
+				},
+			);
+		} catch {
+			// intentionally ignored — see class doc comment
 		}
 	}
 }

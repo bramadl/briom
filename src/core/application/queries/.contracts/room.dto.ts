@@ -88,6 +88,37 @@ export interface RoomDTO {
 
 	/**
 	 * @description
+	 * Current state of the room.
+	 * `null` means no constraint.
+	 */
+	state: {
+		/**
+		 * @description
+		 * - "frozen" — temporary, self-resolvable by the moderator (e.g. top up
+		 * credits, wait for monthly reset).
+		 *
+		 * - "locked" — requires admin
+		 * intervention (e.g. moderation action), cannot be self-resolved.
+		 */
+		kind: "frozen" | "locked";
+
+		/**
+		 * @description
+		 * When this state change occurred.
+		 */
+		occurredAt: Date;
+
+		/**
+		 * @description
+		 * Human-readable explanation shown to the moderator in the UI.
+		 * e.g. "You've used 100% of your daily limit, top up Briom Credit
+		 * now to continue deliberating or wait for the next reset."
+		 */
+		reason: string;
+	} | null;
+
+	/**
+	 * @description
 	 * Human-readable room title.
 	 */
 	title: string;

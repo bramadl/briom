@@ -25,6 +25,9 @@ export class DrizzleGetRoomQuery implements IGetRoomQuery {
 				status: true,
 				createdAt: true,
 				moderatorId: true,
+				stateKind: true,
+				stateOccurredAt: true,
+				stateReason: true,
 			},
 			with: {
 				participants: {
@@ -91,8 +94,8 @@ export class DrizzleGetRoomQuery implements IGetRoomQuery {
 
 			return {
 				id: t.id,
-				content: t.content || "...",
-				status: t.status,
+				content: t.content || "",
+				status: t.status as "pending" | "streaming" | "settled" | "failed",
 				intent: t.intent,
 				createdAt: t.createdAt.toISOString(),
 				settledAt: t.settledAt ? t.settledAt.toISOString() : null,
@@ -133,6 +136,15 @@ export class DrizzleGetRoomQuery implements IGetRoomQuery {
 					moderatorId: roomData.moderatorId,
 				},
 			},
+			state: roomData.stateKind
+				? {
+						kind: roomData.stateKind,
+						occurredAt: roomData.stateOccurredAt as Date,
+						reason:
+							roomData.stateReason ??
+							"Something went wrong, please contact any administrators.",
+					}
+				: null,
 		};
 
 		return { room: roomDTO };

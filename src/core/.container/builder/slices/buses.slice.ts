@@ -122,10 +122,10 @@ export const busesSlice = handlersSlice
 	.registerEvent((r) => {
 		const tracker = r["analytics:tracker:posthog"];
 		const eventBus = r["eventBus:drimion"];
-		const broadcaster = r["broadcaster:supabase-realtime"];
-		const roomRepository = r["repository:room"];
+		const roomPublisher = r["publisher:room-realtime:supabase"];
+		const turnPublisher = r["publisher:turn-realtime:inngest"];
 
 		new AnalyticsEventSubscriber(tracker).register(eventBus);
-		new RoomsEventSubscriber(broadcaster).register(eventBus);
-		new TurnsEventSubscriber(broadcaster, roomRepository).register(eventBus);
+		new RoomsEventSubscriber(roomPublisher).register(eventBus);
+		new TurnsEventSubscriber(turnPublisher).register(eventBus);
 	});

@@ -7,6 +7,15 @@ import type { TurnProposalDTO } from "../.contracts/turn-proposal.dto";
 export interface GetProposalsInput {
 	/**
 	 * @description
+	 * The ID of the moderator requesting this resource.
+	 *
+	 * Used for authorization (Auth-Z) checks.
+	 * Format: UUID v4. Used
+	 */
+	moderatorId: string;
+
+	/**
+	 * @description
 	 * Room to generate proposals for.
 	 */
 	roomId: string;
@@ -36,8 +45,8 @@ export interface GetProposalsOutput {
  * Delegates to `ProposalGenerator.proposeNextTurns()` for context-aware
  * suggestion generation.
  *
- * @see ProposalGenerator.proposeNextTurns — domain logic
  * @see GetProposalHandler — application handler
+ * @see ProposalGenerator.proposeNextTurns — domain logic
  */
 export class GetProposalsQuery {
 	public constructor(public readonly input: GetProposalsInput) {}

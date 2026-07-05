@@ -31,13 +31,38 @@ export interface GetRoomOutput {
 
 /**
  * @description
+ * Additional metadata information of the output.
+ */
+export interface GetRoomMetadata {
+	/**
+	 * @description
+	 * Wether the moderator can attach a file.
+	 *
+	 * Depending on the current limit, the Moderator
+	 * may attach files. FE could use this to hide
+	 * or show (or disable) the attachment button.
+	 */
+	canAttachFile: boolean;
+
+	/**
+	 * @description
+	 * Wether the moderator can invite more participant.
+	 *
+	 * If the room is still forming, typically this will
+	 * be true–unless the Moderator reaches their limit.
+	 */
+	canInviteParticipant: boolean;
+}
+
+/**
+ * @description
  * `IGetRoomQuery` — Application Query Port
  *
  * Returns the complete denormalized view of a room's
  * deliberation in a single round-trip.
  *
- * @see DrizzleGetRoomQuery — infrastructure implementation
  * @see GetRoomHandler — application handler
+ * @see DrizzleGetRoomQuery — infrastructure implementation
  */
 export interface IGetRoomQuery {
 	/**

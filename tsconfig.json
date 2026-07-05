@@ -31,9 +31,9 @@
 			"@drimion/*": ["./src/libs/drimion/*"],
 
 			// Front End: Scoped Modules
-			"@briom/auth/*": ["./src/app/(features)/auth/*"],
-			"@briom/moderator/*": ["./src/app/(features)/moderator/*"],
-			"@briom/room/*": ["./src/app/(features)/room/*"],
+			"@briom/auth/*": ["./src/app/auth/*"],
+			"@briom/moderator/*": ["./src/features/moderator/*"],
+			"@briom/room/*": ["./src/features/room/*"],
 
 			// Front End: Generic
 			"@briom/animated/*": ["./src/components/animated/*"],

@@ -1,6 +1,7 @@
 import {
 	type IRoomRepository,
 	type ITurnRepository,
+	ModeratorId,
 	ProposalGenerator,
 	RoomId,
 } from "@briom/core/domain";
@@ -16,8 +17,8 @@ import type { GetProposalsOutput, GetProposalsQuery } from "./query";
  * Converts raw query output into a `Result` for consistency with command
  * handlers across the application layer.
  *
- * @see ProposalGenerator.proposeNextTurns — domain logic
  * @see GetProposalsQuery — for proposal generation logic
+ * @see ProposalGenerator.proposeNextTurns — domain logic
  */
 export class GetProposalsHandler
 	implements IQuery<GetProposalsQuery, GetProposalsOutput, never>
@@ -38,6 +39,9 @@ export class GetProposalsHandler
 		]);
 
 		if (!room) return Result.success({ proposals: [] });
+		if (room.get("moderatorId").isEqual(ModeratorId(input.moderatorId))) {
+			return Result.success({ proposals: [] });
+		}
 
 		const proposals = ProposalGenerator.proposeNextTurns({
 			participants: room.get("participants"),
