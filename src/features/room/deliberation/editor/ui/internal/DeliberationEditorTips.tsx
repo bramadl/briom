@@ -21,7 +21,7 @@ export function DeliberationEditorTips({
 	];
 
 	return (
-		<span className="text-[10px] text-muted-foreground/30 font-mono">
+		<span className="hidden md:inline text-[10px] text-muted-foreground/30 font-mono">
 			{tips.join(" · ")}
 		</span>
 	);
