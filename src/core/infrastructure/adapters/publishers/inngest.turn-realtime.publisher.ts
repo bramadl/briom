@@ -8,12 +8,10 @@ import type { InngestClient } from "@briom/inngest/client";
  * `ITurnRealtimePublisher` implementation backed by Inngest Realtime.
  * Uses `inngest.realtime.publish()` (the client-level alias), not
  * `step.realtime.publish()` — this class is called from
- * `TurnsEventSubscriber` (inside `after()`, outside any Inngest step)
- * and from `StreamConsumer` (inside `StreamTurnHandler`'s execution,
- * also not a `step.run()` block), so there is no step context to
- * durably attach a publish to. Every publish here is non-durable by
- * necessity, not just by choice — see each method's doc comment on
- * `ITurnRealtimePublisher` for why that's fine per-topic.
+ * `TurnsEventSubscriber` and from `StreamConsumer` (inside
+ * `StreamTurnHandler`'s execution, not a `step.run()` block), so there
+ * is no step context to durably attach a publish to. Every publish
+ * here is non-durable by necessity, not just by choice.
  */
 export class InngestTurnRealtimePublisher implements ITurnRealtimePublisher {
 	public constructor(private readonly client: InngestClient) {}
@@ -36,7 +34,7 @@ export class InngestTurnRealtimePublisher implements ITurnRealtimePublisher {
 
 	public async publishTokenAccumulated(
 		roomId: string,
-		data: { turnId: string; content: string },
+		data: { turnId: string; token: string },
 	): Promise<void> {
 		const channel = turnChannel({ roomId });
 		await this.client.realtime.publish(channel.tokenAccumulated, data);

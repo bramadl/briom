@@ -23,16 +23,22 @@ export function RoomSequence({ contentRef }: RoomSequenceProps) {
 	);
 
 	if (isFresh) return <FreshRoom participants={participants} />;
+
+	const lastIndex = turns.length - 1;
 	return (
 		<div
 			className="w-full max-w-3xl mx-auto md:px-8 flex flex-col gap-12 lg:gap-16 min-w-0"
 			ref={contentRef}
 		>
-			{turns.map((turn) => {
+			{turns.map((turn, index) => {
 				const id = turn.id;
 				const isParticipantTurn = turn.author.type === "participant";
+				const isLatest = index === lastIndex;
 
-				if (isParticipantTurn) return <ParticipantTurn id={id} key={id} />;
+				if (isParticipantTurn) {
+					return <ParticipantTurn id={id} isLatest={isLatest} key={id} />;
+				}
+
 				return (
 					<ModeratorTurn
 						attachments={turn.attachments.map((attachment) => ({
@@ -43,6 +49,7 @@ export function RoomSequence({ contentRef }: RoomSequenceProps) {
 						}))}
 						content={turn.content}
 						id={id}
+						isLatest={isLatest}
 						key={id}
 						settledAt={turn.settledAt}
 					/>

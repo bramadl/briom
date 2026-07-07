@@ -84,7 +84,7 @@ Note: Do not prefix your response with your name, model name, or any identifier 
  * Lorem ipsum dolor sit amet.
  */
 export const TopicGenerationPrompt = {
-	summarizer: "openai/gpt-oss-120b:free",
+	summarizer: "openrouter/free",
 	build(): string {
 		return `Summarize the user's message as a concise topic (8-12 words, no punctuation, no explanation). Output ONLY the topic text, nothing else.`;
 	},
@@ -123,7 +123,7 @@ interface CheckpointPromptInput {
  * that stays within budget, rather than growing by simple concatenation.
  */
 export const CheckpointPrompt = {
-	summarizer: "openai/gpt-oss-120b:free",
+	summarizer: "openrouter/free",
 	build({
 		topic,
 		previousCheckpoint,

@@ -2,13 +2,7 @@ import type { StreamError } from "@briom/core/domain";
 
 /**
  * @description
- * Application-layer port to the Turn realtime channel. Replaces
- * `IRealtimeBroadcaster` for Turn concerns specifically — that port
- * stays alive for Room events (still Supabase Realtime), but Turn
- * events are high-frequency enough (per-flush token streaming) that a
- * generic `broadcast(channel, event, payload)` string API no longer
- * fits: each topic here is typed against `turnChannel`'s schema
- * instead of being assembled by hand.
+ * Application-layer port to the Turn realtime channel.
  *
  * One method per topic rather than a single generic `publish(topic,
  * data)` — this keeps every call site's payload shape checked at the
@@ -47,10 +41,9 @@ export interface ITurnRealtimePublisher {
 	 * Carries the full final content directly in the payload — same
 	 * reasoning as publishFailed's inline error detail. Without this,
 	 * FE has nothing to render the instant streaming stops except
-	 * whatever partial content it last had in liveContent, and has to
-	 * wait on invalidateRoom()'s network round-trip just to see the
-	 * complete text. That round-trip gap is what produced the visible
-	 * "cut off, then jumps to full text" artifact.
+	 * whatever partial content it last had accumulated locally, and has
+	 * to wait on invalidateRoom()'s network round-trip just to see the
+	 * complete text.
 	 */
 	publishSettled(
 		roomId: string,
@@ -62,13 +55,19 @@ export interface ITurnRealtimePublisher {
 	/**
 	 * @description
 	 * Non-durable, fire-and-forget from the caller's perspective — safe
-	 * to call at flush-interval frequency. Never awaited for its
-	 * completion outside of the publish call itself; a dropped or
-	 * duplicated publish here does not affect Turn state, which is the
-	 * DB persist happening alongside it, not this broadcast.
+	 * to call at high frequency (default: every 30ms while there's
+	 * something new to send). `token` is a DELTA — the text received
+	 * since the last publish, NOT the full accumulated content. Callers
+	 * must append this to their own running total; this method carries
+	 * no information about what's been sent before.
+	 *
+	 * Never awaited for its completion outside of the publish call
+	 * itself; a dropped or duplicated publish here does not affect Turn
+	 * state, which is the DB persist happening on its own cadence, not
+	 * this broadcast.
 	 */
 	publishTokenAccumulated(
 		roomId: string,
-		data: { turnId: string; content: string },
+		data: { turnId: string; token: string },
 	): Promise<void>;
 }

@@ -1,85 +1,113 @@
 import { create } from "zustand";
 
-/**
- * @description
- * Pure UI interaction state — which turns are manually expanded.
- * Deliberately separate from `useTurnStore`/`useRoomStore`: nothing
- * here is ever set by a realtime event. It's set by (a) the user
- * clicking a toggle, or (b) `collapseAllExpanded()` as a side-effect of
- * moderator actions (initiating a turn, and later accepting a
- * proposal) — but the trigger for (b) is a mutation's `onMutate`, not
- * a subscription handler, so this store has no dependency on either
- * Supabase or Inngest wiring.
- */
 interface TurnCollapseState {
 	/**
 	 * @description
-	 * Force-collapses every turn currently tracked as expanded. Called
-	 * from `useInitiateTurnMutation`'s `onMutate`, at the exact moment a
-	 * new moderator turn is optimistically created — the newly-created
-	 * moderator turn and its participant placeholder are never in this
-	 * set to begin with, so they render expanded by default (see
-	 * `useIsTurnExpanded`'s doc comment on the default-collapsed
-	 * convention). This is intentionally unconditional: a turn the user
-	 * manually expanded moments ago is still collapsed here, trading
-	 * "preserve user's manual expand" for a simpler mental model and a
-	 * smaller DOM/layout footprint once a new turn starts streaming.
+	 * Called from `useInitiateTurnMutation`'s `onMutate`, at the exact
+	 * moment a new moderator turn is optimistically created. Clears
+	 * ALL manual state — both force-expanded (including anything rule
+	 * 3 was keeping open) and force-collapsed — except for the ids
+	 * passed in `keepExpandedIds`. In practice this is called with an
+	 * empty array: the newly-created moderator turn and its
+	 * participant placeholder don't need to be in this set at all,
+	 * since they're `isLatest` by construction and rule 1 already
+	 * covers them.
 	 */
-	collapseAllExpanded: () => void;
+	collapseAllExcept: (keepExpandedIds: string[]) => void;
 
 	/**
 	 * @description
-	 * IDs of turns the user (or the app) has explicitly expanded.
-	 * Default-collapsed convention: a turn's collapsed state is
-	 * `!expandedTurnIds.has(id)`, so a turn absent from this set renders
-	 * collapsed. Consumers should NEVER select this whole Set directly —
-	 * use `useIsTurnExpanded(id)` instead, which returns a scalar
-	 * boolean so unrelated turns don't re-render when one turn toggles.
+	 * IDs the user has explicitly collapsed. Takes precedence over
+	 * `forceExpandedIds` — this is what lets a moderator manually
+	 * collapse a turn that rule 3 would otherwise keep open.
 	 */
-	expandedTurnIds: Set<string>;
+	forceCollapsedIds: Set<string>;
 
 	/**
 	 * @description
-	 * Toggles a single turn's expanded state. Safe to call for any
-	 * turnId regardless of current membership in `expandedTurnIds`.
+	 * IDs the user (or `forceExpandOnSettle`) has explicitly expanded,
+	 * independent of "latest" status. This is what keeps rule 3 alive:
+	 * a participant turn that just settled is added here, so it stays
+	 * expanded even after a newer moderator turn makes it no longer
+	 * "latest".
 	 */
-	toggleExpanded: (turnId: string) => void;
+	forceExpandedIds: Set<string>;
+
+	/**
+	 * @description
+	 * Rule 3's entry point. Called once, from `ParticipantTurn`, at
+	 * the instant a turn's `isActive` flips from `true` to `false`
+	 * (i.e. streaming just finished). Adds the turn to
+	 * `forceExpandedIds` so it stays open even after it stops being
+	 * `isLatest`. A no-op if the moderator already manually collapsed
+	 * it in the meantime (that intent wins — checked by the caller,
+	 * not here, since this store doesn't know about a turn's
+	 * `isActive` history).
+	 */
+	forceExpandOnSettle: (turnId: string) => void;
+
+	/**
+	 * @description
+	 * Toggles a single turn's expanded state, given its CURRENT
+	 * resolved state (from `useIsTurnExpanded`). Moving a turn from
+	 * expanded -> collapsed always lands it in `forceCollapsedIds`
+	 * (even if it was expanded only because of rule 3, not a manual
+	 * expand) — this is what lets the moderator override rule 3.
+	 * Moving collapsed -> expanded lands it in `forceExpandedIds`.
+	 */
+	toggleExpanded: (turnId: string, currentlyExpanded: boolean) => void;
 }
 
-export const useTurnCollapseStore = create<TurnCollapseState>((set, get) => ({
-	expandedTurnIds: new Set<string>(),
+export const useTurnCollapseStore = create<TurnCollapseState>((set) => ({
+	forceExpandedIds: new Set<string>(),
+	forceCollapsedIds: new Set<string>(),
 
-	toggleExpanded: (turnId) => {
+	collapseAllExcept: (keepExpandedIds) => {
+		set(() => ({
+			forceExpandedIds: new Set(keepExpandedIds),
+			forceCollapsedIds: new Set<string>(),
+		}));
+	},
+
+	toggleExpanded: (turnId, currentlyExpanded) => {
 		set((s) => {
-			const next = new Set(s.expandedTurnIds);
-			if (next.has(turnId)) next.delete(turnId);
-			else next.add(turnId);
-			return { expandedTurnIds: next };
+			const forceExpandedIds = new Set(s.forceExpandedIds);
+			const forceCollapsedIds = new Set(s.forceCollapsedIds);
+
+			if (currentlyExpanded) {
+				forceExpandedIds.delete(turnId);
+				forceCollapsedIds.add(turnId);
+			} else {
+				forceCollapsedIds.delete(turnId);
+				forceExpandedIds.add(turnId);
+			}
+
+			return { forceExpandedIds, forceCollapsedIds };
 		});
 	},
 
-	collapseAllExpanded: () => {
-		// Only replaces the reference when there's actually something to
-		// clear — skips a redundant `Set` allocation + store update on
-		// every optimistic send once the set is already empty (the
-		// common case: nothing was manually expanded before sending).
-		if (get().expandedTurnIds.size === 0) return;
-		set({ expandedTurnIds: new Set() });
+	forceExpandOnSettle: (turnId) => {
+		set((s) => {
+			if (s.forceExpandedIds.has(turnId)) return s;
+			const forceExpandedIds = new Set(s.forceExpandedIds);
+			forceExpandedIds.add(turnId);
+			return { forceExpandedIds };
+		});
 	},
 }));
 
-/**
- * @description
- * Scalar per-turn selector — returns `true` only if this specific
- * `turnId` is in `expandedTurnIds`. Every `StaticParticipantTurn`/
- * `ModeratorTurn` should use this instead of reading `expandedTurnIds`
- * directly: Zustand's default equality check is reference-based, so
- * selecting the whole Set would re-render every turn in the sequence
- * whenever ANY turn toggles or `collapseAllExpanded` fires — exactly
- * the re-render blast radius `ParticipantTurn`'s `memo` wrapper was
- * built to avoid. Selecting a scalar boolean here means Zustand only
- * notifies the one turn whose membership actually changed.
- */
-export function useIsTurnExpanded(turnId: string) {
-	return useTurnCollapseStore((s) => s.expandedTurnIds.has(turnId));
+export function useIsTurnExpanded(
+	turnId: string,
+	opts: { isLatest: boolean; isActiveStreaming: boolean },
+) {
+	return useTurnCollapseStore((s) => {
+		if (opts.isActiveStreaming) return true;
+
+		if (s.forceCollapsedIds.has(turnId)) return false;
+
+		if (opts.isLatest) return true;
+		if (s.forceExpandedIds.has(turnId)) return true;
+
+		return false;
+	});
 }

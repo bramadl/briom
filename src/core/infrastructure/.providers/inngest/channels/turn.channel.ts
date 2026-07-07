@@ -4,26 +4,12 @@ import { realtime, staticSchema } from "inngest";
 /**
  * @description
  * Single realtime channel per Room, carrying every Turn lifecycle event
- * as a distinct topic. Replaces the old Supabase Realtime broadcast on
- * `turn:{moderatorId}:{entity}` string channels — this is keyed by
- * `roomId` instead, since every caller (FE's `RoomDeliberation`, BE's
- * `TurnsEventSubscriber`) already has `roomId` in hand and no longer
- * needs a Room lookup just to resolve a channel name.
+ * as a distinct topic. Keyed by `roomId` — every caller (FE's
+ * `RoomDeliberation`, BE's `TurnsEventSubscriber`) already has `roomId`
+ * in hand.
  *
- * `tokenAccumulated` is a first-class topic here, unlike the old
- * Supabase broadcaster where it was deliberately never forwarded (each
- * publish would have meant a DB-changefeed-triggered broadcast — too
- * costly at per-token frequency). Inngest Realtime's publish is a plain
- * in-memory WebSocket fan-out, not database-changefeed-driven, so that
- * cost concern does not apply here — see Inngest's own docs, which use
- * exactly this token-streaming shape as their canonical example.
- *
- * This file has zero server-only runtime dependencies (no `Inngest`
- * client import, no business logic) — safe to import from both the BE
- * publisher/subscriber and the FE `useRealtime` hook. The one import
- * from `@briom/core/domain` is `type`-only (a string literal union),
- * erased at compile time — it does not pull any server-only runtime
- * code into the FE bundle.
+ * This file has zero server-only runtime dependencies — safe to import
+ * from both the BE publisher/subscriber and the FE `useRealtime` hook.
  */
 export const turnChannel = realtime.channel({
 	name: ({ roomId }: { roomId: string }) => `turn:${roomId}`,
@@ -47,42 +33,36 @@ export const turnChannel = realtime.channel({
 
 		/**
 		 * @description
-		 * Non-durable, high-frequency. Published once per throttled flush
-		 * inside `StreamConsumer.consume()` (same cadence as the DB
-		 * persist), not once per raw token from the LLM provider. Carries
-		 * the full accumulated content so far, not just the delta — FE
-		 * can set state directly with `.data.content` with no local
-		 * concatenation needed.
+		 * Non-durable, high-frequency (default: every 30ms while
+		 * `StreamConsumer`'s broadcast buffer is non-empty). Carries only
+		 * the DELTA since the last broadcast — matches the domain event
+		 * this mirrors (`TurnTokenAccumulated.token`) — NOT the full
+		 * accumulated content. FE appends this to whatever it already has
+		 * for this turnId; it does not replace it.
+		 *
+		 * Sending full content here was tried and reverted: it makes each
+		 * publish's payload size (and serialize/transmit cost) grow with
+		 * the turn's total length instead of staying constant, which
+		 * compounds the longer a turn streams for.
 		 */
 		tokenAccumulated: {
-			schema: staticSchema<{ turnId: string; content: string }>(),
+			schema: staticSchema<{ turnId: string; token: string }>(),
 		},
 
 		/**
 		 * @description
 		 * Terminal: turn settled successfully. Carries the full final
-		 * content directly — same reasoning as `failed`'s inline error
-		 * detail above: lets FE render the complete text the instant
+		 * content directly — FE renders the complete text the instant
 		 * this message lands, without waiting on the invalidateRoom()
-		 * refetch that fires alongside it. Without this, the only
-		 * content FE has at this instant is whatever liveContent last
-		 * held, which may lag the true final content by one flush cycle
-		 * if the tail-buffer tokenAccumulated publish and this settled
-		 * publish race each other over the wire.
+		 * refetch that fires alongside it.
 		 */
 		settled: { schema: staticSchema<{ turnId: string; content: string }>() },
 
 		/**
 		 * @description
 		 * Terminal: turn failed. Mirrors `TurnFailedPayload.error` fields
-		 * directly — carrying the full error here (not just `kind`) means
-		 * `TurnFailed` can render immediately off this message, without
-		 * waiting on the `invalidateRoom()` refetch that also fires
-		 * alongside it. The refetch still happens — it's what makes
-		 * `useRoom`'s `turn.error` the source of truth once it resolves —
-		 * this is purely to close the gap between "failed" and "refetch
-		 * settled" so the user isn't staring at a stale "streaming" card
-		 * for that window.
+		 * directly, so `TurnFailed` can render immediately off this
+		 * message without waiting on the accompanying refetch.
 		 */
 		failed: {
 			schema: staticSchema<{
@@ -97,8 +77,7 @@ export const turnChannel = realtime.channel({
 		/**
 		 * @description
 		 * Terminal: turn was abandoned (e.g. superseded before it could
-		 * run). FE treats this the same as a null turn from a direct
-		 * fetch — see `use-turn-streaming`'s doc comment.
+		 * run).
 		 */
 		abandoned: { schema: staticSchema<{ turnId: string }>() },
 	},

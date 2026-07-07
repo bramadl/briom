@@ -1,4 +1,7 @@
-import { useState } from "react";
+import {
+	useIsTurnExpanded,
+	useTurnCollapseStore,
+} from "@briom/room/turns/hooks/use-turn-collapse-store";
 
 import { TurnActions } from "./internal/TurnActions";
 import {
@@ -36,6 +39,15 @@ interface ModeratorTurnProps {
 
 	/**
 	 * @description
+	 * True if this is the last turn in `room.info.turns` — computed by
+	 * `RoomSequence` from array position. Drives rule 1 of the
+	 * auto-collapse spec: the latest turn is always expanded,
+	 * regardless of any manual collapse/expand history.
+	 */
+	isLatest: boolean;
+
+	/**
+	 * @description
 	 * ISO 8601 timestamp when turn settled, null if not settled.
 	 */
 	settledAt: string | null;
@@ -45,26 +57,33 @@ export function ModeratorTurn({
 	attachments,
 	content,
 	id,
+	isLatest,
 	settledAt,
 }: ModeratorTurnProps) {
-	const [isCollapsed, setIsCollapsed] = useState<boolean>(true);
+	const isExpanded = useIsTurnExpanded(id, {
+		isActiveStreaming: false,
+		isLatest,
+	});
+
+	const toggleExpanded = useTurnCollapseStore((s) => s.toggleExpanded);
+
 	return (
 		<div
 			className="relative group space-y-2 max-w-lg min-w-0 ml-auto rounded-lg"
 			id={id}
 		>
+			{attachments.length > 0 && (
+				<div className="flex flex-wrap justify-end gap-1.5">
+					{attachments.map((attachment) => (
+						<TurnAttachment key={attachment.name} {...attachment} />
+					))}
+				</div>
+			)}
 			<div className="relative bg-muted/50 p-4 rounded-lg space-y-3">
-				{attachments.length > 0 && (
-					<div className="flex flex-wrap gap-1.5 pt-1 border-t border-border/20">
-						{attachments.map((attachment) => (
-							<TurnAttachment key={attachment.name} {...attachment} />
-						))}
-					</div>
-				)}
 				<TurnContentCollapser
 					className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert"
-					isCollapsed={isCollapsed}
-					onToggled={() => setIsCollapsed((prev) => !prev)}
+					isCollapsed={!isExpanded}
+					onToggled={() => toggleExpanded(id, isExpanded)}
 				>
 					<TurnContent content={content} />
 				</TurnContentCollapser>

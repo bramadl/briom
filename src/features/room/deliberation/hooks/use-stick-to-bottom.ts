@@ -17,6 +17,19 @@ export function useStickToBottom<T extends HTMLDivElement = HTMLDivElement>() {
 		el.scrollTo({ top: el.scrollHeight, behavior });
 	}, []);
 
+	const forceScrollToBottom = useCallback(
+		(behavior: ScrollBehavior = "smooth") => {
+			isNearBottomRef.current = true;
+
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => {
+					scrollToBottom(behavior);
+				});
+			});
+		},
+		[scrollToBottom],
+	);
+
 	useEffect(() => {
 		const el = scrollContainerRef.current;
 		if (!el) return;
@@ -45,5 +58,10 @@ export function useStickToBottom<T extends HTMLDivElement = HTMLDivElement>() {
 		return () => resizeObserver.disconnect();
 	}, [contentNode, scrollToBottom]);
 
-	return { contentRef, scrollContainerRef, scrollToBottom };
+	return {
+		contentRef,
+		forceScrollToBottom,
+		scrollContainerRef,
+		scrollToBottom,
+	};
 }

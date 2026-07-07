@@ -2,6 +2,9 @@ import { StreamConsumer, TranscriptorRenderer } from "@briom/core/app";
 
 import { adaptersSlice } from "./adapters.slice";
 
+const broadcastIntervalMs = 60;
+const persistIntervalMs = 500;
+
 /**
  * @description
  * Layer 2 — internal application services. These are NOT ports (no
@@ -20,6 +23,8 @@ export const servicesSlice = adaptersSlice
 			turnAbortSignal,
 			turnRealtimePublisher,
 			logger,
+			broadcastIntervalMs,
+			persistIntervalMs,
 		);
 	})
 

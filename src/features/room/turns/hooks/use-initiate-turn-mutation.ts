@@ -13,24 +13,30 @@ export function useInitiateTurnMutation(roomId: string) {
 	const queryClient = useQueryClient();
 	const queryKey = roomQueryOptions.getRoom(roomId).queryKey;
 
-	const toggleExpanded = useTurnCollapseStore((s) => s.toggleExpanded);
-
-	const collapseAllExpanded = useTurnCollapseStore(
-		(s) => s.collapseAllExpanded,
-	);
-
+	const collapseAllExcept = useTurnCollapseStore((s) => s.collapseAllExcept);
 	return useMutation({
 		mutationFn: async (input: Parameters<typeof initiateTurn>[number]) => {
 			return unwrap(await initiateTurn(input));
 		},
 
 		onMutate: async (input) => {
-			collapseAllExpanded();
+			const previousCollapseState = {
+				forceCollapsedIds: new Set(
+					useTurnCollapseStore.getState().forceCollapsedIds,
+				),
+				forceExpandedIds: new Set(
+					useTurnCollapseStore.getState().forceExpandedIds,
+				),
+			};
+
+			collapseAllExcept([]);
 
 			await queryClient.cancelQueries({ queryKey, exact: true });
 			const previous = queryClient.getQueryData(queryKey);
 
-			if (!input.moderatorTurnId || !previous?.data.room) return { previous };
+			if (!input.moderatorTurnId || !previous?.data.room) {
+				return { previous, previousCollapseState };
+			}
 
 			const room = previous.data.room;
 			const optimisticTurn = buildOptimisticModeratorTurn({
@@ -60,14 +66,13 @@ export function useInitiateTurnMutation(roomId: string) {
 				},
 			});
 
-			return { previous };
+			return { previous, previousCollapseState };
 		},
 
 		onSuccess: (data) => {
 			const current = queryClient.getQueryData(queryKey);
 			if (!current?.data.room) return;
 
-			toggleExpanded(data.data.nextResponder.turn.id);
 			const room = current.data.room;
 			const alreadyPresent = room.info.turns.some(
 				(t) => t.id === data.data.nextResponder.turn.id,
@@ -99,6 +104,10 @@ export function useInitiateTurnMutation(roomId: string) {
 		onError: (_err, _input, context) => {
 			if (context?.previous) {
 				queryClient.setQueryData(queryKey, context.previous);
+			}
+
+			if (context?.previousCollapseState) {
+				useTurnCollapseStore.setState(context.previousCollapseState);
 			}
 		},
 

@@ -7,21 +7,37 @@ import type { ITurnAbortSignal } from "../../ports/signals/turn-abort.signal";
 
 /**
  * @description
- * Consumes an LLM stream, throttled-flushing accumulated content to a
- * Turn aggregate and checking for abort signals between reads. This
- * is NOT a use case on its own — it's the streaming mechanics
- * extracted out, so that method stays readable as a sequence of
- * business steps, not stream-processing plumbing.
+ * Consumes an LLM stream, broadcasting and persisting accumulated
+ * content on two INDEPENDENT timers that run concurrently with the
+ * reader loop — neither ever blocks `reader.read()`.
  *
- * Each DB flush is now paired with a realtime publish of the same
- * accumulated content, on the same cadence (`flushIntervalMs`) — this
- * is what lets FE render live tokens via `useRealtime` instead of
- * polling `getTurn`. The publish is fire-and-forget from this class's
- * perspective: it's `await`ed so the underlying Promise settles before
- * the next read, but a failed publish never fails the stream — only a
- * failed *persist* does, since content durability matters and realtime
- * delivery doesn't (a dropped publish just means FE catches up on the
- * next flush's fuller content, or on `getTurn` at settle time).
+ * Broadcast sends only the DELTA since the last tick (matches the
+ * domain event `TurnTokenAccumulated.token`), on a tight, non-durable
+ * cadence. Persist is a slower, durable DB write on its own cadence.
+ * Both use a re-entrancy guard: if a tick is still in flight when the
+ * next one fires, that next tick is skipped and its buffer carries
+ * over — graceful degradation under slow I/O instead of blocking the
+ * reader.
+ *
+ * The in-flight PROMISE for each timer (not just a boolean flag) is
+ * tracked and explicitly awaited during shutdown — this is the part
+ * that was missing before and caused a real race: `clearInterval`
+ * only stops FUTURE ticks, it does nothing about a tick that's
+ * already mid-flight (e.g. still awaiting its DB write) at the exact
+ * moment the reader loop ends. Without waiting for it, the final
+ * drain's own persist call could run concurrently with that straggler
+ * — and if the straggler (holding an OLDER, pre-settle snapshot of
+ * `turn`) happened to resolve its DB write AFTER the final drain's
+ * newer write, it would silently overwrite the turn's row back to an
+ * earlier state (e.g. reverting `status` from "settled" back to
+ * "streaming"). That's a durable, DB-level regression — the UI still
+ * looked fine (FE already had the full content via realtime
+ * broadcast, independent of this), but `room.isAcceptingTurns` reading
+ * that stale row would then wrongly refuse the next turn, and the
+ * room could look "stuck re-streaming" for a moment on refetch. Now,
+ * shutdown always awaits any straggler to fully complete BEFORE the
+ * final drain runs, so writes are strictly ordered: nothing can land
+ * after the true final write.
  */
 export class StreamConsumer {
 	public constructor(
@@ -29,28 +45,11 @@ export class StreamConsumer {
 		private readonly turnAbortSignal: ITurnAbortSignal,
 		private readonly turnRealtimePublisher: ITurnRealtimePublisher,
 		private readonly logger: ILogger,
-		private readonly flushIntervalMs: number = 150,
+		private readonly broadcastIntervalMs: number = 30,
+		private readonly persistIntervalMs: number = 500,
 		private readonly chunkTimeoutMs: number = 15_000,
 	) {}
 
-	/**
-	 * @description
-	 * Drains `reader` into `turn`, flushing to persistence at most once
-	 * per `flushIntervalMs`. Returns how the stream ended so the caller
-	 * decides what happens next (settle vs fail) — this class never calls
-	 * turn.settle()/fail() itself, keeping that decision with the command
-	 * handler that owns the broader transaction.
-	 *
-	 * Network drops, provider disconnects, or a rejected `usage` promise
-	 * are all caught here and surfaced as `outcome: "failed"` rather than
-	 * thrown — an uncaught exception here would leave the Turn stuck in
-	 * "streaming" and the Room's slot permanently claimed, since neither
-	 * turn.fail() nor room.releaseTurnSlot() would ever run upstream.
-	 * The raw error is returned for the caller to log; it is deliberately
-	 * NOT wrapped into a domain error here, since infra-level failure
-	 * detail (network errors, provider transport internals) doesn't
-	 * belong inside the domain layer.
-	 */
 	public async consume(
 		turn: Turn,
 		reader: ReadableStreamDefaultReader<string>,
@@ -60,14 +59,66 @@ export class StreamConsumer {
 		| { outcome: "aborted" }
 		| { outcome: "failed"; error: { name: string; message: string } }
 	> {
-		let buffer = "";
-		let lastFlushAt = Date.now();
+		let broadcastBuffer = "";
+		let persistBuffer = "";
+
+		let persistInFlight: Promise<void> | null = null;
+		let broadcastInFlight: Promise<void> | null = null;
+
+		const broadcastTimer = setInterval(() => {
+			if (broadcastInFlight || broadcastBuffer.length === 0) return;
+
+			const delta = broadcastBuffer;
+			broadcastBuffer = "";
+
+			broadcastInFlight = this.publishDelta(turn, delta).finally(() => {
+				broadcastInFlight = null;
+			});
+		}, this.broadcastIntervalMs);
+
+		const persistTimer = setInterval(() => {
+			if (persistInFlight || persistBuffer.length === 0) return;
+
+			const chunk = persistBuffer;
+			persistBuffer = "";
+
+			const accResult = turn.accumulate(chunk);
+			if (!accResult.isSuccess()) return;
+
+			persistInFlight = this.turnRepository
+				.persist(turn)
+				.catch((error) => {
+					this.logger.error("[StreamConsumer] periodic persist failed", {
+						turnId: turn.id.value(),
+						errorMessage:
+							error instanceof Error ? error.message : String(error),
+					});
+				})
+				.finally(() => {
+					persistInFlight = null;
+				});
+		}, this.persistIntervalMs);
+
+		/**
+		 * @description
+		 * Stops future ticks AND waits for any tick already in flight
+		 * to fully resolve — must always be called before any code
+		 * downstream reads or writes `turn` again, to guarantee strict
+		 * write ordering (see this class's doc comment).
+		 */
+		const stopTimersAndDrainInFlight = async (): Promise<void> => {
+			clearInterval(broadcastTimer);
+			clearInterval(persistTimer);
+
+			await Promise.all([persistInFlight, broadcastInFlight]);
+		};
 
 		try {
 			while (true) {
 				const abortRequested = await this.turnAbortSignal.isRequested(turn.id);
 
 				if (abortRequested) {
+					await stopTimersAndDrainInFlight();
 					reader.cancel();
 					await this.turnAbortSignal.clear(turn.id);
 					return { outcome: "aborted" };
@@ -81,29 +132,30 @@ export class StreamConsumer {
 
 				if (done) break;
 
-				buffer += value;
-
-				if (Date.now() - lastFlushAt >= this.flushIntervalMs) {
-					const accResult = turn.accumulate(buffer);
-					if (accResult.isSuccess()) {
-						const publishPromise = this.publishAccumulated(turn);
-						await this.turnRepository.persist(turn);
-						await publishPromise;
-					}
-
-					buffer = "";
-					lastFlushAt = Date.now();
-				}
+				broadcastBuffer += value;
+				persistBuffer += value;
 			}
 
-			if (buffer.length > 0) {
-				turn.accumulate(buffer);
-				await this.publishAccumulated(turn);
+			await stopTimersAndDrainInFlight();
+
+			if (persistBuffer.length > 0) {
+				const accResult = turn.accumulate(persistBuffer);
+				if (accResult.isSuccess()) {
+					await this.turnRepository.persist(turn);
+				}
+				persistBuffer = "";
+			}
+
+			if (broadcastBuffer.length > 0) {
+				await this.publishDelta(turn, broadcastBuffer);
+				broadcastBuffer = "";
 			}
 
 			const resolvedUsage = await usage;
 			return { outcome: "completed", usage: resolvedUsage };
 		} catch (error) {
+			await stopTimersAndDrainInFlight();
+
 			const errorName = error instanceof Error ? error.name : typeof error;
 			const errorMessage =
 				error instanceof Error ? error.message : String(error);
@@ -115,9 +167,9 @@ export class StreamConsumer {
 				errorStack: error instanceof Error ? error.stack : undefined,
 			});
 
-			if (buffer.length > 0) {
+			if (persistBuffer.length > 0) {
 				try {
-					const accResult = turn.accumulate(buffer);
+					const accResult = turn.accumulate(persistBuffer);
 					if (accResult.isSuccess()) await this.turnRepository.persist(turn);
 				} catch {}
 			}
@@ -133,20 +185,11 @@ export class StreamConsumer {
 		}
 	}
 
-	/**
-	 * @description
-	 * Publishes the turn's current accumulated content to the realtime
-	 * channel. Swallows its own errors — a broadcast failure is not a
-	 * streaming failure, see this class's doc comment.
-	 */
-	private async publishAccumulated(turn: Turn): Promise<void> {
+	private async publishDelta(turn: Turn, token: string): Promise<void> {
 		try {
 			await this.turnRealtimePublisher.publishTokenAccumulated(
 				turn.get("roomId").value(),
-				{
-					turnId: turn.id.value(),
-					content: turn.currentContent,
-				},
+				{ turnId: turn.id.value(), token },
 			);
 		} catch {}
 	}
@@ -167,7 +210,7 @@ export class StreamConsumer {
 		try {
 			return await Promise.race([promise, timeout]);
 		} finally {
-			// biome-ignore lint/style/noNonNullAssertion: Promise race.
+			// biome-ignore lint/style/noNonNullAssertion: Promise.race
 			clearTimeout(timer!);
 		}
 	}

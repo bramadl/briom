@@ -502,11 +502,11 @@ export class InitiateTurnHandler
 		shouldGenerateTopic: boolean;
 		seedContent: string;
 	}): Promise<void> {
-		const [turnResult, topicResult] = await Promise.allSettled([
-			this.turnGenerator.enqueue(params.roomId, params.participantTurnId),
+		const [topicResult, turnResult] = await Promise.allSettled([
 			params.shouldGenerateTopic
 				? this.topicGenerator.enqueue(params.roomId, params.seedContent)
 				: Promise.resolve(),
+			this.turnGenerator.enqueue(params.roomId, params.participantTurnId),
 		]);
 
 		/** @todo - non-MVP blocker: Implement Outbox pattern. */

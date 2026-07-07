@@ -280,7 +280,7 @@ export function useRoomSubscriber(params: {
 
 		return () => {
 			supabaseClient.removeChannel(roomChannel);
-			roomStreamActions.reset();
+			turnStreamActions.hardReset();
 		};
 	}, [roomId, moderatorId]);
 }

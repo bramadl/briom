@@ -47,9 +47,9 @@ export class GetRoomHandler
 		if (moderator) {
 			const policy = new ModeratorPolicy(moderator);
 			if (output.room) {
-				canAttachFile =
-					policy.canAttachFile(output.room.info.attachments.length) &&
-					output.room.info.metadata.status === "forming";
+				canAttachFile = policy.canAttachFile(
+					output.room.info.attachments.length,
+				);
 
 				canInviteParticipant = policy.canInviteParticipant(
 					output.room.info.participants.length,

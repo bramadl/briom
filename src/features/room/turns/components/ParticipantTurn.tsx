@@ -11,7 +11,7 @@ import {
 	useIsTurnExpanded,
 	useTurnCollapseStore,
 } from "@briom/room/turns/hooks/use-turn-collapse-store";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useRetryTurnMutation } from "../hooks/use-retry-turn-mutation";
 import { useTurnStreaming } from "../hooks/use-turn-streaming";
@@ -20,21 +20,14 @@ import { TurnContent } from "./internal/TurnContent";
 import { TurnContentCollapser } from "./internal/TurnContentCollapser";
 import { TurnFailed } from "./internal/TurnFailed";
 
-interface ParticipantProfileProps {
+function ParticipantProfile(props: {
 	displayName: string;
 	intent: TurnIntent | null;
 	isStreaming: boolean;
 	model: string;
 	participantId: string;
-}
-
-function ParticipantProfile({
-	displayName,
-	intent,
-	isStreaming,
-	model,
-	participantId,
-}: ParticipantProfileProps) {
+}) {
+	const { displayName, intent, isStreaming, model, participantId } = props;
 	const theme = getParticipantTheme(participantId);
 
 	return (
@@ -61,37 +54,35 @@ function ParticipantProfile({
 interface ParticipantTurnProps {
 	/**
 	 * @description
-	 * The ID of this turn — still the only prop this takes. Whether
-	 * it's live or settled, its content, and its expanded state are all
-	 * resolved internally. There is deliberately no more Live/Static
-	 * split: that split was the cause of a visible empty-card gap the
-	 * instant a turn settled, because unmounting the live subtree and
-	 * mounting a fresh static one meant a render (or several, waiting
-	 * on the room refetch) with neither streaming content NOR settled
-	 * content available. `useTurnStreaming` now owns bridging that gap
-	 * — see its doc comment — so this component just renders "whatever
-	 * content is currently the best available" continuously, with no
-	 * unmount/remount seam between phases.
+	 * The ID of this turn. Whether it's live or settled, its content,
+	 * and its expanded state are all resolved internally. There is
+	 * deliberately no more Live/Static split: that split was the cause
+	 * of a visible empty-card gap the instant a turn settled, because
+	 * unmounting the live subtree and mounting a fresh static one meant
+	 * a render (or several, waiting on the room refetch) with neither
+	 * streaming content NOR settled content available. `useTurnStreaming`
+	 * now owns bridging that gap — see its doc comment — so this
+	 * component just renders "whatever content is currently the best
+	 * available" continuously, with no unmount/remount seam between
+	 * phases.
 	 */
 	id: string;
+
+	/**
+	 * @description
+	 * True if this is the last turn in `room.info.turns` — computed by
+	 * `RoomSequence` from array position. Drives rule 1 of the
+	 * auto-collapse spec (always expanded), independent of whatever
+	 * this turn's own manual expand/collapse history is.
+	 */
+	isLatest: boolean;
 }
 
-/**
- * @description
- * Single rendering path for a turn, live or settled. `memo`-wrapped so
- * that, across `RoomSequence`'s `turns.map()`, only the instance whose
- * own scalar selectors actually changed (`useIsTurnExpanded(id)`, and
- * whatever `useTurnStreaming` internally selects) re-renders — this
- * still holds because the only prop is `id`, unchanged across renders
- * for every other turn in the list.
- */
 export const ParticipantTurn = memo(function ParticipantTurn({
 	id,
+	isLatest,
 }: ParticipantTurnProps) {
 	const { room, roomId } = useRoom();
-
-	const isExpanded = useIsTurnExpanded(id);
-	const toggleExpanded = useTurnCollapseStore((s) => s.toggleExpanded);
 
 	const retryMutation = useRetryTurnMutation(roomId);
 	const retry = useCallback(() => {
@@ -108,9 +99,27 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 		settledContent: turn?.content,
 	});
 
-	const smoothedContent = useSmoothedStreamText(content, isStreaming);
+	const isExpanded = useIsTurnExpanded(id, {
+		isActiveStreaming: isActive,
+		isLatest,
+	});
 
+	const toggleExpanded = useTurnCollapseStore((s) => s.toggleExpanded);
+	const forceExpandOnSettle = useTurnCollapseStore(
+		(s) => s.forceExpandOnSettle,
+	);
+
+	const prevIsActiveRef = useRef(isActive);
+	useEffect(() => {
+		if (prevIsActiveRef.current && !isActive) {
+			forceExpandOnSettle(id);
+		}
+		prevIsActiveRef.current = isActive;
+	}, [isActive, id, forceExpandOnSettle]);
+
+	const smoothedContent = useSmoothedStreamText(content, isStreaming);
 	if (turn?.author.type !== "participant") return null;
+
 	const { profile } = turn.author;
 	if (!profile.participant) return null;
 
@@ -139,7 +148,7 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 							<TurnContentCollapser
 								className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert"
 								isCollapsed={isCollapsed}
-								onToggled={() => toggleExpanded(id)}
+								onToggled={() => toggleExpanded(id, isExpanded)}
 							>
 								<TurnContent content={content} />
 							</TurnContentCollapser>
@@ -172,7 +181,7 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 					<TurnContentCollapser
 						className="prose prose-sm max-w-none text-foreground/85 dark:prose-invert"
 						isCollapsed={isCollapsed}
-						onToggled={() => toggleExpanded(id)}
+						onToggled={() => toggleExpanded(id, isExpanded)}
 					>
 						<TurnContent content={content} />
 					</TurnContentCollapser>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@briom/components/ui/button";
+import { cn } from "@briom/libs/utils";
 import { Loader2Icon, PaperclipIcon } from "lucide-react";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -65,7 +66,7 @@ export function AttachmentButton({
 
 	return (
 		<Button
-			className="border-dashed"
+			className={cn("border-dashed", !canAdd && "opacity-15!")}
 			disabled={disabled}
 			onClick={onAttach}
 			size="sm"
