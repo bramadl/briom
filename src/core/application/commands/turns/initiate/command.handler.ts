@@ -111,7 +111,7 @@ export class InitiateTurnHandler
 		if (result.isError()) return Result.error(result.error());
 		const { output, shouldGenerateTopic, participantTurnId } = result.value();
 
-		await this.dispatchGenerators({
+		this.dispatchGenerators({
 			roomId,
 			participantTurnId,
 			shouldGenerateTopic,

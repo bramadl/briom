@@ -13,35 +13,45 @@ import {
 } from "@briom/core/domain";
 import type {
 	DomainEvent,
+	EventSubscriber,
 	IEventSubscriberRegistry,
 } from "@briom/libs/drimion/types/event.types";
-import { after } from "next/server";
 
+import type { ILogger } from "../ports/logger/logger";
 import type { ITurnRealtimePublisher } from "../ports/publishers/turn-realtime.publisher";
 
 /**
  * @description
  * Forwards Turn lifecycle events to Inngest Realtime, one publish per
- * event on the `turn:{roomId}` channel (see `turnChannel`). Every
- * event here carries `roomId` directly in its own payload, so — unlike
- * the old Supabase-backed version of this subscriber — there is no
- * Room lookup needed to resolve which channel to publish on. This also
- * means the `after()` callback below never awaits I/O beyond the
- * publish itself, so subscriber registration no longer needs
- * `IRoomRepository` as a dependency at all.
+ * event on the `turn:{roomId}` channel (see `turnChannel`).
  *
- * `TurnRetried` and `TurnTokenAccumulated` are NOT subscribed here.
- * `TurnRetried` — FE doesn't need it yet (unchanged from before).
- * `TurnTokenAccumulated` is deliberately absent from this event-bus
- * path too: it's published directly from `StreamConsumer.consume()`
- * instead, at the same cadence as its DB flush, rather than being
- * pulled through a domain event round-trip. Routing it through here
- * would mean firing a domain event per flush just to immediately
- * forward it — `StreamConsumer` already has the throttled buffer and
- * the publisher in hand, so it publishes directly.
+ * Deliberately does NOT use `next/server`'s `after()`. This subscriber
+ * fires from two different execution contexts:
+ *   1. `InitiateTurnHandler`, inside a genuine Next.js Server Action
+ *      request (browser → server).
+ *   2. `StreamTurnHandler`, inside an Inngest worker's call to
+ *      `/api/workers` — NOT a Next.js Server Action/Route Handler
+ *      request, even though it happens to be an HTTP request Next.js
+ *      is technically handling.
+ *
+ * `after()` is only valid in the first context. In the second, it
+ * silently drops the scheduled callback — confirmed by Inngest's own
+ * realtime server logs, which showed the two Inngest event triggers
+ * (`topic/generation.requested`, `turn/generation.requested`) firing
+ * correctly, but never a single `turn:{roomId}:settled` (or
+ * `streamStarted`/`failed`) publish, even though `StreamTurnHandler`
+ * logged a fully successful execution all the way through.
+ *
+ * Publishing directly (awaited, with its own try/catch) works
+ * correctly in both contexts and is not meaningfully slower — the
+ * publish itself is a single WebSocket fan-out message, not blocking
+ * I/O worth deferring.
  */
 export class TurnsEventSubscriber {
-	public constructor(private readonly publisher: ITurnRealtimePublisher) {}
+	public constructor(
+		private readonly publisher: ITurnRealtimePublisher,
+		private readonly logger: ILogger,
+	) {}
 
 	private registry = {
 		abandoned: TurnAbandoned.type,
@@ -64,26 +74,35 @@ export class TurnsEventSubscriber {
 
 	/**
 	 * @description
-	 * Wraps a translator into the EventSubscriber shape IEventBus
-	 * expects. The publish happens inside `after()` so it never blocks
-	 * the request that triggered the underlying domain event — but
-	 * unlike the old version, nothing here needs to `await` a
-	 * repository lookup first.
+	 * Wraps a translator into the `EventSubscriber` shape `IEventBus`
+	 * expects. Returns an `async` function so it satisfies
+	 * `void | Promise<void>` regardless of whether the concrete
+	 * `IEventBus` implementation awaits subscribers or not — either way,
+	 * the publish itself always actually runs, unlike the previous
+	 * `after()`-based version.
 	 */
 	private forward<TPayload extends BaseTurnEventPayload>(
 		translate: (event: DomainEvent<TPayload>) => (() => Promise<void>) | null,
-	) {
-		return (event: DomainEvent<TPayload>) => {
+	): EventSubscriber<TPayload> {
+		return async (event: DomainEvent<TPayload>): Promise<void> => {
 			if (!event.payload) return;
 			const publish = translate(event);
 			if (!publish) return;
 
-			after(publish);
+			try {
+				await publish();
+			} catch (error) {
+				this.logger.error("TurnsEventSubscriber: publish to realtime failed", {
+					eventType: event.type,
+					errorName: error instanceof Error ? error.name : typeof error,
+					errorMessage: error instanceof Error ? error.message : String(error),
+				});
+			}
 		};
 	}
 
 	// ===================================================================
-	// Publisher
+	// Translators
 	// ===================================================================
 
 	private onTurnAbandoned = (event: DomainEvent<TurnAbandonedPayload>) => {
@@ -103,7 +122,10 @@ export class TurnsEventSubscriber {
 		return () =>
 			this.publisher.publishFailed(roomId.value(), {
 				turnId: turnId.value(),
-				errorKind: error.kind,
+				kind: error.kind,
+				message: error.message,
+				isRetryable: error.isRetryable,
+				retryAfter: error.retryAfter,
 			});
 	};
 
@@ -122,11 +144,12 @@ export class TurnsEventSubscriber {
 
 	private onTurnSettled = (event: DomainEvent<TurnSettledPayload>) => {
 		if (!event.payload) return null;
-		const { roomId, turnId } = event.payload;
+		const { roomId, turnId, content } = event.payload;
 
 		return () =>
 			this.publisher.publishSettled(roomId.value(), {
 				turnId: turnId.value(),
+				content,
 			});
 	};
 

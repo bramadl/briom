@@ -6,7 +6,12 @@ import type { TurnError } from "./turn.error";
 type PendingState = { status: "pending" };
 type StreamingState = { status: "streaming"; tokens: string[] };
 type SettledState = { status: "settled"; content: string; settledAt: Date };
-type FailedState = { status: "failed"; error: TurnError; failedAt: Date };
+type FailedState = {
+	status: "failed";
+	error: TurnError;
+	failedAt: Date;
+	tokens: string[];
+};
 type AbandonedState = { status: "abandoned" };
 
 /**
@@ -82,10 +87,18 @@ export class TurnState extends ValueObject<TurnStateProps> {
 
 	/**
 	 * @description
-	 * Failed state, carries the stream error and timestamp.
+	 * Failed state, carries the stream error, timestamp, and whatever
+	 * content had already streamed in before the failure — preserved
+	 * because the LLM cost for those tokens was already incurred with
+	 * the provider, same reasoning as `settle()`'s content preservation.
 	 */
-	public static failed(error: TurnError): TurnState {
-		return new TurnState({ status: "failed", error, failedAt: new Date() });
+	public static failed(error: TurnError, tokens: string[] = []): TurnState {
+		return new TurnState({
+			status: "failed",
+			error,
+			failedAt: new Date(),
+			tokens,
+		});
 	}
 
 	/**
@@ -143,7 +156,9 @@ export class TurnState extends ValueObject<TurnStateProps> {
 	 */
 	public get tokens(): string[] {
 		const props = this.getRaw();
-		return props.status === "streaming" ? props.tokens : [];
+		if (props.status === "streaming") return props.tokens;
+		if (props.status === "failed") return props.tokens;
+		return [];
 	}
 
 	/**
@@ -164,6 +179,7 @@ export class TurnState extends ValueObject<TurnStateProps> {
 	public get currentContent(): string {
 		const props = this.getRaw();
 		if (props.status === "streaming") return props.tokens.join("");
+		if (props.status === "failed") return props.tokens.join("");
 		if (props.status === "settled") return props.content;
 		return "";
 	}

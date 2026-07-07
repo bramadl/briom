@@ -70,7 +70,7 @@ export class DrizzleTurnRepository
 	public async getLatestTurnFrom(room: Room): Promise<Turn | null> {
 		const turn = await this.db.query.turnsTable.findFirst({
 			where: { roomId: room.id.value() },
-			orderBy: { sequence: "asc" },
+			orderBy: { sequence: "desc" },
 			columns: this.columns,
 		});
 
@@ -122,7 +122,7 @@ export class DrizzleTurnRepository
 				case "abandoned":
 					return TurnState.abandoned();
 				case "failed":
-					return TurnState.failed(turnError);
+					return TurnState.failed(turnError, [raw.content ?? ""]);
 				case "pending":
 					return TurnState.pending();
 				case "streaming":

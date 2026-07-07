@@ -8,9 +8,11 @@ import { TurnProposals } from "@briom/room/turns/components/TurnProposals";
 import { useProposals } from "@briom/room/turns/hooks/use-proposals";
 import { useMemo } from "react";
 
-import { useStickToBottom } from "../../hooks/use-stick-to-bottom";
+interface RoomSequenceProps {
+	contentRef: React.Ref<HTMLDivElement>;
+}
 
-export function RoomSequence() {
+export function RoomSequence({ contentRef }: RoomSequenceProps) {
 	const { isFresh, room } = useRoom();
 	const { acceptProposal, proposals, showProposals } = useProposals(room.id);
 
@@ -20,13 +22,11 @@ export function RoomSequence() {
 		[room.info.participants],
 	);
 
-	const { containerRef } = useStickToBottom();
-
 	if (isFresh) return <FreshRoom participants={participants} />;
 	return (
 		<div
 			className="w-full max-w-3xl mx-auto md:px-8 flex flex-col gap-12 lg:gap-16 min-w-0"
-			ref={containerRef}
+			ref={contentRef}
 		>
 			{turns.map((turn) => {
 				const id = turn.id;

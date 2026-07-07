@@ -1,6 +1,7 @@
 import type { ITurnRepository, Turn } from "@briom/core/domain";
 
 import type { UsageInfo } from "../../ports/gateways/llm/llm.ref";
+import type { ILogger } from "../../ports/logger/logger";
 import type { ITurnRealtimePublisher } from "../../ports/publishers/turn-realtime.publisher";
 import type { ITurnAbortSignal } from "../../ports/signals/turn-abort.signal";
 
@@ -27,7 +28,9 @@ export class StreamConsumer {
 		private readonly turnRepository: ITurnRepository,
 		private readonly turnAbortSignal: ITurnAbortSignal,
 		private readonly turnRealtimePublisher: ITurnRealtimePublisher,
-		private readonly flushIntervalMs: number = 1000,
+		private readonly logger: ILogger,
+		private readonly flushIntervalMs: number = 150,
+		private readonly chunkTimeoutMs: number = 15_000,
 	) {}
 
 	/**
@@ -55,7 +58,7 @@ export class StreamConsumer {
 	): Promise<
 		| { outcome: "completed"; usage: UsageInfo }
 		| { outcome: "aborted" }
-		| { outcome: "failed"; error: unknown }
+		| { outcome: "failed"; error: { name: string; message: string } }
 	> {
 		let buffer = "";
 		let lastFlushAt = Date.now();
@@ -70,7 +73,12 @@ export class StreamConsumer {
 					return { outcome: "aborted" };
 				}
 
-				const { done, value } = await reader.read();
+				const { done, value } = await this.withTimeout(
+					reader.read(),
+					this.chunkTimeoutMs,
+					"reader.read()",
+				);
+
 				if (done) break;
 
 				buffer += value;
@@ -78,8 +86,9 @@ export class StreamConsumer {
 				if (Date.now() - lastFlushAt >= this.flushIntervalMs) {
 					const accResult = turn.accumulate(buffer);
 					if (accResult.isSuccess()) {
+						const publishPromise = this.publishAccumulated(turn);
 						await this.turnRepository.persist(turn);
-						await this.publishAccumulated(turn);
+						await publishPromise;
 					}
 
 					buffer = "";
@@ -95,30 +104,32 @@ export class StreamConsumer {
 			const resolvedUsage = await usage;
 			return { outcome: "completed", usage: resolvedUsage };
 		} catch (error) {
-			// Best-effort: preserve whatever content streamed in since the
-			// last flush before we give up, so a network drop 900ms into
-			// a 1000ms flush window doesn't silently drop that trailing
-			// text on top of failing the turn.
+			const errorName = error instanceof Error ? error.name : typeof error;
+			const errorMessage =
+				error instanceof Error ? error.message : String(error);
+
+			this.logger.error("[StreamConsumer] raw stream error:", {
+				turnId: turn.id.value(),
+				errorName,
+				errorMessage,
+				errorStack: error instanceof Error ? error.stack : undefined,
+			});
+
 			if (buffer.length > 0) {
 				try {
 					const accResult = turn.accumulate(buffer);
 					if (accResult.isSuccess()) await this.turnRepository.persist(turn);
-				} catch {
-					// intentionally ignored — we're already on the failure
-					// path, a secondary persist failure shouldn't mask it
-				}
+				} catch {}
 			}
 
-			// Best-effort: release the reader lock so the underlying
-			// connection isn't left dangling. Swallow any secondary
-			// error from cancel() itself for the same reason as above.
 			try {
 				reader.cancel();
-			} catch {
-				// intentionally ignored
-			}
+			} catch {}
 
-			return { outcome: "failed", error };
+			return {
+				outcome: "failed",
+				error: { name: errorName, message: errorMessage },
+			};
 		}
 	}
 
@@ -137,8 +148,27 @@ export class StreamConsumer {
 					content: turn.currentContent,
 				},
 			);
-		} catch {
-			// intentionally ignored — see class doc comment
+		} catch {}
+	}
+
+	private async withTimeout<T>(
+		promise: Promise<T>,
+		ms: number,
+		label: string,
+	): Promise<T> {
+		let timer: ReturnType<typeof setTimeout>;
+		const timeout = new Promise<never>((_, reject) => {
+			timer = setTimeout(
+				() => reject(new Error(`TIMEOUT: ${label} exceeded ${ms}ms`)),
+				ms,
+			);
+		});
+
+		try {
+			return await Promise.race([promise, timeout]);
+		} finally {
+			// biome-ignore lint/style/noNonNullAssertion: Promise race.
+			clearTimeout(timer!);
 		}
 	}
 }

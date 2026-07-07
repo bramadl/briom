@@ -1,5 +1,5 @@
 import { useHotkey } from "@tanstack/react-hotkeys";
-import type { LexicalEditor } from "lexical";
+import type { LexicalEditor, SerializedEditorState } from "lexical";
 import { $createParagraphNode, $getRoot } from "lexical";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -18,6 +18,7 @@ export interface MentionItem {
 
 interface UseDeliberationEditorOptions {
 	canEdit?: boolean;
+	canSend?: boolean;
 	draftKey?: string;
 	mentionList?: MentionItem[];
 	onSend?: (content: string, mentionees: Mentionee[]) => void | Promise<void>;
@@ -26,6 +27,7 @@ interface UseDeliberationEditorOptions {
 
 export function useDeliberationEditor({
 	canEdit,
+	canSend,
 	mentionList,
 	onSend,
 	placeholder,
@@ -55,6 +57,8 @@ export function useDeliberationEditor({
 	}, []);
 
 	const sendHandler = useCallback(async () => {
+		if (!canSend) return;
+
 		const editor = editorRef.current;
 		if (!editor || isEmpty || isSendingRef.current) return;
 
@@ -62,19 +66,25 @@ export function useDeliberationEditor({
 		if (!content.trim()) return;
 
 		const mentionees = extractMentionees(editor);
+		const snapshot: SerializedEditorState = editor.getEditorState().toJSON();
+
 		isSendingRef.current = true;
 		setIsSending(true);
+		clear();
 
 		try {
 			await onSend?.(content, mentionees);
-			clear();
-		} catch (error) {
-			console.error("Failed to send moderator turn", error);
+		} catch {
+			const restoreEditor = editorRef.current;
+			if (restoreEditor) {
+				const restoredState = restoreEditor.parseEditorState(snapshot);
+				restoreEditor.setEditorState(restoredState);
+			}
 		} finally {
 			isSendingRef.current = false;
 			setIsSending(false);
 		}
-	}, [clear, isEmpty, onSend]);
+	}, [canSend, clear, isEmpty, onSend]);
 
 	useEffect(() => {
 		editorRef.current?.setEditable(canEdit ?? true);

@@ -50,6 +50,7 @@ export function RoomTimelineBar({
 		isFailed && "bg-destructive",
 		(isPending || isStreaming) && "shimmer-bar",
 		!isFailed && !isPending && !isStreaming && (theme?.dot ?? "bg-primary"),
+		isModeratorTurn && "bg-primary",
 	);
 
 	return (

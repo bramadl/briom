@@ -38,6 +38,27 @@ import type { TranscriptorRenderer } from "../../.services/transcriptor-renderer
 
 import type { StreamTurnCommand, StreamTurnOutput } from "./command";
 
+/**
+ * @description
+ * Internal-only outcome of a streaming attempt. Deliberately NOT an
+ * `IResult` — `IResult` can only hold success-xor-error, but this needs
+ * to carry "did the slot get released" as an orthogonal fact alongside
+ * whatever the command's final success/error outcome is.
+ *
+ * `release`:
+ *  - "pending" — nobody has released the slot or persisted/published
+ *                the turn's events yet; `execute`'s `finally` must do
+ *                exactly that, exactly once, via `finalize()`.
+ *  - "handled" — some path already released the slot AND persisted +
+ *                published everything itself (currently only the
+ *                insufficient-credit freeze path); `execute` must NOT
+ *                touch anything again.
+ */
+type StreamAttemptOutcome = {
+	commandResult: IResult<void, ApplicationError>;
+	release: "pending" | "handled";
+};
+
 export class StreamTurnHandler
 	implements ICommand<StreamTurnCommand, StreamTurnOutput, ApplicationError>
 {
@@ -56,26 +77,157 @@ export class StreamTurnHandler
 		private readonly logger: ILogger,
 	) {}
 
+	/**
+	 * @description
+	 * Entry point. The single invariant this method exists to guarantee:
+	 * **a claimed turn slot is always released, exactly once, AND the
+	 * turn's domain events are persisted + published exactly once** — no
+	 * matter how streaming ends (success, LLM error, abort, settlement
+	 * failure, insufficient credit, or an unexpected throw).
+	 *
+	 * Every branch inside `runStreamAttempt` reports intent via
+	 * `StreamAttemptOutcome` instead of touching the repository/event bus
+	 * directly for the room+turn finalization — `finalize()` in the
+	 * `finally` block is the ONLY place that happens for the "pending"
+	 * case. This is what prevents both halves of the original bug: (a) a
+	 * slot never released, and (b) `turn.pullEvents()` called twice,
+	 * silently swallowing the second publish because the array was
+	 * already drained by the first call.
+	 */
 	public async execute({
 		input,
 	}: StreamTurnCommand): Promise<IResult<StreamTurnOutput, ApplicationError>> {
 		const roomId = RoomId(input.roomId);
 		const turnId = TurnId(input.turnId);
 
+		this.logger.info("StreamTurnHandler: execute start", {
+			roomId: roomId.value(),
+			turnId: turnId.value(),
+		});
+
 		const contextResult = await this.buildTurnContext(roomId, turnId);
-		if (contextResult.isError()) return Result.error(contextResult.error());
+		if (contextResult.isError()) {
+			this.logger.error("StreamTurnHandler: turn context resolution failed", {
+				roomId: roomId.value(),
+				turnId: turnId.value(),
+				reason: contextResult.error(),
+			});
+
+			return Result.error(contextResult.error());
+		}
 
 		const { room, participant, turn } = contextResult.value();
-		if (!turn.isPending) return Result.success(this.timestamp);
 
+		if (!turn.isPending) {
+			this.logger.warn(
+				"StreamTurnHandler: turn is no longer pending, skipping — likely a duplicate Inngest event",
+				{
+					roomId: room.id.value(),
+					turnId: turn.id.value(),
+					currentStatus: turn.get("state").get("status"),
+				},
+			);
+
+			return Result.success(this.timestamp);
+		}
+
+		let outcome: StreamAttemptOutcome | undefined;
+
+		try {
+			outcome = await this.runStreamAttempt(room, participant, turn);
+		} catch (unexpectedError) {
+			this.logger.error(
+				"StreamTurnHandler: unhandled exception escaped runStreamAttempt",
+				{
+					roomId: room.id.value(),
+					turnId: turn.id.value(),
+					errorName:
+						unexpectedError instanceof Error
+							? unexpectedError.name
+							: typeof unexpectedError,
+					errorMessage:
+						unexpectedError instanceof Error
+							? unexpectedError.message
+							: String(unexpectedError),
+					stack:
+						unexpectedError instanceof Error
+							? unexpectedError.stack
+							: undefined,
+				},
+			);
+
+			outcome = this.markFailed(room, turn, TurnError.streamFailure());
+		} finally {
+			if (outcome?.release === "pending") {
+				await this.finalize(room, turn);
+			} else if (!outcome) {
+				this.logger.error(
+					"StreamTurnHandler: outcome was never assigned — releasing slot defensively to avoid a stuck room",
+					{ roomId: room.id.value(), turnId: turn.id.value() },
+				);
+
+				await this.finalize(room, turn);
+			}
+		}
+
+		if (outcome.commandResult.isError()) {
+			this.logger.warn("StreamTurnHandler: execute finished with an error", {
+				roomId: room.id.value(),
+				turnId: turn.id.value(),
+				reason: outcome.commandResult.error(),
+			});
+
+			return Result.error(outcome.commandResult.error());
+		}
+
+		if (turn.isSettled) await this.generateCheckpoint(room.id);
+
+		this.logger.info("StreamTurnHandler: execute completed successfully", {
+			roomId: room.id.value(),
+			turnId: turn.id.value(),
+		});
+
+		return Result.success(this.timestamp);
+	}
+
+	/**
+	 * @description
+	 * The actual streaming pipeline: start → call gateway → consume
+	 * stream → settle. Every branch returns a `StreamAttemptOutcome`
+	 * instead of releasing the slot or persisting the turn's events
+	 * directly — that keeps finalization centralized in `execute`.
+	 */
+	private async runStreamAttempt(
+		room: Room,
+		participant: Participant,
+		turn: Turn,
+	): Promise<StreamAttemptOutcome> {
 		const startResult = await this.transitionToStreaming(turn);
-		if (startResult.isError()) return Result.error(startResult.error());
+		if (startResult.isError()) {
+			this.logger.error(
+				"StreamTurnHandler: turn failed to transition to STREAMING",
+				{
+					roomId: room.id.value(),
+					turnId: turn.id.value(),
+					reason: startResult.error(),
+				},
+			);
+
+			return this.markFailed(room, turn, TurnError.streamFailure());
+		}
 
 		const { messages, systemPrompt } = await this.buildLlmContext(
 			room,
 			participant,
 			turn,
 		);
+
+		this.logger.info("StreamTurnHandler: requesting stream from LLM gateway", {
+			roomId: room.id.value(),
+			turnId: turn.id.value(),
+			model: participant.qualifiedModel,
+			messageCount: messages.length,
+		});
 
 		const streamResult = await this.llmGateway.stream({
 			model: participant.qualifiedModel,
@@ -84,15 +236,26 @@ export class StreamTurnHandler
 		});
 
 		if (streamResult.isError()) {
-			return await this.failAndRelease(
-				room,
-				turn,
-				this.mapStreamError(streamResult.error()),
-			);
+			const mappedError = this.mapStreamError(streamResult.error());
+
+			this.logger.error("StreamTurnHandler: initial stream request failed", {
+				roomId: room.id.value(),
+				turnId: turn.id.value(),
+				model: participant.qualifiedModel,
+				rawStreamError: streamResult.error(),
+				mappedTo: mappedError.get("message"),
+			});
+
+			return this.markFailed(room, turn, mappedError);
 		}
 
 		const { stream, usage } = streamResult.value();
 		const reader = stream.getReader();
+
+		this.logger.info("StreamTurnHandler: stream handshake OK, consuming", {
+			roomId: room.id.value(),
+			turnId: turn.id.value(),
+		});
 
 		const streamingResult = await this.streamConsumer.consume(
 			turn,
@@ -101,41 +264,40 @@ export class StreamTurnHandler
 		);
 
 		if (streamingResult.outcome === "aborted") {
-			return await this.failAndRelease(room, turn, TurnError.aborted());
+			this.logger.warn("StreamTurnHandler: stream aborted", {
+				roomId: room.id.value(),
+				turnId: turn.id.value(),
+			});
+
+			return this.markFailed(room, turn, TurnError.aborted());
 		}
 
 		if (streamingResult.outcome === "failed") {
-			this.logger.error("Stream consumption failed", {
+			const { message, name } = streamingResult.error;
+
+			this.logger.error("StreamTurnHandler: stream consumption failed", {
 				roomId: room.id.value(),
 				turnId: turn.id.value(),
-				error: streamingResult.error,
+				errorName: name,
+				errorMessage: message,
 			});
 
-			return await this.failAndRelease(room, turn, TurnError.streamFailure());
+			return this.markFailed(room, turn, TurnError.streamFailure(message));
 		}
 
-		const settleResult = await this.settleTurn(
-			room,
-			participant,
-			turn,
-			streamingResult.usage,
-		);
+		this.logger.info("StreamTurnHandler: stream consumed successfully", {
+			roomId: room.id.value(),
+			turnId: turn.id.value(),
+			usage: streamingResult.usage,
+		});
 
-		if (settleResult.isError()) return Result.error(settleResult.error());
-
-		room.releaseTurnSlot();
-		await this.persistAndPublish(room, turn);
-		await this.generateCheckpoint(room.id);
-
-		return Result.success(this.timestamp);
+		return this.settleTurn(room, participant, turn, streamingResult.usage);
 	}
 
 	/**
 	 * @description
 	 * Loads the room and turn this command operates on, and resolves the
-	 * participant the turn belongs to. Returns a typed not-found error for
-	 * whichever entity is missing, rather than letting `undefined`
-	 * propagate into later steps.
+	 * participant the turn belongs to.
 	 */
 	private async buildTurnContext(
 		roomId: RoomId,
@@ -187,7 +349,9 @@ export class StreamTurnHandler
 	 * Transitions the turn into the streaming state and persists that
 	 * transition immediately, before any LLM call is made — so a crash
 	 * mid-stream leaves the turn correctly marked as "streaming" rather
-	 * than stuck "pending" forever.
+	 * than stuck "pending" forever. This publish is independent of
+	 * `finalize()`'s later publish (different event, pulled at a
+	 * different time), so no double-pull risk here.
 	 */
 	private async transitionToStreaming(
 		turn: Turn,
@@ -239,24 +403,14 @@ export class StreamTurnHandler
 	/**
 	 * @description
 	 * Settles the turn with its final content and reported usage, then
-	 * attempts to record the corresponding credit deduction. Settlement
-	 * happens regardless of whether the moderator can still afford it,
-	 * because the LLM cost was already incurred upstream with the
-	 * provider the moment streaming completed — see recordCreditMovement
-	 * for what happens when credit falls short.
-	 *
-	 * Once streaming completes, the LLM cost has already been incurred
-	 * upstream with the provider — settling and (if needed) freezing
-	 * on insufficient credit are both handled inside this, so
-	 * from there it's either a clean success or an already-persisted
-	 * terminal state.
+	 * attempts to record the corresponding credit deduction.
 	 */
 	private async settleTurn(
 		room: Room,
 		participant: Participant,
 		turn: Turn,
 		usage: UsageInfo,
-	): Promise<IResult<void, ApplicationError>> {
+	): Promise<StreamAttemptOutcome> {
 		const usageResult = CreditUsage.create({
 			completionTokens: usage.completionTokens,
 			costUsd: usage.costUsd,
@@ -264,45 +418,50 @@ export class StreamTurnHandler
 		});
 
 		if (usageResult.isError()) {
-			return Result.error(
-				ApplicationError.unprocessableEntity(
-					"Reported usage could not be recorded against this turn.",
-				),
-			);
+			this.logger.error("StreamTurnHandler: reported usage failed validation", {
+				roomId: room.id.value(),
+				turnId: turn.id.value(),
+				rawUsage: usage,
+				reason: usageResult.error(),
+			});
+
+			return this.markFailed(room, turn, TurnError.emptyResponse());
 		}
 
 		const settleResult = turn.settle(turn.currentContent, usageResult.value());
 		if (settleResult.isError()) {
-			return Result.error(
-				ApplicationError.unexpected(settleResult.error().message),
-			);
+			this.logger.error("StreamTurnHandler: turn failed to settle", {
+				roomId: room.id.value(),
+				turnId: turn.id.value(),
+				currentContentLength: turn.currentContent?.length ?? 0,
+				reason: settleResult.error(),
+			});
+
+			return this.markFailed(room, turn, TurnError.emptyResponse());
 		}
 
-		const movementResult = await this.recordCreditMovement(
+		return this.recordCreditMovement(
 			room,
 			participant,
 			turn,
 			usageResult.value(),
 		);
-
-		if (movementResult.isError()) return Result.error(movementResult.error());
-		return Result.success(undefined);
 	}
 
 	/**
 	 * @description
 	 * Deducts credit for a settled turn's cost. If the moderator can't
-	 * cover it, the room is frozen and this terminal state is persisted
-	 * immediately (see freezeRoomAndPersist) — the turn keeps its settled
-	 * content rather than being discarded, since the cost was already
-	 * incurred with the LLM provider regardless of the moderator's balance.
+	 * cover it, the room is frozen and that terminal state — including
+	 * the slot release and event publish — is persisted immediately
+	 * inside `freezeRoomAndPersist`. That's why this branch reports
+	 * `release: "handled"`.
 	 */
 	private async recordCreditMovement(
 		room: Room,
 		participant: Participant,
 		turn: Turn,
 		usage: CreditUsage,
-	): Promise<IResult<void, ApplicationError>> {
+	): Promise<StreamAttemptOutcome> {
 		const deductionAmount = CreditDeductionPolicy.calculate(
 			usage.costUsd,
 			await this.fxRateGateway.convert("USD", "IDR"),
@@ -313,25 +472,46 @@ export class StreamTurnHandler
 		);
 
 		if (!moderator) {
-			return Result.error(
-				ApplicationError.notFound("Moderator not found").withCode(
-					"MODERATOR_NOT_FOUND_ERROR",
-				),
+			this.logger.error(
+				"StreamTurnHandler: moderator not found while recording credit movement",
+				{ roomId: room.id.value(), turnId: turn.id.value() },
 			);
+
+			return {
+				commandResult: Result.error(
+					ApplicationError.notFound("Moderator not found").withCode(
+						"MODERATOR_NOT_FOUND_ERROR",
+					),
+				),
+				release: "pending",
+			};
 		}
 
 		if (!moderator.credit.canDeduct(deductionAmount)) {
+			this.logger.warn(
+				"StreamTurnHandler: insufficient credit, freezing room",
+				{
+					roomId: room.id.value(),
+					turnId: turn.id.value(),
+					moderatorId: moderator.id.value(),
+					deductionAmount,
+				},
+			);
+
 			await this.freezeRoomAndPersist(
 				room,
 				turn,
 				"Insufficient credit to cover this turn's cost.",
 			);
 
-			return Result.error(
-				ApplicationError.paymentRequired(
-					"Moderator does not have enough credit to cover this turn's cost.",
-				).withCode("INSUFFICIENT_CREDIT_ERROR"),
-			);
+			return {
+				commandResult: Result.error(
+					ApplicationError.paymentRequired(
+						"Moderator does not have enough credit to cover this turn's cost.",
+					).withCode("INSUFFICIENT_CREDIT_ERROR"),
+				),
+				release: "handled",
+			};
 		}
 
 		moderator.deductCredit(deductionAmount);
@@ -346,19 +526,72 @@ export class StreamTurnHandler
 
 		if (movementResult.isSuccess()) {
 			await this.creditMovementRepository.append(movementResult.value());
+		} else {
+			this.logger.warn(
+				"StreamTurnHandler: credit movement record failed to construct — deduction still applied",
+				{
+					roomId: room.id.value(),
+					turnId: turn.id.value(),
+					reason: movementResult.error(),
+				},
+			);
 		}
 
-		return Result.success(undefined);
+		return { commandResult: Result.success(undefined), release: "pending" };
+	}
+
+	/**
+	 * @description
+	 * Marks the turn as failed. Deliberately does NOT persist or publish
+	 * anything — that's `finalize()`'s job, called once from `execute`'s
+	 * `finally`. This is what fixes the original double-pull bug: if
+	 * this method persisted+published here AND `finalize` did it again,
+	 * `turn.pullEvents()` would return empty the second time, silently
+	 * dropping the `TurnFailed` event FE needs to stop showing "thinking
+	 * for a moment...".
+	 */
+	private markFailed(
+		room: Room,
+		turn: Turn,
+		error: TurnError,
+	): StreamAttemptOutcome {
+		const failResult = turn.fail(error);
+
+		if (failResult.isError()) {
+			this.logger.error(
+				"StreamTurnHandler: turn could not transition to FAILED state — slot will still be released",
+				{
+					roomId: room.id.value(),
+					turnId: turn.id.value(),
+					currentStatus: turn.get("state").get("status"),
+					attemptedError: error,
+					reason: failResult.error(),
+				},
+			);
+
+			return {
+				commandResult: Result.error(
+					ApplicationError.conflict(failResult.error().message),
+				),
+				release: "pending",
+			};
+		}
+
+		return {
+			commandResult: Result.error(
+				ApplicationError.unprocessableEntity(error.message).causedBy(error),
+			),
+			release: "pending",
+		};
 	}
 
 	/**
 	 * @description
 	 * Freezes the room and releases its turn slot as one terminal state
-	 * change, persisting and publishing immediately rather than deferring
-	 * to the end of execute(). Used when a turn completed and settled
-	 * successfully but the moderator can't cover its cost — unlike
-	 * failAndRelease, the turn's settled content is kept, only the room
-	 * transitions to frozen so no further turns can be claimed.
+	 * change, persisting and publishing both room and turn events
+	 * immediately — this is the one path that finalizes itself instead of
+	 * deferring to `finalize()`, since freezing needs to happen alongside
+	 * settlement, not as a generic "turn failed" cleanup.
 	 */
 	private async freezeRoomAndPersist(
 		room: Room,
@@ -374,22 +607,54 @@ export class StreamTurnHandler
 		]);
 
 		const events = [...room.pullEvents(), ...turn.pullEvents()];
+
+		this.logger.info("StreamTurnHandler: room frozen and slot released", {
+			roomId: room.id.value(),
+			turnId: turn.id.value(),
+			eventCount: events.length,
+		});
+
 		await this.eventBus.publishAll(events);
 	}
 
 	/**
 	 * @description
-	 * Persists the room and turn aggregates together and publishes any
-	 * domain events they accumulated — the happy-path settle-and-release
-	 * flow, once credit deduction has succeeded.
+	 * The SINGLE place `room.releaseTurnSlot()` is called, and the SINGLE
+	 * place `turn.pullEvents()` is called, for every "pending" outcome —
+	 * happy-path settlement and every `markFailed` branch alike. Any
+	 * events accumulated by `turn.fail()`/`turn.settle()` earlier in this
+	 * execution are still sitting in the turn's internal event queue at
+	 * this point (since `markFailed`/`settleTurn` never pull them) — this
+	 * is where they're pulled and published for the first and only time.
 	 */
-	private async persistAndPublish(room: Room, turn: Turn): Promise<void> {
+	private async finalize(room: Room, turn: Turn): Promise<void> {
+		room.releaseTurnSlot();
+
 		await Promise.all([
 			this.roomRepository.persist(room),
 			this.turnRepository.persist(turn),
 		]);
 
 		const events = [...room.pullEvents(), ...turn.pullEvents()];
+
+		this.logger.info(
+			"StreamTurnHandler: finalize — slot released, publishing events",
+			{
+				roomId: room.id.value(),
+				turnId: turn.id.value(),
+				turnStatus: turn.get("state").get("status"),
+				eventCount: events.length,
+				eventNames: events.map((event) => event.type),
+			},
+		);
+
+		if (events.length === 0) {
+			this.logger.warn(
+				"StreamTurnHandler: finalize produced zero events — FE will not receive any update for this turn",
+				{ roomId: room.id.value(), turnId: turn.id.value() },
+			);
+		}
+
 		await this.eventBus.publishAll(events);
 	}
 
@@ -411,38 +676,14 @@ export class StreamTurnHandler
 			estimatedTokens,
 		);
 
+		this.logger.info("StreamTurnHandler: checkpoint trigger evaluated", {
+			roomId: roomId.value(),
+			reportedTokens,
+			estimatedTokens,
+			shouldGenerate,
+		});
+
 		if (shouldGenerate) await this.checkpointGenerator.enqueue(roomId);
-	}
-
-	/**
-	 * @description
-	 * Marks the turn as failed, releases the room's turn slot, and
-	 * persists both — the terminal path for stream errors and aborts,
-	 * where no content should be kept (unlike the credit-exhausted path,
-	 * where the turn did complete and its content is preserved).
-	 */
-	private async failAndRelease(
-		room: Room,
-		turn: Turn,
-		error: TurnError,
-	): Promise<IResult<StreamTurnOutput, ApplicationError>> {
-		const failResult = turn.fail(error);
-		if (failResult.isError()) {
-			return Result.error(
-				ApplicationError.conflict(failResult.error().message),
-			);
-		}
-
-		room.releaseTurnSlot();
-		await Promise.all([
-			this.roomRepository.persist(room),
-			this.turnRepository.persist(turn),
-		]);
-
-		const events = [...room.pullEvents(), ...turn.pullEvents()];
-		await this.eventBus.publishAll(events);
-
-		return Result.success(this.timestamp);
 	}
 
 	/**

@@ -91,8 +91,14 @@ export const handlersSlice = servicesSlice
 		const roomRepository = r["repository:room"];
 		const llmGateway = r["gateway:llm:openrouter"];
 		const eventBus = r["eventBus:drimion"];
+		const logger = r["logger:pino"];
 
-		return new GenerateTopicHandler(roomRepository, llmGateway, eventBus);
+		return new GenerateTopicHandler(
+			roomRepository,
+			llmGateway,
+			eventBus,
+			logger,
+		);
 	})
 
 	.add("handler:rooms:invite-participant", (r) => {

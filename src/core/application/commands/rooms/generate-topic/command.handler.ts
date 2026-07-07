@@ -1,3 +1,4 @@
+import type { ILogger } from "@briom/core/application/ports/logger/logger";
 import {
 	type IRoomRepository,
 	RoomId,
@@ -13,7 +14,6 @@ import {
 
 import type { ILLMGateway } from "../../../ports/gateways/llm/llm.gateway";
 import { type Message, Role } from "../../../ports/gateways/llm/llm.ref";
-
 import type { GenerateTopicCommand, GenerateTopicOutput } from "./command";
 
 /**
@@ -34,6 +34,7 @@ export class GenerateTopicHandler
 		private readonly roomRepository: IRoomRepository,
 		private readonly llmGateway: ILLMGateway,
 		private readonly eventBus: IEventBus,
+		private readonly logger: ILogger,
 	) {}
 
 	public async execute({
@@ -83,8 +84,24 @@ export class GenerateTopicHandler
 			);
 		}
 
+		this.logger.info(
+			"GenerateTopicHandler: stream consumption completed–saving to DB...",
+			{
+				roomId: room.id.value(),
+				topic: room.get("topic"),
+			},
+		);
+
 		await this.roomRepository.persist(room);
 		await this.eventBus.publishAll(room.pullEvents());
+
+		this.logger.info(
+			"GenerateTopicHandler: persisted and published all events!",
+			{
+				roomId: room.id.value(),
+				topic: room.get("topic"),
+			},
+		);
 
 		return Result.success({ roomId: room.id.value(), topic });
 	}

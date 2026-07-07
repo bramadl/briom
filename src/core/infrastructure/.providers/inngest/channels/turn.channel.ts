@@ -1,3 +1,4 @@
+import type { StreamError } from "@briom/core/domain";
 import { realtime, staticSchema } from "inngest";
 
 /**
@@ -17,9 +18,12 @@ import { realtime, staticSchema } from "inngest";
  * cost concern does not apply here — see Inngest's own docs, which use
  * exactly this token-streaming shape as their canonical example.
  *
- * This file has zero server-only dependencies (no `Inngest` client
- * import, no business logic) — safe to import from both the BE
- * publisher/subscriber and the FE `useRealtime` hook.
+ * This file has zero server-only runtime dependencies (no `Inngest`
+ * client import, no business logic) — safe to import from both the BE
+ * publisher/subscriber and the FE `useRealtime` hook. The one import
+ * from `@briom/core/domain` is `type`-only (a string literal union),
+ * erased at compile time — it does not pull any server-only runtime
+ * code into the FE bundle.
  */
 export const turnChannel = realtime.channel({
 	name: ({ roomId }: { roomId: string }) => `turn:${roomId}`,
@@ -56,16 +60,38 @@ export const turnChannel = realtime.channel({
 
 		/**
 		 * @description
-		 * Terminal: turn settled successfully.
+		 * Terminal: turn settled successfully. Carries the full final
+		 * content directly — same reasoning as `failed`'s inline error
+		 * detail above: lets FE render the complete text the instant
+		 * this message lands, without waiting on the invalidateRoom()
+		 * refetch that fires alongside it. Without this, the only
+		 * content FE has at this instant is whatever liveContent last
+		 * held, which may lag the true final content by one flush cycle
+		 * if the tail-buffer tokenAccumulated publish and this settled
+		 * publish race each other over the wire.
 		 */
-		settled: { schema: staticSchema<{ turnId: string }>() },
+		settled: { schema: staticSchema<{ turnId: string; content: string }>() },
 
 		/**
 		 * @description
-		 * Terminal: turn failed. `errorKind` mirrors `TurnError.kind`.
+		 * Terminal: turn failed. Mirrors `TurnFailedPayload.error` fields
+		 * directly — carrying the full error here (not just `kind`) means
+		 * `TurnFailed` can render immediately off this message, without
+		 * waiting on the `invalidateRoom()` refetch that also fires
+		 * alongside it. The refetch still happens — it's what makes
+		 * `useRoom`'s `turn.error` the source of truth once it resolves —
+		 * this is purely to close the gap between "failed" and "refetch
+		 * settled" so the user isn't staring at a stale "streaming" card
+		 * for that window.
 		 */
 		failed: {
-			schema: staticSchema<{ turnId: string; errorKind: string }>(),
+			schema: staticSchema<{
+				turnId: string;
+				kind: StreamError;
+				message: string;
+				isRetryable?: boolean;
+				retryAfter?: number;
+			}>(),
 		},
 
 		/**

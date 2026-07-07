@@ -169,7 +169,7 @@ export class DrizzleRoomRepository
 			id: room.id.value(),
 			moderatorId: room.get("moderatorId").value(),
 			title: room.get("title"),
-			activeTurnId: room.get("activeTurnId")?.value(),
+			activeTurnId: room.get("activeTurnId")?.value() ?? null,
 			attachmentCount: room.attachmentCount,
 			checkpointIds: room.get("checkpointIds").map((id) => id.value()),
 			createdAt: room.get("createdAt"),

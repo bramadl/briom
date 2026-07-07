@@ -108,7 +108,7 @@ export function useRoomParticipantPicker({
 	);
 
 	const selectedModelIds = useMemo(
-		() => new Set(participants.map((p) => p.model)),
+		() => new Set(participants.map((p) => `${p.provider}/${p.model}`)),
 		[participants],
 	);
 

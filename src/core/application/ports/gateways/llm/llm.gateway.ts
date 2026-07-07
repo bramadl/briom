@@ -94,6 +94,7 @@ export interface ILLMGateway {
 	 * Bypass streaming and expect a full completed response.
 	 */
 	complete(input: GenerateInput): Promise<IResult<CompleteOutput, StreamError>>;
+
 	/**
 	 * @description
 	 * Initiates a streaming LLM response.

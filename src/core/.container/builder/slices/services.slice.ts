@@ -13,11 +13,13 @@ export const servicesSlice = adaptersSlice
 		const turnRepository = r["repository:turn"];
 		const turnAbortSignal = r["signal:turn-abort:drizzle"];
 		const turnRealtimePublisher = r["publisher:turn-realtime:inngest"];
+		const logger = r["logger:pino"];
 
 		return new StreamConsumer(
 			turnRepository,
 			turnAbortSignal,
 			turnRealtimePublisher,
+			logger,
 		);
 	})
 

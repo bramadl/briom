@@ -1,11 +1,14 @@
+"use client";
+
+import type { RoomTurnDTO } from "@briom/core/app";
 import { turnChannel } from "@briom/inngest/channels/turn.channel";
 import { roomQueryOptions } from "@briom/room/queries/query.options";
 import { getTurnRealtimeToken } from "@briom/room/turns/actions/get-turn-realtime.action";
-import { useTurnStore } from "@briom/room/turns/hooks/use-turn-store";
-import { turnQueryOptions } from "@briom/room/turns/queries/query.options";
+// import { turnQueryOptions } from "@briom/room/turns/queries/query.options";
+import { turnStreamActions } from "@briom/room/turns/store/turn-stream.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRealtime } from "inngest/react";
-import { useCallback, useEffect } from "react";
+import { useEffect } from "react";
 
 const TURN_TOPICS = [
 	"initiated",
@@ -18,49 +21,92 @@ const TURN_TOPICS = [
 
 /**
  * @description
- * Subscribes to every Turn-level event over Inngest Realtime — status
- * transitions AND token streaming, both on the same `turnChannel`
- * subscription. This is the ONLY `useRealtime` call for Turn concerns
- * in the whole room view; `LiveParticipantTurn` never opens its own —
- * it reads live content via `useLiveTurnContent(turnId)`, a scalar
- * selector into `useTurnStore`, which this hook is what populates.
+ * Resume-on-mount: covers reconnect while BE is mid-stream (hard
+ * refresh, HMR, navigate-away-and-back). Without this, the store
+ * comes up as `activeTurnId: null` and every subsequent
+ * `tokenAccumulated`/`settled` for that turn gets silently dropped
+ * by the `activeTurnId !== turnId` guards — the user is stuck
+ * looking at whatever partial content the DTO had at mount, forever,
+ * until some unrelated event forces a refetch. Runs once per mount;
+ * intentionally NOT re-run if `initialTurns` changes later in this
+ * hook's lifetime (that's what the realtime messages below are for).
  */
-export function useTurnSubscriber(params: { roomId: string }) {
-	const { roomId } = params;
+function useResumeStream(
+	roomId: string,
+	initialTurns: Pick<RoomTurnDTO, "id" | "status" | "content">[],
+) {
 	const queryClient = useQueryClient();
+	const roomKey = roomQueryOptions.getRoom(roomId).queryKey;
 
-	const roomQueryKey = roomQueryOptions.getRoom(roomId).queryKey;
-	const turnQueryKey = turnQueryOptions.getProposals(roomId).queryKey;
+	// biome-ignore lint/correctness/useExhaustiveDependencies: deliberately mount-only, see comment above.
+	useEffect(() => {
+		const streamingTurn = initialTurns.find((t) => t.status === "streaming");
+		const pendingTurn = initialTurns.find((t) => t.status === "pending");
 
-	const reset = useTurnStore((s) => s.reset);
-	const claimTurn = useTurnStore((s) => s.claimTurn);
-	const markStreaming = useTurnStore((s) => s.markStreaming);
-	const setLiveContent = useTurnStore((s) => s.setLiveContent);
-	const settleTurn = useTurnStore((s) => s.settleTurn);
-	const failTurn = useTurnStore((s) => s.failTurn);
-	const abandonTurn = useTurnStore((s) => s.abandonTurn);
-	const setProposalsVisible = useTurnStore((s) => s.setProposalsVisible);
+		if (streamingTurn) {
+			turnStreamActions.resumeStreaming(
+				streamingTurn.id,
+				streamingTurn.content,
+			);
+		} else if (pendingTurn) {
+			turnStreamActions.claimTurn(pendingTurn.id);
+		}
+
+		if (streamingTurn || pendingTurn) {
+			queryClient.invalidateQueries({ queryKey: roomKey, exact: true });
+		}
+	}, []);
+}
+
+export function useTurnSubscriber(params: {
+	roomId: string;
+	initialTurns: Pick<RoomTurnDTO, "id" | "status" | "content">[];
+}) {
+	const { roomId, initialTurns } = params;
+
+	// const queryClient = useQueryClient();
+	// const roomKey = roomQueryOptions.getRoom(roomId).queryKey;
+	// const proposalsKey = turnQueryOptions.getProposals(roomId).queryKey;
+	// const invalidate = (key: typeof roomKey | typeof proposalsKey) => {
+	// 	queryClient.invalidateQueries({ queryKey: key, exact: true });
+	// };
 
 	const channel = turnChannel({ roomId });
-
 	const { messages } = useRealtime({
 		channel,
 		topics: TURN_TOPICS,
 		token: () => getTurnRealtimeToken(roomId),
 	});
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: queryClient is stable.
-	const invalidateRoom = useCallback(() => {
-		queryClient.invalidateQueries({ queryKey: roomQueryKey, exact: true });
-	}, []);
-
-	// biome-ignore lint/correctness/useExhaustiveDependencies: queryClient is stable.
-	const invalidateProposals = useCallback(() => {
-		queryClient.invalidateQueries({ queryKey: turnQueryKey, exact: true });
-	}, []);
-
-	// store setters are stable zustand references
-	// biome-ignore lint/correctness/useExhaustiveDependencies: queryClient is stable.
+	/**
+	 * @description
+	 * Processes newly-arrived realtime messages. Deliberately has NO
+	 * cleanup function.
+	 *
+	 * `messages.delta` is a fresh array on effectively every render of
+	 * this hook's owner (`inngest/react` does not memoize it against
+	 * "no new messages arrived") — it is NOT safe to treat as "this only
+	 * changes when a new message actually arrives". Putting a `reset()`
+	 * in this effect's cleanup was the actual bug behind both reported
+	 * symptoms: any unrelated re-render anywhere in this subtree gives
+	 * `messages.delta` a new identity, which reruns this effect, which
+	 * fires the OLD effect's cleanup first — wiping `activeTurnId` /
+	 * `liveContent` back to empty — then replays every message from
+	 * scratch. Because that wipe is itself a Valtio mutation, it
+	 * re-renders every subscribed `ParticipantTurn`, which re-renders
+	 * this hook's owner, which gives `messages.delta` yet another new
+	 * identity — a self-sustaining reset↔replay loop with no natural
+	 * exit. That's why streaming content never appeared to advance
+	 * (each write was wiped again almost immediately) and why it was
+	 * so severe performance-wise (an unbounded re-render cycle, not
+	 * just an expensive one).
+	 *
+	 * The message-processing logic itself is idempotent per message
+	 * (each branch is a plain state transition keyed by turnId), so
+	 * reprocessing the same message twice if `messages.delta` ever
+	 * legitimately repeats content is harmless — no cleanup is needed
+	 * to guard against that.
+	 */
 	useEffect(() => {
 		for (const message of messages.delta) {
 			if (message.kind === "run") continue;
@@ -68,64 +114,62 @@ export function useTurnSubscriber(params: { roomId: string }) {
 			switch (message.topic) {
 				case "initiated": {
 					const { turnId } = message.data;
-					claimTurn(turnId);
-					// A participant has been handed the floor — whatever
-					// proposals were showing belong to the previous
-					// moderator turn and are now stale. This is the
-					// realtime-driven half of hiding proposals; the
-					// optimistic half fires synchronously from
-					// `useInitiateTurnMutation`'s `onSuccess`, ahead of
-					// this message arriving.
-					setProposalsVisible(false);
+					turnStreamActions.claimTurn(turnId);
+					turnStreamActions.setProposalsVisible(false);
 					break;
 				}
 
 				case "streamStarted": {
-					markStreaming(message.data.turnId);
+					turnStreamActions.markStreaming(message.data.turnId);
 					break;
 				}
 
 				case "tokenAccumulated": {
 					const { turnId, content } = message.data;
-					setLiveContent(turnId, content);
+					turnStreamActions.setLiveContent(turnId, content);
 					break;
 				}
 
 				case "settled": {
-					const { turnId } = message.data;
-					settleTurn(turnId);
-					invalidateRoom();
-					// The floor is back with the moderator — refresh and
-					// reveal whatever new proposals the BE generated off
-					// the back of this settled turn.
-					invalidateProposals();
-					setProposalsVisible(true);
+					const { turnId, content } = message.data;
+					turnStreamActions.settleTurn(turnId, content);
+					// invalidate(roomKey);
+					// invalidate(proposalsKey);
+					turnStreamActions.setProposalsVisible(true);
 					break;
 				}
 
 				case "failed": {
-					failTurn(message.data.turnId);
-					invalidateRoom();
+					turnStreamActions.failTurn(message.data.turnId, {
+						kind: message.data.kind,
+						message: message.data.message,
+						isRetryable: message.data.isRetryable,
+						retryAfter: message.data.retryAfter,
+					});
+					// invalidate(roomKey);
 					break;
 				}
 
 				case "abandoned": {
-					// One of two independent abandonment guards — the
-					// other lives wherever a direct `getTurn` fallback
-					// is checked (formerly the poll loop in
-					// `useTurnPolling`, now absent entirely since
-					// there's no more polling to guard against — this
-					// is the sole detection point now).
-					abandonTurn(message.data.turnId);
-					invalidateRoom();
+					turnStreamActions.abandonTurn(message.data.turnId);
+					// invalidate(roomKey);
 					break;
 				}
 			}
 		}
-	}, [messages.delta, roomId]);
+	}, [messages.delta]);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: store setter is a stable zustand reference.
+	/**
+	 * @description
+	 * Reset lives in its OWN effect now, tied only to `roomId` — fires
+	 * exactly once, when this subscriber actually unmounts or the user
+	 * navigates to a different room. Not coupled to `messages.delta` in
+	 * any way, so it can no longer fire on an unrelated re-render.
+	 */
+	// biome-ignore lint/correctness/useExhaustiveDependencies: stable ref
 	useEffect(() => {
-		return () => reset();
+		return () => turnStreamActions.reset();
 	}, [roomId]);
+
+	useResumeStream(roomId, initialTurns);
 }

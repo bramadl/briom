@@ -35,8 +35,7 @@ export function createDraftingExtension({
 							isRestoring = false;
 						});
 					}
-				} catch (err) {
-					console.error("[Drafting] Failed to restore draft", err);
+				} catch {
 					localStorage.removeItem(storageKey);
 				}
 			}

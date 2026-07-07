@@ -546,7 +546,8 @@ export class Turn extends Aggregate<TurnProps> {
 			);
 		}
 
-		this.change("state", TurnState.failed(error));
+		const existingTokens = this.get("state").tokens;
+		this.change("state", TurnState.failed(error, existingTokens));
 
 		this.emit(
 			new TurnFailed(this.id.value(), {

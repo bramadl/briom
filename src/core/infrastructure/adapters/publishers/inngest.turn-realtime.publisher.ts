@@ -1,4 +1,5 @@
 import type { ITurnRealtimePublisher } from "@briom/core/app";
+import type { StreamError } from "@briom/core/domain";
 import { turnChannel } from "@briom/inngest/channels/turn.channel";
 import type { InngestClient } from "@briom/inngest/client";
 
@@ -43,7 +44,7 @@ export class InngestTurnRealtimePublisher implements ITurnRealtimePublisher {
 
 	public async publishSettled(
 		roomId: string,
-		data: { turnId: string },
+		data: { turnId: string; content: string },
 	): Promise<void> {
 		const channel = turnChannel({ roomId });
 		await this.client.realtime.publish(channel.settled, data);
@@ -51,7 +52,13 @@ export class InngestTurnRealtimePublisher implements ITurnRealtimePublisher {
 
 	public async publishFailed(
 		roomId: string,
-		data: { turnId: string; errorKind: string },
+		data: {
+			turnId: string;
+			kind: StreamError;
+			message: string;
+			isRetryable?: boolean;
+			retryAfter?: number;
+		},
 	): Promise<void> {
 		const channel = turnChannel({ roomId });
 		await this.client.realtime.publish(channel.failed, data);

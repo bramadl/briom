@@ -37,6 +37,12 @@ interface DeliberationEditorProps {
 
 	/**
 	 * @description
+	 * Wether the editor can accept ENTER or send button.
+	 */
+	canSend: boolean;
+
+	/**
+	 * @description
 	 * True while `initiateTurn` is in flight. Used here ONLY to:
 	 * - lock the attachment add/remove controls (the in-flight payload
 	 *   already captured whatever attachments existed at submit time —
@@ -83,6 +89,7 @@ interface DeliberationEditorProps {
 export function DeliberationEditor({
 	canEdit,
 	canMention,
+	canSend,
 	isPending = false,
 	isStreaming = false,
 	onAbort,
@@ -120,6 +127,10 @@ export function DeliberationEditor({
 		maxAttachments: maximumAttachmentPerRoom,
 	});
 
+	const canTouchAttachments = !isPending;
+	const allowEditing = canEdit && !isPending && !isStreaming && !isUploading;
+	const allowSend = canSend && allowEditing;
+
 	const {
 		clearDraftRef,
 		editorRef,
@@ -130,6 +141,7 @@ export function DeliberationEditor({
 		setIsEmpty,
 	} = useDeliberationEditor({
 		canEdit,
+		canSend: allowSend,
 		draftKey,
 		mentionList: canMention
 			? participants?.map((p) => ({
@@ -144,14 +156,6 @@ export function DeliberationEditor({
 		},
 		placeholder: moderatorHint,
 	});
-
-	const canTouchAttachments = !isPending;
-	const canSend =
-		canEdit &&
-		!isPending &&
-		!isStreaming &&
-		!isUploading &&
-		(!isEmpty || attachments.length > 0);
 
 	return (
 		<div
@@ -207,7 +211,7 @@ export function DeliberationEditor({
 				</div>
 
 				<DeliberationEditorButton
-					isDisabled={!canSend}
+					isDisabled={!allowSend || isEmpty}
 					isSending={isSending || isPending}
 					isStreaming={isStreaming}
 					onAbort={onAbort}

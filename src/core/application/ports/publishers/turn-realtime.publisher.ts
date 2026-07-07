@@ -1,3 +1,5 @@
+import type { StreamError } from "@briom/core/domain";
+
 /**
  * @description
  * Application-layer port to the Turn realtime channel. Replaces
@@ -17,16 +19,43 @@
 export interface ITurnRealtimePublisher {
 	publishAbandoned(roomId: string, data: { turnId: string }): Promise<void>;
 
+	/**
+	 * @description
+	 * Carries the full error detail (not just `kind`) so FE's
+	 * `TurnFailed` card can render immediately off this message alone,
+	 * without waiting on the `invalidateRoom()` refetch that fires
+	 * alongside it. Mirrors `TurnFailedPayload.error`'s fields directly.
+	 */
 	publishFailed(
 		roomId: string,
-		data: { turnId: string; errorKind: string },
+		data: {
+			turnId: string;
+			kind: StreamError;
+			message: string;
+			isRetryable?: boolean;
+			retryAfter?: number;
+		},
 	): Promise<void>;
+
 	publishInitiated(
 		roomId: string,
 		data: { turnId: string; sequence: number },
 	): Promise<void>;
 
-	publishSettled(roomId: string, data: { turnId: string }): Promise<void>;
+	/**
+	 * @description
+	 * Carries the full final content directly in the payload — same
+	 * reasoning as publishFailed's inline error detail. Without this,
+	 * FE has nothing to render the instant streaming stops except
+	 * whatever partial content it last had in liveContent, and has to
+	 * wait on invalidateRoom()'s network round-trip just to see the
+	 * complete text. That round-trip gap is what produced the visible
+	 * "cut off, then jumps to full text" artifact.
+	 */
+	publishSettled(
+		roomId: string,
+		data: { turnId: string; content: string },
+	): Promise<void>;
 
 	publishStreamStarted(roomId: string, data: { turnId: string }): Promise<void>;
 

@@ -31,8 +31,8 @@ import type {
 	DomainEvent,
 	IEventSubscriberRegistry,
 } from "@briom/libs/drimion/types/event.types";
-import { after } from "next/server";
 
+import type { ILogger } from "../ports/logger/logger";
 import type { IRoomRealtimePublisher } from "../ports/publishers/room-realtime.publisher";
 
 /**
@@ -54,16 +54,40 @@ type RealtimeTranslator<TPayload> = (
  * @description
  * Forwards a curated allow-list of coarse, low-frequency Room lifecycle
  * events to Supabase Realtime. This is the ONLY consumer of Realtime in
- * Briom — anything per-token or high-frequency stays on the Streaming
- * plane instead, to protect the free-tier quota (200 concurrent
- * connections, 2M messages/month).
+ * Briom for Room concerns — anything per-token or high-frequency stays
+ * on the Streaming plane instead, to protect the free-tier quota (200
+ * concurrent connections, 2M messages/month).
  *
- * Channel is scoped per-moderator (`moderator:{moderatorId}`), not
- * per-room — a moderator with several rooms open keeps a single
- * Realtime connection; FE filters by `roomId` inside the payload.
+ * Deliberately does NOT use `next/server`'s `after()` — same reasoning
+ * as `TurnsEventSubscriber`: this subscriber fires from two different
+ * execution contexts:
+ *   1. Room command handlers (close/conclude/form/rename/...), inside
+ *      a genuine Next.js Server Action request (browser → server).
+ *   2. `StreamTurnHandler.finalize()`/`freezeRoomAndPersist()`, inside
+ *      an Inngest worker's call to `/api/workers` — NOT a Server
+ *      Action/Route Handler request from the browser's perspective,
+ *      even though Next.js is technically the one handling the HTTP
+ *      request underneath.
+ *
+ * `after()` is only valid in the first context — in the second it
+ * silently drops the scheduled callback. This previously meant every
+ * `TurnSlotReleased`/`TurnSlotClaimed` (and `RoomFrozen`, etc.) emitted
+ * from inside `StreamTurnHandler` never reached FE: the Turn itself
+ * would correctly end up `failed`/`settled` in the DB and over the
+ * `turn:{roomId}` Inngest Realtime channel, but the Room's turn slot
+ * stayed marked as claimed forever on the `moderator:{moderatorId}`
+ * Supabase channel — `isTurnSlotClaimed` never flipped back, so the
+ * room looked permanently stuck/read-only even though the individual
+ * turn had already resolved. Publishing directly (awaited, with its
+ * own try/catch) works correctly in both contexts and is not
+ * meaningfully slower — broadcasting is a single fan-out message, not
+ * blocking I/O worth deferring.
  */
 export class RoomsEventSubscriber {
-	public constructor(private readonly publisher: IRoomRealtimePublisher) {}
+	public constructor(
+		private readonly publisher: IRoomRealtimePublisher,
+		private readonly logger: ILogger,
+	) {}
 
 	private registry = {
 		topicGenerated: RoomTopicGenerated.type,
@@ -108,25 +132,33 @@ export class RoomsEventSubscriber {
 
 	/**
 	 * @description
-	 * Wraps a translator into the EventSubscriber shape IEventBus expects.
-	 * Synchronous by design — Room payloads already carry `moderatorId`,
-	 * so no repository lookup is needed before scheduling the broadcast.
+	 * Wraps a translator into the EventSubscriber shape IEventBus
+	 * expects. Returns an `async` function — matches `TurnsEventSubscriber`'s
+	 * shape exactly, and for the same reason: the publish must always
+	 * actually run and be awaited, not scheduled via `after()`.
 	 */
 	private forward<TPayload>(translate: RealtimeTranslator<TPayload>) {
-		return (event: DomainEvent<TPayload>) => {
+		return async (event: DomainEvent<TPayload>): Promise<void> => {
 			const signal = translate(event);
 			if (!signal) return;
 
-			// all turns are in the following format: `room:{entity}`.
-			const [scope, entity] = signal.event.split(":");
-
-			after(() =>
-				this.publisher.broadcast(
-					`${scope}:${signal.moderatorId}:${entity}`,
+			try {
+				await this.publisher.broadcast(
+					`moderator:${signal.moderatorId}`,
 					signal.event,
 					signal.data,
-				),
-			);
+				);
+			} catch (error) {
+				this.logger.error(
+					"RoomsEventSubscriber: broadcast to realtime failed",
+					{
+						eventType: signal.event,
+						errorName: error instanceof Error ? error.name : typeof error,
+						errorMessage:
+							error instanceof Error ? error.message : String(error),
+					},
+				);
+			}
 		};
 	}
 

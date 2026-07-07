@@ -67,26 +67,6 @@ export function TurnActions({
 				}
 			},
 		},
-		// Not yet implemented, outside of MVP scope.
-		// ...(isModerator
-		// 	? [
-		// 			{
-		// 				id: "edit",
-		// 				icon: EditIcon,
-		// 				tooltip: "Edit Message",
-		// 				onClick: () => console.log("Edit clicked"),
-		// 			},
-		// 		]
-		// 	: [
-		// 			{
-		// 				id: "reply",
-		// 				forAi: true,
-		// 				forUser: false,
-		// 				icon: ReplyIcon,
-		// 				tooltip: "Reply Message",
-		// 				onClick: () => console.log("Reply clicked"),
-		// 			},
-		// 		]),
 	];
 
 	return (

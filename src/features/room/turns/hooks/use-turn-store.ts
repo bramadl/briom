@@ -1,5 +1,14 @@
 import { create } from "zustand";
 
+/**
+ * @description
+ * Mirrors the domain's `TurnState` status union exactly (see
+ * `turn.state.ts`), plus "idle" which only exists client-side (no active
+ * turn at all). "abandoned" is intentionally distinct from "failed" —
+ * BE's own doc comment on `TurnsEventSubscriber` says abandoned turns
+ * are removed from the sequence immediately, while failed turns render
+ * a `TurnFailed` card. Collapsing them would lose that distinction.
+ */
 export type ActiveTurnPhase =
 	| "idle"
 	| "pending"
@@ -8,7 +17,22 @@ export type ActiveTurnPhase =
 	| "failed"
 	| "abandoned";
 
-interface TurnStoreState {
+/**
+ * @description
+ * Mirrors `ITurnRealtimePublisher.publishFailed`'s payload shape
+ * (minus `turnId`, which is the map key here) — carried in full so
+ * `TurnFailed` can render immediately off the realtime message alone,
+ * without waiting on the `invalidateRoom()` refetch that fires
+ * alongside `failTurn`.
+ */
+export interface ActiveTurnError {
+	isRetryable?: boolean;
+	kind: string;
+	message: string;
+	retryAfter?: number;
+}
+
+interface TurnState {
 	/**
 	 * @description
 	 * `TurnAbandoned`. No-ops if turnId isn't the active one.
@@ -19,7 +43,7 @@ interface TurnStoreState {
 	 * @description
 	 * The one turn currently going through pending → streaming →
 	 * settled/failed/abandoned. Sequential-only per current product
-	 * requirement. Cleared back to `null` the moment the turn reaches any
+	 * assumption. Cleared back to `null` the moment the turn reaches any
 	 * terminal phase — `phase` itself still reflects which terminal state
 	 * it landed in for the one render cycle before the room refetch
 	 * replaces this turn's card with whatever `useRoom` now says.
@@ -28,16 +52,34 @@ interface TurnStoreState {
 
 	/**
 	 * @description
-	 * `TurnInitiated`. BE never broadcasts this for moderator turns —
-	 * every payload FE receives here is already participant-only.
+	 * `TurnInitiated`. BE never broadcasts this for moderator turns — every payload FE receives here is already participant-only.
 	 */
 	claimTurn: (turnId: string) => void;
 
 	/**
 	 * @description
+	 * Explicit cleanup for a settled/failed/abandoned turn's leftover
+	 * `liveContent` entry — called by the consumer (`useTurnStreaming`)
+	 * once it confirms the room DTO has caught up with real content,
+	 * NOT automatically by settleTurn/failTurn/abandonTurn. See those
+	 * methods' comment for why the old auto-clear-on-settle behavior
+	 * was removed.
+	 */
+	clearLiveContent: (turnId: string) => void;
+
+	/**
+	 * @description
+	 * The active turn's error detail, set only when `phase === "failed"`.
+	 * Read via `useActiveTurnError()`. Cleared whenever a new turn is
+	 * claimed.
+	 */
+	error: ActiveTurnError | null;
+
+	/**
+	 * @description
 	 * `TurnFailed`. No-ops if turnId isn't the active one.
 	 */
-	failTurn: (turnId: string) => void;
+	failTurn: (turnId: string, error: ActiveTurnError) => void;
 
 	/**
 	 * @description
@@ -46,7 +88,7 @@ interface TurnStoreState {
 	 * cadence as the BE's throttled DB flush inside `StreamConsumer`.
 	 * Deliberately keyed by turnId (not just "the current content")
 	 * even though only one turn streams at a time under the current
-	 * sequential-turn requirement — this keeps stale content from a
+	 * sequential-turn assumption — this keeps stale content from a
 	 * just-ended turn from ever being read by a newly-active one for a
 	 * single render before it's overwritten.
 	 *
@@ -63,15 +105,6 @@ interface TurnStoreState {
 	 */
 	markStreaming: (turnId: string) => void;
 
-	/**
-	 * @description
-	 * Mirrors the domain's `TurnState` status union exactly (see
-	 * `turn.state.ts`), plus "idle" which only exists client-side (no active
-	 * turn at all). "abandoned" is intentionally distinct from "failed" —
-	 * BE's own doc comment on `TurnsEventSubscriber` says abandoned turns
-	 * are removed from the sequence immediately, while failed turns render
-	 * a `TurnFailed` card. Collapsing them would lose that distinction.
-	 */
 	phase: ActiveTurnPhase;
 
 	/**
@@ -85,11 +118,30 @@ interface TurnStoreState {
 	 */
 	proposalsVisible: boolean;
 
+	reset: () => void;
+
 	/**
 	 * @description
-	 * Nuclear bomb that resets everything–lol.
+	 * Adopts a turn that's already `streaming` per the room DTO — used
+	 * exclusively by `useTurnSubscriber`'s mount-time resume check, for
+	 * the case where the client reconnects (refresh, HMR, navigate back)
+	 * while BE is still mid-stream on some turn. Without this, the store
+	 * comes up as `activeTurnId: null`, so every subsequent
+	 * `tokenAccumulated`/`settled` message for that turn is silently
+	 * dropped by the `activeTurnId !== turnId` guards in `setLiveContent`
+	 * /`settleTurn`/`failTurn` — the user is left staring at whatever
+	 * partial `content` the DTO snapshot had at mount, forever, until
+	 * some unrelated event forces a room refetch.
+	 *
+	 * Deliberately distinct from `claimTurn`: this does NOT reset `error`
+	 * (a resumed turn was never in a fresh "just claimed" state) and it
+	 * seeds `liveContent[turnId]` with whatever content the DTO already
+	 * had, rather than leaving it empty — that seed is what keeps the
+	 * turn rendering its last-known text right away instead of a blank
+	 * card for the (network-round-trip-sized) window until the next
+	 * realtime message arrives.
 	 */
-	reset: () => void;
+	resumeStreaming: (turnId: string, knownContent: string) => void;
 
 	/**
 	 * @description
@@ -100,10 +152,6 @@ interface TurnStoreState {
 	 */
 	setLiveContent: (turnId: string, content: string) => void;
 
-	/**
-	 * @description
-	 * No idea how to describe this, just look at the damn code.
-	 */
 	setProposalsVisible: (visible: boolean) => void;
 
 	/**
@@ -113,7 +161,7 @@ interface TurnStoreState {
 	 * refetch's `RoomTurnDTO.content` becomes the source of truth, so
 	 * there's nothing left for `liveContent` to usefully hold onto.
 	 */
-	settleTurn: (turnId: string) => void;
+	settleTurn: (turnId: string, content: string) => void;
 }
 
 const initialState = {
@@ -121,65 +169,65 @@ const initialState = {
 	phase: "idle" as const,
 	proposalsVisible: false,
 	liveContent: {},
+	error: null,
 };
 
-export const useTurnStore = create<TurnStoreState>((set, get) => ({
+export const useTurnStore = create<TurnState>((set, get) => ({
 	...initialState,
 
-	abandonTurn: (turnId) => {
-		if (get().activeTurnId !== turnId) return;
-		set((s) => {
-			const nextContent = { ...s.liveContent };
-			delete nextContent[turnId];
-			return {
-				phase: "abandoned",
-				activeTurnId: null,
-				liveContent: nextContent,
-			};
-		});
-	},
+	setProposalsVisible: (visible) => set({ proposalsVisible: visible }),
 
-	claimTurn: (turnId) => set({ activeTurnId: turnId, phase: "pending" }),
-
-	failTurn: (turnId) => {
-		if (get().activeTurnId !== turnId) return;
-		set((s) => {
-			const nextContent = { ...s.liveContent };
-			delete nextContent[turnId];
-			return {
-				phase: "failed",
-				activeTurnId: null,
-				liveContent: nextContent,
-			};
-		});
-	},
+	claimTurn: (turnId) =>
+		set({ activeTurnId: turnId, phase: "pending", error: null }),
 
 	markStreaming: (turnId) => {
 		if (get().activeTurnId !== turnId) return;
 		set({ phase: "streaming" });
 	},
 
-	reset: () => set({ ...initialState, liveContent: {} }),
-
 	setLiveContent: (turnId, content) => {
 		if (get().activeTurnId !== turnId) return;
 		set((s) => ({ liveContent: { ...s.liveContent, [turnId]: content } }));
 	},
 
-	setProposalsVisible: (visible) => set({ proposalsVisible: visible }),
-
-	settleTurn: (turnId) => {
+	settleTurn: (turnId, content) => {
 		if (get().activeTurnId !== turnId) return;
-		set((s) => {
-			const nextContent = { ...s.liveContent };
-			delete nextContent[turnId];
-			return {
-				phase: "settled",
-				activeTurnId: null,
-				liveContent: nextContent,
-			};
-		});
+		set((s) => ({
+			phase: "settled",
+			activeTurnId: null,
+			// Overwrite with the authoritative final content instead of
+			// leaving whatever partial tail liveContent last held — this
+			// is what actually closes the gap, not just the fallback.
+			liveContent: { ...s.liveContent, [turnId]: content },
+		}));
 	},
+
+	failTurn: (turnId, error) => {
+		if (get().activeTurnId !== turnId) return;
+		set({ phase: "failed", activeTurnId: null, error });
+	},
+
+	abandonTurn: (turnId) => {
+		if (get().activeTurnId !== turnId) return;
+		set({ phase: "abandoned", activeTurnId: null });
+	},
+
+	clearLiveContent: (turnId) =>
+		set((s) => {
+			if (!(turnId in s.liveContent)) return s;
+			const next = { ...s.liveContent };
+			delete next[turnId];
+			return { liveContent: next };
+		}),
+
+	resumeStreaming: (turnId, knownContent) =>
+		set((s) => ({
+			activeTurnId: turnId,
+			phase: "streaming",
+			liveContent: { ...s.liveContent, [turnId]: knownContent },
+		})),
+
+	reset: () => set({ ...initialState, liveContent: {} }),
 }));
 
 // ─── Granular selector hooks — one per consumer, minimal re-renders ────
@@ -190,6 +238,16 @@ export function useIsActiveTurn(turnId: string) {
 
 export function useActiveTurnPhase() {
 	return useTurnStore((s) => s.phase);
+}
+
+/**
+ * @description
+ * The active turn's error detail, populated straight from the
+ * `failed` Inngest topic — see `ActiveTurnError`'s doc comment for why
+ * this doesn't wait on a refetch.
+ */
+export function useActiveTurnError() {
+	return useTurnStore((s) => s.error);
 }
 
 /**

@@ -34,6 +34,12 @@ export interface ParticipantModel {
 
 	/**
 	 * @description
+	 * ...
+	 */
+	model: string;
+
+	/**
+	 * @description
 	 * Display name, e.g. "Claude 3.5 Sonnet".
 	 */
 	name: string;
@@ -54,18 +60,20 @@ function isPriceFree(price: string | undefined): boolean {
 	return Number.isNaN(parsed) || parsed === 0;
 }
 
-function deriveProvider(id: string): string {
-	const [provider] = id.split("/");
-	return provider ?? id;
+function deriveProvider(id: string): [string, string] {
+	const [provider, modelName] = id.split("/");
+	return [provider ?? id, modelName];
 }
 
 export function toParticipantModel(model: Model): ParticipantModel {
+	const [provider, modelName] = deriveProvider(model.id);
 	return {
 		id: model.id,
 		isFree:
 			isPriceFree(model.pricing.prompt) &&
 			isPriceFree(model.pricing.completion),
 		name: model.name,
-		provider: deriveProvider(model.id),
+		model: modelName,
+		provider: provider,
 	};
 }

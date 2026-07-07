@@ -28,8 +28,7 @@
     }
   },
   "include": [
-    "src/core/**",
-    "src/libs/drimion"
+    "src/core/**"
   ],
   "ignore": {
     "useGitignore": true,
@@ -40,7 +39,9 @@
       "public/**",
       "src/app/**",
       "src/components/**",
+      "src/features/**",
       "src/hooks/**",
+      "src/libs/drimion",
       "src/libs/providers/**",
       "src/libs/utils.ts",
       "biome.json",

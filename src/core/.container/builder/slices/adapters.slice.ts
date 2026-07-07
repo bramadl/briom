@@ -72,7 +72,9 @@ export const adaptersSlice = providersSlice
 
 	.add("gateway:llm:openrouter", (r) => {
 		const client = r.openRouter;
-		return new OpenRouterLLMGateway(client);
+		const logger = r["logger:pino"];
+
+		return new OpenRouterLLMGateway(client, logger);
 	})
 
 	.add("generator:turn:inngest", (r) => {

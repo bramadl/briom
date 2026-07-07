@@ -5,7 +5,7 @@ import {
 	InputGroupAddon,
 	InputGroupInput,
 } from "@briom/components/ui/input-group";
-import { type FormStore, insert, useField } from "@formisch/react";
+import { type FormStore, insert, remove, useField } from "@formisch/react";
 import { SearchIcon } from "lucide-react";
 import { Fragment } from "react/jsx-runtime";
 
@@ -51,14 +51,27 @@ export function RoomParticipantPicker({
 	} = useRoomParticipantPicker({ participants });
 
 	const inviteHandler = (model: (typeof filteredModels)[number]) => {
+		const alreadyExists = participants.some(
+			(p) => `${p.provider}/${p.model}` === model.id,
+		);
+
+		if (alreadyExists) return;
 		insert(form, {
 			path: ["participants"],
 			initialInput: {
 				displayName: model.name,
-				model: model.id,
+				model: model.model,
 				provider: model.provider,
 			},
 		});
+	};
+
+	const uninviteHandler = (model: (typeof filteredModels)[number]) => {
+		const index = participants.findIndex(
+			(p) => `${p.provider}/${p.model}` === model.id,
+		);
+
+		if (index !== -1) remove(form, { path: ["participants"], at: index });
 	};
 
 	return (
@@ -77,24 +90,30 @@ export function RoomParticipantPicker({
 				</InputGroup>
 			</div>
 			<RoomParticipantGrid isLoading={isLoading} models={filteredModels}>
-				{(model) => (
-					<RoomParticipantSelectionItem
-						disabled={
-							disabled ||
-							!model.isFree ||
-							(maxParticipantsReached && !isSelected(model))
-						}
-						isFeatured={isFeatured(model)}
-						isPending={isFiltering}
-						isSelected={isSelected(model)}
-						key={model.id}
-						model={model}
-						onSelect={() => {
-							if (isSelected(model)) return;
-							inviteHandler(model);
-						}}
-					/>
-				)}
+				{(model) => {
+					const isModelSelected = isSelected(model);
+					return (
+						<RoomParticipantSelectionItem
+							disabled={
+								disabled ||
+								!model.isFree ||
+								(maxParticipantsReached && !isModelSelected)
+							}
+							isFeatured={isFeatured(model)}
+							isPending={isFiltering}
+							isSelected={isModelSelected}
+							key={model.id}
+							model={model}
+							onSelect={() => {
+								if (isModelSelected) {
+									uninviteHandler(model);
+								} else {
+									inviteHandler(model);
+								}
+							}}
+						/>
+					);
+				}}
 			</RoomParticipantGrid>
 		</Fragment>
 	);

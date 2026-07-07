@@ -1,7 +1,8 @@
 import { resolveMediaType } from "@briom/core/domain";
 import { unwrap } from "@briom/libs/server-action";
-import { useDeliberationStore } from "@briom/room/deliberation/hooks/use-deliberation-store";
 import { roomQueryOptions } from "@briom/room/queries/query.options";
+import { useTurnCollapseStore } from "@briom/room/turns/hooks/use-turn-collapse-store";
+import { turnStreamActions } from "@briom/room/turns/store/turn-stream.store";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { initiateTurn } from "../actions/initiate-turn.action";
@@ -12,8 +13,9 @@ export function useInitiateTurnMutation(roomId: string) {
 	const queryClient = useQueryClient();
 	const queryKey = roomQueryOptions.getRoom(roomId).queryKey;
 
-	const claimTurn = useDeliberationStore((s) => s.claimTurn);
-	const collapseAllExpanded = useDeliberationStore(
+	const toggleExpanded = useTurnCollapseStore((s) => s.toggleExpanded);
+
+	const collapseAllExpanded = useTurnCollapseStore(
 		(s) => s.collapseAllExpanded,
 	);
 
@@ -22,21 +24,6 @@ export function useInitiateTurnMutation(roomId: string) {
 			return unwrap(await initiateTurn(input));
 		},
 
-		/**
-		 * @description
-		 * Injects the moderator's own turn into the room cache immediately
-		 * — this is the "true zero-latency" half of the optimistic update,
-		 * since every field it needs is already known client-side (the
-		 * content just typed, attachments already uploaded, and an ID this
-		 * mutation itself generates). Snapshots the previous cache value
-		 * so `onError` can restore it exactly.
-		 *
-		 * Also fires `collapseAllExpanded()` here rather than in
-		 * `onSuccess` — this is the earliest point at which we know a new
-		 * turn is being sent, and collapsing previous turns should feel
-		 * instantaneous (part of the "send" action itself), not gated
-		 * behind a network round trip.
-		 */
 		onMutate: async (input) => {
 			collapseAllExpanded();
 
@@ -76,20 +63,11 @@ export function useInitiateTurnMutation(roomId: string) {
 			return { previous };
 		},
 
-		/**
-		 * @description
-		 * Appends the participant placeholder using data the command
-		 * output already gave us (`nextResponder`), and claims the turn in
-		 * the store immediately — ahead of the `TurnInitiated` realtime
-		 * broadcast, which would otherwise be the only thing driving this.
-		 * The realtime handler still fires when the broadcast eventually
-		 * arrives; `claimTurn` is idempotent for the same turnId, so that
-		 * second call is a harmless no-op, not a correctness concern.
-		 */
 		onSuccess: (data) => {
 			const current = queryClient.getQueryData(queryKey);
 			if (!current?.data.room) return;
 
+			toggleExpanded(data.data.nextResponder.turn.id);
 			const room = current.data.room;
 			const alreadyPresent = room.info.turns.some(
 				(t) => t.id === data.data.nextResponder.turn.id,
@@ -115,39 +93,15 @@ export function useInitiateTurnMutation(roomId: string) {
 				},
 			});
 
-			claimTurn(data.data.nextResponder.turn.id);
+			turnStreamActions.claimTurn(data.data.nextResponder.turn.id);
 		},
 
-		/**
-		 * @description
-		 * Restores the exact pre-mutation snapshot from `onMutate`. Does
-		 * NOT attempt to restore `expandedTurnIds` — `collapseAllExpanded`
-		 * already ran optimistically in `onMutate`, and re-expanding
-		 * everything on a failed send would be a jarring layout snap-back
-		 * for a state that was arguably reasonable anyway (turns collapsed
-		 * is not itself wrong, even if the send that triggered it failed).
-		 */
 		onError: (_err, _input, context) => {
-			console.error(_err);
 			if (context?.previous) {
 				queryClient.setQueryData(queryKey, context.previous);
 			}
 		},
 
-		/**
-		 * @description
-		 * Fires on both success and error, converging the cache to
-		 * server-truth regardless of outcome:
-		 *
-		 * - Success: the optimistic moderator turn and participant
-		 *   placeholder are already visually present, so this invalidation
-		 *   is a correctness pass (real IDs already match — see
-		 *   `InitiateTurnHandler.createModeratorTurn`'s `passedId` — so no
-		 *   flicker), not what makes them appear.
-		 * - Error: cache was already rolled back in `onError`; this just
-		 *   guards against drift from anything else that changed
-		 *   server-side despite the error (defensive, cheap).
-		 */
 		onSettled: () => {
 			queryClient.invalidateQueries({ queryKey, exact: true });
 		},
