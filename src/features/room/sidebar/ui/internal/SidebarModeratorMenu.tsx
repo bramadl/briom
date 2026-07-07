@@ -37,10 +37,9 @@ function ModeratorAvatar({ ...props }) {
 }
 
 function ModeratorInfo() {
-	const { id, name, email } = useModerator();
+	const { name, email } = useModerator();
 	return (
 		<span className="grid flex-1 text-left text-sm leading-tight">
-			<span>{id}</span>
 			<span className="truncate font-medium">{name}</span>
 			<span className="truncate text-xs">{email}</span>
 		</span>
