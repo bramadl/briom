@@ -11,6 +11,7 @@ import {
 } from "@briom/core/domain";
 import { roomQueryOptions } from "@briom/room/queries/query.options";
 import { roomStreamActions } from "@briom/room/store/room-stream.store";
+import { turnQueryOptions } from "@briom/room/turns/queries/query.options";
 import { turnStreamActions } from "@briom/room/turns/store/turn-stream.store";
 import { createAuthClient } from "@briom/supabase/auth/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -43,6 +44,7 @@ export function useRoomSubscriber(params: {
 	const queryClient = useQueryClient();
 	const allRoomsKey = roomQueryOptions.getRooms().queryKey;
 	const roomKey = roomQueryOptions.getRoom(roomId).queryKey;
+	const proposalsKey = turnQueryOptions.getProposals(roomId).queryKey;
 
 	// biome-ignore lint/correctness/useExhaustiveDependencies: roomStreamActions is stable, queryClient is stable.
 	useEffect(() => {
@@ -274,6 +276,11 @@ export function useRoomSubscriber(params: {
 					roomStreamActions.setTurnSlotClaimed(false);
 					turnStreamActions.reset();
 					queryClient.invalidateQueries({ queryKey: roomKey, exact: true });
+					queryClient.invalidateQueries({
+						queryKey: proposalsKey,
+						exact: true,
+					});
+					turnStreamActions.setProposalsVisible(true);
 				},
 			)
 			.subscribe();

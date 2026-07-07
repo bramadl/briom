@@ -51,13 +51,18 @@ export function useTurnSubscriber(params: {
 }) {
 	const { roomId, initialTurns } = params;
 
+	const queryClient = useQueryClient();
+	const roomKey = roomQueryOptions.getRoom(roomId).queryKey;
+
 	const channel = turnChannel({ roomId });
 	const { messages } = useRealtime({
 		channel,
 		topics: TURN_TOPICS,
 		token: () => getTurnRealtimeToken(roomId),
+		pauseOnHidden: false,
 	});
 
+	// biome-ignore lint/correctness/useExhaustiveDependencies: stable ref.
 	useEffect(() => {
 		for (const message of messages.delta) {
 			if (message.kind === "run") continue;
@@ -66,7 +71,6 @@ export function useTurnSubscriber(params: {
 				case "initiated": {
 					const { turnId } = message.data;
 					turnStreamActions.claimTurn(turnId);
-					turnStreamActions.setProposalsVisible(false);
 					break;
 				}
 
@@ -84,7 +88,6 @@ export function useTurnSubscriber(params: {
 				case "settled": {
 					const { turnId, content } = message.data;
 					turnStreamActions.settleTurn(turnId, content);
-					turnStreamActions.setProposalsVisible(true);
 					break;
 				}
 
@@ -100,6 +103,7 @@ export function useTurnSubscriber(params: {
 
 				case "abandoned": {
 					turnStreamActions.abandonTurn(message.data.turnId);
+					queryClient.invalidateQueries({ queryKey: roomKey, exact: true });
 					break;
 				}
 			}

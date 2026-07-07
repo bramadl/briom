@@ -57,9 +57,6 @@ interface DeliberationEditorProps {
 	/**
 	 * @description
 	 * True while the claimed participant turn is actively streaming.
-	 * Currently always `false` from the caller — wiring this to the real
-	 * streaming phase, and giving `onAbort` a real implementation, is
-	 * out of scope for this pass and tracked separately.
 	 */
 	isStreaming: boolean;
 

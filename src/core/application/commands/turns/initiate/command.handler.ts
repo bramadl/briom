@@ -226,7 +226,7 @@ export class InitiateTurnHandler
 
 		return Result.success({
 			participantTurnId: participantTurn.id,
-			shouldGenerateTopic: isForming,
+			shouldGenerateTopic: room.topic === null,
 			output: {
 				...output,
 				failedAttachments,

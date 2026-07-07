@@ -40,6 +40,7 @@ export class DrizzleGetRoomQuery implements IGetRoomQuery {
 					orderBy: { createdAt: "asc" },
 				},
 				turns: {
+					where: { status: { NOT: "abandoned" } },
 					columns: {
 						id: true,
 						content: true,

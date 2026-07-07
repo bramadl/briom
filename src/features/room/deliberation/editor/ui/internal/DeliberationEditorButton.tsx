@@ -2,7 +2,7 @@
 
 import { Button } from "@briom/components/ui/button";
 import { ArrowUpIcon, LoaderCircleIcon, SquareIcon } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useTransition } from "react";
 
 interface DeliberationEditorButtonProps {
 	/**
@@ -54,9 +54,17 @@ export function DeliberationEditorButton({
 	onAbort,
 	onSend,
 }: DeliberationEditorButtonProps) {
+	const [abortPending, startAborting] = useTransition();
+
 	const handleClick = useCallback(() => {
-		if (isStreaming) onAbort();
-		else onSend();
+		if (isStreaming) {
+			startAborting(() => {
+				onAbort();
+			});
+			return;
+		}
+
+		onSend();
 	}, [isStreaming, onAbort, onSend]);
 
 	return (
@@ -68,11 +76,15 @@ export function DeliberationEditorButton({
 			type="button"
 		>
 			{isStreaming ? (
-				<SquareIcon className="fill-current size-4" />
+				abortPending ? (
+					<LoaderCircleIcon className="animate-spin" />
+				) : (
+					<SquareIcon className="fill-current" />
+				)
 			) : isSending ? (
-				<LoaderCircleIcon className="animate-spin size-4" />
+				<LoaderCircleIcon className="animate-spin" />
 			) : (
-				<ArrowUpIcon className="size-4" />
+				<ArrowUpIcon />
 			)}
 		</Button>
 	);

@@ -29,7 +29,7 @@ interface TurnStreamState {
 const initialState: TurnStreamState = {
 	activeTurnId: null,
 	phase: "idle",
-	proposalsVisible: false,
+	proposalsVisible: true,
 	liveContent: {},
 	error: null,
 	settledTurnIds: new Set(),
@@ -129,6 +129,10 @@ export const turnStreamActions = {
 
 export function useIsActiveTurn(turnId: string): boolean {
 	return useSnapshot(turnStreamState).activeTurnId === turnId;
+}
+
+export function useActiveTurnId(): string | null {
+	return useSnapshot(turnStreamState).activeTurnId;
 }
 
 export function useActiveTurnPhase(): ActiveTurnPhase {

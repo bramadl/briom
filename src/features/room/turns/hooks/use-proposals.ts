@@ -3,36 +3,48 @@ import {
 	turnStreamActions,
 	useShouldShowProposals,
 } from "@briom/room/turns/store/turn-stream.store";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useCallback, useTransition } from "react";
+import { toast } from "sonner";
 
 import { turnQueryOptions } from "../queries/query.options";
+import { useAcceptProposalMutation } from "./use-accept-proposal-mutation";
 
 export function useProposals(roomId: string) {
-	const queryClient = useQueryClient();
-
 	const {
 		data: {
 			data: { proposals },
 		},
 	} = useSuspenseQuery(turnQueryOptions.getProposals(roomId));
 
-	const shouldShowProposals = useShouldShowProposals();
-	const showProposals = shouldShowProposals && proposals.length > 0;
+	const [pending, startTransition] = useTransition();
 
-	/**
-	 * @todo
-	 * Implement accept proposal.
-	 */
+	const shouldShowProposals = useShouldShowProposals();
+	const showProposals = !pending && shouldShowProposals && proposals.length > 0;
+
+	const mutation = useAcceptProposalMutation(roomId);
+
 	const acceptProposal = useCallback(
-		(_proposal: TurnProposalDTO) => {
-			turnStreamActions.setProposalsVisible(false);
-			queryClient.removeQueries({
-				queryKey: turnQueryOptions.getProposals(roomId).queryKey,
-				exact: true,
+		async ({ intent, participantId }: TurnProposalDTO) => {
+			startTransition(async () => {
+				turnStreamActions.setProposalsVisible(false);
+				try {
+					const pending = mutation.mutateAsync({
+						intent,
+						participantId,
+						roomId,
+					});
+
+					await pending;
+				} catch (error) {
+					toast.error("Failed to send", {
+						description: (error as Error).message,
+					});
+					throw error;
+				}
 			});
 		},
-		[queryClient, roomId],
+		[roomId, mutation.mutateAsync],
 	);
 
 	return { acceptProposal, proposals, showProposals };

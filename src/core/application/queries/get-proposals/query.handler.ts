@@ -39,7 +39,7 @@ export class GetProposalsHandler
 		]);
 
 		if (!room) return Result.success({ proposals: [] });
-		if (room.get("moderatorId").isEqual(ModeratorId(input.moderatorId))) {
+		if (!room.get("moderatorId").isEqual(ModeratorId(input.moderatorId))) {
 			return Result.success({ proposals: [] });
 		}
 

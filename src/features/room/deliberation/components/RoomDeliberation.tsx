@@ -3,10 +3,16 @@
 import { cn } from "@briom/libs/utils";
 import { useRoom } from "@briom/room/hooks/use-room";
 import { useIsTurnSlotClaimed } from "@briom/room/store/room-stream.store";
+import { useAbortTurnMutation } from "@briom/room/turns/hooks/use-abort-turn-mutation";
 import { useInitiateTurnMutation } from "@briom/room/turns/hooks/use-initiate-turn-mutation";
+import {
+	useActiveTurnId,
+	useActiveTurnPhase,
+} from "@briom/room/turns/store/turn-stream.store";
 import dynamic from "next/dynamic";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
+
 import type { PendingAttachment } from "../attachments/utils/attachment.types";
 import type { Mentionee } from "../editor/helpers/mention-extractor";
 import { useDeliberationRealtime } from "../hooks/use-deliberation-realtime";
@@ -74,6 +80,16 @@ export function RoomDeliberation() {
 		}
 	};
 
+	const activeTurnId = useActiveTurnId();
+	const activeTurnPhase = useActiveTurnPhase();
+	const abortMutation = useAbortTurnMutation();
+
+	const isStreaming = activeTurnPhase === "streaming";
+	const abortTurn = useCallback(() => {
+		if (!activeTurnId) return;
+		abortMutation.mutate({ roomId, turnId: activeTurnId });
+	}, [abortMutation, roomId, activeTurnId]);
+
 	useDeliberationRealtime({
 		roomId,
 		moderatorId: room.info.metadata.moderatorId,
@@ -110,8 +126,8 @@ export function RoomDeliberation() {
 						canMention={canMention}
 						canSend={!isReadOnly}
 						isPending={mutation.isPending}
-						isStreaming={false}
-						onAbort={() => {}}
+						isStreaming={isStreaming}
+						onAbort={abortTurn}
 						onSend={initateTurn}
 						participants={participants}
 					/>
