@@ -71,6 +71,7 @@ export function useTurnSubscriber(params: {
 				case "initiated": {
 					const { turnId } = message.data;
 					turnStreamActions.claimTurn(turnId);
+					turnStreamActions.setProposalsVisible(false);
 					break;
 				}
 
