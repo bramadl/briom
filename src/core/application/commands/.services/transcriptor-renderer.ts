@@ -130,7 +130,7 @@ export class TranscriptorRenderer {
 			participants.map((p) => [p.id.value(), p]),
 		);
 
-		const settled = turns.filter((t) => !t.isFailed && !t.isPending);
+		const settled = turns.filter((t) => t.isSettled);
 		const relevantTurns = latestCheckpoint
 			? settled.filter(
 					(t) =>

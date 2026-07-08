@@ -96,8 +96,9 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 	);
 
 	const { content, status, error, isActive, isStreaming } = useTurnStreaming({
-		turnId: id,
+		cacheStatus: turn?.status,
 		settledContent: turn?.content,
+		turnId: id,
 	});
 
 	const isExpanded = useIsTurnExpanded(id, {

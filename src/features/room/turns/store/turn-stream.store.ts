@@ -20,16 +20,18 @@ export interface ActiveTurnError {
 interface TurnStreamState {
 	activeTurnId: string | null;
 	error: ActiveTurnError | null;
+	isOptimisticallyPending: boolean;
 	liveContent: Record<string, string>;
 	phase: ActiveTurnPhase;
-	proposalsVisible: boolean;
 	settledTurnIds: Set<string>;
+	trackedTurnId: string | null;
 }
 
 const initialState: TurnStreamState = {
 	activeTurnId: null,
+	trackedTurnId: null,
 	phase: "idle",
-	proposalsVisible: true,
+	isOptimisticallyPending: false,
 	liveContent: {},
 	error: null,
 	settledTurnIds: new Set(),
@@ -37,12 +39,29 @@ const initialState: TurnStreamState = {
 
 export const turnStreamState = proxy<TurnStreamState>({ ...initialState });
 
+// Phases in which no turn is in-flight, i.e. it's safe to show proposals.
+const IDLE_PHASES: ReadonlySet<ActiveTurnPhase> = new Set([
+	"idle",
+	"settled",
+	"failed",
+	"abandoned",
+]);
+
 export const turnStreamActions = {
+	beginOptimisticTurn(): void {
+		turnStreamState.isOptimisticallyPending = true;
+	},
+
+	cancelOptimisticTurn(): void {
+		turnStreamState.isOptimisticallyPending = false;
+	},
+
 	claimTurn(turnId: string): void {
 		turnStreamState.activeTurnId = turnId;
+		turnStreamState.trackedTurnId = turnId;
 		turnStreamState.phase = "pending";
 		turnStreamState.error = null;
-		turnStreamState.proposalsVisible = false;
+		turnStreamState.isOptimisticallyPending = false;
 		turnStreamState.settledTurnIds.delete(turnId);
 	},
 
@@ -90,17 +109,17 @@ export const turnStreamActions = {
 			delete turnStreamState.liveContent[turnId];
 		}
 		turnStreamState.settledTurnIds.delete(turnId);
+		if (turnStreamState.trackedTurnId === turnId) {
+			turnStreamState.trackedTurnId = null;
+		}
 	},
 
 	resumeStreaming(turnId: string, knownContent: string): void {
 		turnStreamState.activeTurnId = turnId;
+		turnStreamState.trackedTurnId = turnId;
 		turnStreamState.phase = "streaming";
 		turnStreamState.liveContent[turnId] = knownContent;
 		turnStreamState.settledTurnIds.delete(turnId);
-	},
-
-	setProposalsVisible(visible: boolean): void {
-		turnStreamState.proposalsVisible = visible;
 	},
 
 	reset(): void {
@@ -112,24 +131,26 @@ export const turnStreamActions = {
 		}
 
 		turnStreamState.activeTurnId = null;
+		turnStreamState.trackedTurnId = null;
 		turnStreamState.phase = "idle";
 		turnStreamState.error = null;
-		turnStreamState.proposalsVisible = false;
+		turnStreamState.isOptimisticallyPending = false;
 		turnStreamState.liveContent = preservedContent;
 	},
 
 	hardReset(): void {
 		turnStreamState.activeTurnId = null;
+		turnStreamState.trackedTurnId = null;
 		turnStreamState.phase = "idle";
 		turnStreamState.error = null;
-		turnStreamState.proposalsVisible = false;
+		turnStreamState.isOptimisticallyPending = false;
 		turnStreamState.liveContent = {};
 		turnStreamState.settledTurnIds = new Set();
 	},
 };
 
 export function useIsActiveTurn(turnId: string): boolean {
-	return useSnapshot(turnStreamState).activeTurnId === turnId;
+	return useSnapshot(turnStreamState).trackedTurnId === turnId;
 }
 
 export function useActiveTurnId(): string | null {
@@ -150,5 +171,9 @@ export function useLiveTurnContent(turnId: string): string {
 
 export function useShouldShowProposals(): boolean {
 	const snap = useSnapshot(turnStreamState);
-	return snap.proposalsVisible;
+	return (
+		snap.activeTurnId === null &&
+		!snap.isOptimisticallyPending &&
+		IDLE_PHASES.has(snap.phase)
+	);
 }

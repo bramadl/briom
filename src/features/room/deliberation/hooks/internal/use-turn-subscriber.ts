@@ -1,5 +1,3 @@
-"use client";
-
 import type { RoomTurnDTO } from "@briom/core/app";
 import { turnChannel } from "@briom/inngest/channels/turn.channel";
 import { roomQueryOptions } from "@briom/room/queries/query.options";
@@ -73,7 +71,6 @@ export function useTurnSubscriber(params: {
 				case "initiated": {
 					const { turnId } = message.data;
 					turnStreamActions.claimTurn(turnId);
-					turnStreamActions.setProposalsVisible(false);
 					break;
 				}
 
@@ -91,13 +88,10 @@ export function useTurnSubscriber(params: {
 				case "settled": {
 					const { turnId, content } = message.data;
 					turnStreamActions.settleTurn(turnId, content);
-					queryClient
-						.invalidateQueries({ queryKey: proposalKey, exact: true })
-						.then(() => {
-							setTimeout(() => {
-								turnStreamActions.setProposalsVisible(true);
-							}, 600);
-						});
+					void queryClient.invalidateQueries({
+						queryKey: proposalKey,
+						exact: true,
+					});
 					break;
 				}
 
@@ -108,13 +102,10 @@ export function useTurnSubscriber(params: {
 						isRetryable: message.data.isRetryable,
 						retryAfter: message.data.retryAfter,
 					});
-					queryClient
-						.invalidateQueries({ queryKey: proposalKey, exact: true })
-						.then(() => {
-							setTimeout(() => {
-								turnStreamActions.setProposalsVisible(true);
-							}, 600);
-						});
+					void queryClient.invalidateQueries({
+						queryKey: proposalKey,
+						exact: true,
+					});
 					break;
 				}
 

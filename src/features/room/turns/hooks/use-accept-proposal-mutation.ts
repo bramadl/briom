@@ -18,6 +18,8 @@ export function useAcceptProposalMutation(roomId: string) {
 		},
 
 		onMutate: async () => {
+			turnStreamActions.beginOptimisticTurn();
+
 			const previousCollapseState = {
 				forceCollapsedIds: new Set(
 					useTurnCollapseStore.getState().forceCollapsedIds,
@@ -71,6 +73,8 @@ export function useAcceptProposalMutation(roomId: string) {
 		},
 
 		onError: (_err, _input, context) => {
+			turnStreamActions.cancelOptimisticTurn();
+
 			if (context?.previous) {
 				queryClient.setQueryData(queryKey, context.previous);
 			}

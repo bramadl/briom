@@ -13,8 +13,9 @@ import {
 export function useTurnStreaming(params: {
 	turnId: string;
 	settledContent?: string;
+	cacheStatus?: string;
 }) {
-	const { turnId, settledContent } = params;
+	const { turnId, settledContent, cacheStatus } = params;
 
 	const isActive = useIsActiveTurn(turnId);
 	const liveContent = useLiveTurnContent(turnId);
@@ -22,12 +23,20 @@ export function useTurnStreaming(params: {
 	const error = useActiveTurnError();
 
 	const hasSettledContent = !!settledContent && settledContent.length > 0;
+	const cacheConfirmsTerminal =
+		cacheStatus === "settled" ||
+		cacheStatus === "failed" ||
+		cacheStatus === "abandoned";
 
 	useEffect(() => {
-		if (!isActive && hasSettledContent) {
+		if (!isActive) return;
+		const storeSaysTerminal =
+			phase === "settled" || phase === "failed" || phase === "abandoned";
+
+		if (storeSaysTerminal && (hasSettledContent || cacheConfirmsTerminal)) {
 			turnStreamActions.clearLiveContent(turnId);
 		}
-	}, [isActive, hasSettledContent, turnId]);
+	}, [isActive, phase, hasSettledContent, cacheConfirmsTerminal, turnId]);
 
 	const content = isActive
 		? liveContent

@@ -1,9 +1,6 @@
 import type { TurnProposalDTO } from "@briom/core/app";
 import { roomStreamActions } from "@briom/room/store/room-stream.store";
-import {
-	turnStreamActions,
-	useShouldShowProposals,
-} from "@briom/room/turns/store/turn-stream.store";
+import { useShouldShowProposals } from "@briom/room/turns/store/turn-stream.store";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useTransition } from "react";
 import { toast } from "sonner";
@@ -28,8 +25,6 @@ export function useProposals(roomId: string) {
 	const acceptProposal = useCallback(
 		async ({ intent, participantId }: TurnProposalDTO) => {
 			roomStreamActions.setTransitioning(true);
-			turnStreamActions.setProposalsVisible(false);
-
 			startTransition(async () => {
 				try {
 					const pending = mutation.mutateAsync(
