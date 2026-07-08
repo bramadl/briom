@@ -39,7 +39,6 @@ const initialState: TurnStreamState = {
 
 export const turnStreamState = proxy<TurnStreamState>({ ...initialState });
 
-// Phases in which no turn is in-flight, i.e. it's safe to show proposals.
 const IDLE_PHASES: ReadonlySet<ActiveTurnPhase> = new Set([
 	"idle",
 	"settled",
@@ -123,19 +122,8 @@ export const turnStreamActions = {
 	},
 
 	reset(): void {
-		const preservedContent: Record<string, string> = {};
-		for (const turnId of turnStreamState.settledTurnIds) {
-			if (turnId in turnStreamState.liveContent) {
-				preservedContent[turnId] = turnStreamState.liveContent[turnId];
-			}
-		}
-
 		turnStreamState.activeTurnId = null;
-		turnStreamState.trackedTurnId = null;
-		turnStreamState.phase = "idle";
-		turnStreamState.error = null;
 		turnStreamState.isOptimisticallyPending = false;
-		turnStreamState.liveContent = preservedContent;
 	},
 
 	hardReset(): void {

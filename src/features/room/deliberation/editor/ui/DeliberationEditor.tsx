@@ -167,7 +167,7 @@ export function DeliberationEditor({
 			className={cn(
 				"relative flex flex-col gap-4 py-4 max-w-4xl mx-auto rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm transition-all",
 				"focus-within:border-border focus-within:shadow-lg focus-within:shadow-primary/5",
-				pulsed && "animate-pulse border-primary! ring-4 ring-primary/15",
+				pulsed && "animate-pulse ring-4 ring-primary/15",
 				isDragActive &&
 					"border-primary/60 bg-primary/5 shadow-lg shadow-primary/10",
 			)}
