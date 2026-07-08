@@ -6,7 +6,7 @@ import { turnQueryOptions } from "@briom/room/turns/queries/query.options";
 import { turnStreamActions } from "@briom/room/turns/store/turn-stream.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRealtime } from "inngest/react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const TURN_TOPICS = [
 	"initiated",
@@ -23,9 +23,31 @@ function useResumeStream(
 ) {
 	const queryClient = useQueryClient();
 	const roomKey = roomQueryOptions.getRoom(roomId).queryKey;
+	const resumedTurnIdRef = useRef<string | null>(null);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: deliberately mount-only, see comment above.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: reacts to initialTurns identity changes (new refs on refetch), roomId for the query key, queryClient/roomKey are stable.
 	useEffect(() => {
+		const resumedId = resumedTurnIdRef.current;
+
+		if (resumedId) {
+			const fresh = initialTurns.find((t) => t.id === resumedId);
+			if (fresh && fresh.status !== "streaming" && fresh.status !== "pending") {
+				if (fresh.status === "settled") {
+					turnStreamActions.settleTurn(resumedId, fresh.content);
+				} else if (fresh.status === "failed") {
+					turnStreamActions.failTurn(resumedId, {
+						kind: "stale_resume",
+						message:
+							"This response failed to generate. Refresh if this looks out of date.",
+					});
+				} else if (fresh.status === "abandoned") {
+					turnStreamActions.abandonTurn(resumedId);
+				}
+				resumedTurnIdRef.current = null;
+			}
+			return;
+		}
+
 		const streamingTurn = initialTurns.find((t) => t.status === "streaming");
 		const pendingTurn = initialTurns.find((t) => t.status === "pending");
 
@@ -34,14 +56,16 @@ function useResumeStream(
 				streamingTurn.id,
 				streamingTurn.content,
 			);
+			resumedTurnIdRef.current = streamingTurn.id;
 		} else if (pendingTurn) {
 			turnStreamActions.claimTurn(pendingTurn.id);
+			resumedTurnIdRef.current = pendingTurn.id;
 		}
 
 		if (streamingTurn || pendingTurn) {
 			queryClient.invalidateQueries({ queryKey: roomKey, exact: true });
 		}
-	}, []);
+	}, [initialTurns]);
 }
 
 export function useTurnSubscriber(params: {
