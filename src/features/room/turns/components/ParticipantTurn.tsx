@@ -82,8 +82,9 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 	id,
 	isLatest,
 }: ParticipantTurnProps) {
-	const { room, roomId } = useRoom();
+	const { room, roomId, isConcluded, isFrozen, isLocked } = useRoom();
 
+	const canRetry = !isConcluded && !isFrozen && !isLocked;
 	const retryMutation = useRetryTurnMutation(roomId);
 	const retry = useCallback(() => {
 		retryMutation.mutate({ roomId, turnId: id });
@@ -159,7 +160,7 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 									? "Perspective was not generated"
 									: "Perspective was not fully generated"
 							}
-							onRetried={onRetried}
+							onRetried={canRetry ? onRetried : undefined}
 							reason={failureReason ?? "Unknown error."}
 						/>
 					</>
