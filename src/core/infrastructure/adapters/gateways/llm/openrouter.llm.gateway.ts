@@ -44,6 +44,33 @@ const BOUNDED_RETRY_CONFIG = {
 	retryConnectionErrors: true,
 } as const;
 
+/**
+ * @description
+ * Hard ceiling on how long `pull()` will keep looping through empty-delta
+ * chunks without seeing ANY delta content, before giving up on a stream
+ * entirely. Some providers (caught here on `cohere/north-mini-code:free`)
+ * send an unbounded run of role-only/metadata-only chunks with
+ * `finishReason: null` and never actually terminate the stream on their
+ * own — the original loop had no exit condition for that case, and spun
+ * past 11,000 iterations before `StreamConsumer`'s outer `chunkTimeoutMs`
+ * finally gave up and cancelled the reader out from under it. That race
+ * is also what caused the "Invalid state: Controller is already closed"
+ * crash — see `stopped` below.
+ *
+ * Deliberately time-based rather than a fixed chunk count: reasoning
+ * models legitimately send hundreds of empty chunks in a row while
+ * "thinking" before ever emitting a token (observed: 1131 consecutive
+ * empty chunks from this same model, followed by a normal completion),
+ * and chunk-arrival rate varies a lot between providers. A fixed count
+ * threshold either fires on legitimately-slow-but-alive models, or has
+ * to be set so high it stops being a useful guard against genuine stalls.
+ * Wall-clock time since the last real delta is what actually
+ * distinguishes "still thinking" from "dead" — a provider that's alive
+ * keeps the connection warm and events keep arriving at SOME rate, even
+ * if none of them carry content yet.
+ */
+const EMPTY_DELTA_STALL_TIMEOUT_MS = 90_000;
+
 export class OpenRouterLLMGateway implements ILLMGateway {
 	public constructor(
 		private readonly client: OpenRouterClient,
@@ -127,6 +154,29 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 	 * that silently never delivered any tokens. Looping inside a single
 	 * `pull()` call until something is actually enqueued (or the stream
 	 * ends) removes that dependency entirely.
+	 *
+	 * Two further guards were added after a second incident
+	 * (`cohere/north-mini-code:free`), where a provider sent an UNBOUNDED
+	 * run of empty-delta chunks with `finishReason: null` and never
+	 * terminated the stream at all:
+	 *
+	 * 1. `EMPTY_DELTA_STALL_TIMEOUT_MS` bounds how long the empty-delta
+	 *    loop is willing to wait since the LAST real delta before giving
+	 *    up, so a genuinely stalled provider is caught here instead of
+	 *    relying on `StreamConsumer`'s outer per-chunk timeout to notice
+	 *    first. Time-based rather than chunk-count-based deliberately —
+	 *    see that constant's doc comment for why a count threshold isn't
+	 *    a reliable signal here (reasoning models can legitimately send
+	 *    1000+ empty chunks before responding).
+	 * 2. `stopped` guards every controller call. Without it, if the outer
+	 *    timeout DOES fire first and calls `reader.cancel()` (invoking
+	 *    this stream's `cancel()`, which closes the controller), a
+	 *    `pull()` call already in flight has no way to know that happened
+	 *    — it would loop around, eventually call `controller.enqueue()`
+	 *    or `controller.close()`, and throw `Invalid state: Controller is
+	 *    already closed`. Setting `stopped = true` inside `cancel()` and
+	 *    checking it at every re-entry point in `pull()`'s loop closes
+	 *    that race.
 	 */
 	public async stream(
 		input: GenerateInput,
@@ -160,11 +210,34 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 		let emptyDeltaCount = 0;
 		let enqueuedCharCount = 0;
 
+		/**
+		 * @description
+		 * Wall-clock timestamp of the last chunk that carried real delta
+		 * content (or the stream's start, if none yet). Compared against
+		 * `EMPTY_DELTA_STALL_TIMEOUT_MS` on every empty-delta chunk to
+		 * decide whether the provider is still meaningfully alive.
+		 */
+		let lastDeltaAt = Date.now();
+
+		/**
+		 * @description
+		 * Flags this stream as done from the gateway's own perspective
+		 * (closed, errored, or cancelled) so any `pull()` call already in
+		 * flight when that happens never touches the controller again
+		 * afterwards. See the class-level doc comment on `stream()` for
+		 * the race this closes.
+		 */
+		let stopped = false;
+
 		const stream = new ReadableStream<string>({
 			async pull(controller) {
 				try {
 					while (true) {
+						if (stopped) return;
+
 						const { done, value } = await iterator.next();
+
+						if (stopped) return;
 
 						if (done) {
 							logger.info("OpenRouterLLMGateway.stream: iterator done", {
@@ -175,6 +248,7 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 							});
 
 							resolveUsageOnce();
+							stopped = true;
 							controller.close();
 							return;
 						}
@@ -193,6 +267,7 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 							);
 
 							resolveUsageOnce();
+							stopped = true;
 							controller.error(
 								new Error(
 									`OpenRouter stream error (${
@@ -215,15 +290,19 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 						const delta = value.choices[0]?.delta?.content;
 
 						if (delta) {
+							emptyDeltaCount = 0;
+							lastDeltaAt = Date.now();
 							enqueuedCharCount += delta.length;
 							controller.enqueue(delta);
 							return;
 						}
 
 						// No content in this chunk (role-only / metadata-only chunk,
-						// commonly the first chunk from some free-tier models).
-						// Loop again instead of returning without enqueuing —
-						// returning here was the original bug.
+						// commonly the first chunk from some free-tier models, or a
+						// reasoning-phase heartbeat). Loop again instead of returning
+						// without enqueuing — returning here was the original bug.
+						// But bound how long we're willing to keep doing that with
+						// no real delta at all — see EMPTY_DELTA_STALL_TIMEOUT_MS.
 						emptyDeltaCount += 1;
 
 						if (emptyDeltaCount === 1 || emptyDeltaCount % 10 === 0) {
@@ -233,12 +312,40 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 									model,
 									chunkCount,
 									emptyDeltaCount,
+									msSinceLastDelta: Date.now() - lastDeltaAt,
 									finishReason: value.choices[0]?.finishReason,
 								},
 							);
 						}
+
+						const msSinceLastDelta = Date.now() - lastDeltaAt;
+						if (msSinceLastDelta >= EMPTY_DELTA_STALL_TIMEOUT_MS) {
+							logger.error(
+								"OpenRouterLLMGateway.stream: no delta content for too long, aborting stream as stalled",
+								{
+									model,
+									chunkCount,
+									emptyDeltaCount,
+									msSinceLastDelta,
+									stallTimeoutMs: EMPTY_DELTA_STALL_TIMEOUT_MS,
+								},
+							);
+
+							resolveUsageOnce();
+							stopped = true;
+							controller.error(
+								new Error(
+									`OpenRouter stream stalled: no content for ${Math.round(
+										msSinceLastDelta / 1000,
+									)}s (${emptyDeltaCount} empty chunks), giving up`,
+								),
+							);
+							return;
+						}
 					}
 				} catch (error) {
+					if (stopped) return;
+
 					logger.error("OpenRouterLLMGateway.stream: pull() threw", {
 						model,
 						chunkCount,
@@ -249,6 +356,7 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 					});
 
 					resolveUsageOnce();
+					stopped = true;
 					controller.error(error);
 				}
 			},
@@ -261,6 +369,7 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 					enqueuedCharCount,
 				});
 
+				stopped = true;
 				resolveUsageOnce();
 
 				try {
