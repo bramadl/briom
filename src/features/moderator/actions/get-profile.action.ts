@@ -3,6 +3,7 @@
 import { briom } from "@briom";
 import { getUser } from "@briom/core/infra/auth";
 import { respond } from "@briom/libs/server-action";
+import { forbidden } from "next/navigation";
 
 export async function getProfile() {
 	const user = await getUser();
@@ -20,7 +21,7 @@ export async function getProfile() {
 			registerResult.isError() &&
 			registerResult.error().code !== "EMAIL_ALREADY_USED"
 		) {
-			return respond(registerResult);
+			return forbidden();
 		}
 
 		result = await briom.moderators.profile({ moderatorId: user.id });
