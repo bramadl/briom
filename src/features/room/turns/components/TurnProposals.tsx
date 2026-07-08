@@ -25,7 +25,7 @@ export function TurnProposals({ proposals, onSelect }: TurnProposalsProps) {
 	return (
 		<Fragment>
 			<Separator className="opacity-50" />
-			<div className="flex flex-col items-end gap-1.5">
+			<div className="flex flex-col items-end gap-1.5 animate-in fade-in-0 slide-in-from-bottom-5">
 				<span className="text-[10px] text-muted-foreground/50 uppercase tracking-widest font-mono select-none">
 					continue the discussion
 				</span>

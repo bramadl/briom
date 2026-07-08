@@ -6,14 +6,6 @@ import { toast } from "sonner";
 
 import { retryTurn } from "../actions/retry-turn.action";
 
-/**
- * @description
- * Retries a single failed turn. `claimTurn` is called on success rather
- * than waiting for the `initiated` realtime message — closes the small
- * gap between "mutation resolved" and "realtime message round-trips
- * back to this client", so the turn's card flips out of its failed
- * state without a visible beat of nothing happening after the click.
- */
 export function useRetryTurnMutation(roomId: string) {
 	const queryClient = useQueryClient();
 	const queryKey = roomQueryOptions.getRoom(roomId).queryKey;
@@ -23,11 +15,16 @@ export function useRetryTurnMutation(roomId: string) {
 			return unwrap(await retryTurn(input));
 		},
 
-		onSuccess: (_data, input) => {
+		onMutate: (input) => {
 			turnStreamActions.claimTurn(input.turnId);
 		},
 
-		onError: (error) => {
+		onError: (error, input) => {
+			turnStreamActions.failTurn(input.turnId, {
+				kind: "retry_failed",
+				message: error.message,
+			});
+
 			toast.error("Failed to retry", { description: error.message });
 		},
 

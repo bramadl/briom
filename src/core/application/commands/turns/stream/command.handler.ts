@@ -33,6 +33,7 @@ import type { ILLMGateway } from "../../../ports/gateways/llm/llm.gateway";
 import type { Message, UsageInfo } from "../../../ports/gateways/llm/llm.ref";
 import type { ICheckpointGenerator } from "../../../ports/generators/checkpoint.generator";
 import type { ILogger } from "../../../ports/logger/logger";
+import type { ITurnAbortSignal } from "../../../ports/signals/turn-abort.signal";
 import type { StreamConsumer } from "../../.services/stream-consumer";
 import type { TranscriptorRenderer } from "../../.services/transcriptor-renderer";
 
@@ -74,6 +75,7 @@ export class StreamTurnHandler
 		private readonly fxRateGateway: IFxRateGateway,
 		private readonly checkpointGenerator: ICheckpointGenerator,
 		private readonly eventBus: IEventBus,
+		private readonly turnAbortSignal: ITurnAbortSignal,
 		private readonly logger: ILogger,
 	) {}
 
@@ -229,11 +231,43 @@ export class StreamTurnHandler
 			messageCount: messages.length,
 		});
 
-		const streamResult = await this.llmGateway.stream({
-			model: participant.qualifiedModel,
-			systemPrompt,
-			messages,
-		});
+		/**
+		 * @description
+		 * `turnAbortSignal` is a DB-polled flag, not a native cancellation
+		 * primitive — so we bridge it into a real `AbortController` here,
+		 * scoped to the lifetime of this attempt only. Without this, an
+		 * abort requested while the gateway handshake (`chat.send()`) is
+		 * still in flight has nothing to interrupt: `StreamConsumer`'s
+		 * abort-aware loop doesn't even exist yet at that point, so a
+		 * stuck or slow-retrying handshake would run to its own
+		 * exhaustion (potentially minutes) regardless of the abort
+		 * request. `watchForAbort` below polls at the same cadence the
+		 * consumer uses once inside its loop, and is always cleared in
+		 * `finally` so it never outlives this attempt.
+		 */
+		const abortController = new AbortController();
+		const watchForAbort = this.pollAbortUntilSignalled(turn, abortController);
+
+		let streamResult: Awaited<ReturnType<ILLMGateway["stream"]>>;
+		try {
+			streamResult = await this.llmGateway.stream({
+				model: participant.qualifiedModel,
+				systemPrompt,
+				messages,
+				signal: abortController.signal,
+			});
+		} finally {
+			watchForAbort.stop();
+		}
+
+		if (abortController.signal.aborted) {
+			this.logger.warn(
+				"StreamTurnHandler: abort requested during gateway handshake",
+				{ roomId: room.id.value(), turnId: turn.id.value() },
+			);
+
+			return this.markFailed(room, turn, TurnError.aborted());
+		}
 
 		if (streamResult.isError()) {
 			const mappedError = this.mapStreamError(streamResult.error());
@@ -342,6 +376,45 @@ export class StreamTurnHandler
 		}
 
 		return Result.success({ room, participant, turn });
+	}
+
+	/**
+	 * @description
+	 * Bridges the DB-polled `ITurnAbortSignal` into a real `AbortController`
+	 * for the duration of a single gateway call (the handshake in
+	 * `runStreamAttempt`). Polls on the same cadence `StreamConsumer` uses
+	 * internally once it's consuming chunks, so abort latency is
+	 * consistent across the whole attempt regardless of which phase it's
+	 * in. Callers MUST call `.stop()` once the awaited call settles
+	 * (success or error) to avoid leaking the interval.
+	 */
+	private pollAbortUntilSignalled(
+		turn: Turn,
+		controller: AbortController,
+		intervalMs = 1_000,
+	): { stop: () => void } {
+		let stopped = false;
+
+		const tick = async () => {
+			if (stopped || controller.signal.aborted) return;
+
+			const abortRequested = await this.turnAbortSignal.isRequested(turn.id);
+
+			if (abortRequested && !stopped) {
+				controller.abort();
+			}
+		};
+
+		const timer = setInterval(() => {
+			void tick();
+		}, intervalMs);
+
+		return {
+			stop: () => {
+				stopped = true;
+				clearInterval(timer);
+			},
+		};
 	}
 
 	/**

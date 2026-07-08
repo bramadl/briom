@@ -1,8 +1,10 @@
 "use client";
 
-import { cn } from "@briom/libs/utils";
 import { useRoom } from "@briom/room/hooks/use-room";
-import { useIsTurnSlotClaimed } from "@briom/room/store/room-stream.store";
+import {
+	useIsTurnSlotClaimed,
+	useRoomTransition,
+} from "@briom/room/store/room-stream.store";
 import { useAbortTurnMutation } from "@briom/room/turns/hooks/use-abort-turn-mutation";
 import { useInitiateTurnMutation } from "@briom/room/turns/hooks/use-initiate-turn-mutation";
 import {
@@ -17,6 +19,7 @@ import type { PendingAttachment } from "../attachments/utils/attachment.types";
 import type { Mentionee } from "../editor/helpers/mention-extractor";
 import { useDeliberationRealtime } from "../hooks/use-deliberation-realtime";
 import { useStickToBottom } from "../hooks/use-stick-to-bottom";
+import { RoomBanner } from "./internal/RoomBanner";
 import { RoomLoader } from "./internal/RoomLoader";
 
 const RoomSequence = dynamic(
@@ -34,7 +37,6 @@ export function RoomDeliberation() {
 	const { isConcluded, isFrozen, isLocked, isMultiDeliberation, room, roomId } =
 		useRoom();
 
-	const roomState = useMemo(() => room.state, [room.state]);
 	const participants = useMemo(
 		() => room.info.participants,
 		[room.info.participants],
@@ -90,6 +92,7 @@ export function RoomDeliberation() {
 		abortMutation.mutate({ roomId, turnId: activeTurnId });
 	}, [abortMutation, roomId, activeTurnId]);
 
+	const transitioned = useRoomTransition();
 	useDeliberationRealtime({
 		roomId,
 		moderatorId: room.info.metadata.moderatorId,
@@ -98,21 +101,7 @@ export function RoomDeliberation() {
 
 	return (
 		<div className="relative min-w-0 min-h-0 h-full flex-1 flex flex-col overflow-hidden">
-			{roomState && (
-				<div
-					className={cn(
-						"p-4 text-sm",
-						roomState.kind === "frozen"
-							? "bg-dusty-blue-background text-dusty-blue"
-							: "bg-terracotta-background text-terracotta",
-					)}
-				>
-					<p className="font-semibold">
-						{roomState.kind === "frozen" ? "Room Frozen" : "Room Locked"}
-					</p>
-					<p className="text-xs">{roomState.reason}</p>
-				</div>
-			)}
+			<RoomBanner />
 			<div
 				className="flex-1 flex flex-col gap-8 p-8 lg:py-16 min-w-0 min-h-0 overflow-y-auto no-scrollbar overflow-x-hidden"
 				ref={scrollContainerRef}
@@ -130,6 +119,7 @@ export function RoomDeliberation() {
 						onAbort={abortTurn}
 						onSend={initateTurn}
 						participants={participants}
+						pulsed={transitioned}
 					/>
 				</div>
 			)}

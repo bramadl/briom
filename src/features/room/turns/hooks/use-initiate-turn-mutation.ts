@@ -20,6 +20,8 @@ export function useInitiateTurnMutation(roomId: string) {
 		},
 
 		onMutate: async (input) => {
+			turnStreamActions.setProposalsVisible(false);
+
 			const previousCollapseState = {
 				forceCollapsedIds: new Set(
 					useTurnCollapseStore.getState().forceCollapsedIds,

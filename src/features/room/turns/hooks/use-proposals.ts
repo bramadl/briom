@@ -1,4 +1,5 @@
 import type { TurnProposalDTO } from "@briom/core/app";
+import { roomStreamActions } from "@briom/room/store/room-stream.store";
 import {
 	turnStreamActions,
 	useShouldShowProposals,
@@ -26,14 +27,19 @@ export function useProposals(roomId: string) {
 
 	const acceptProposal = useCallback(
 		async ({ intent, participantId }: TurnProposalDTO) => {
+			roomStreamActions.setTransitioning(true);
+			turnStreamActions.setProposalsVisible(false);
+
 			startTransition(async () => {
-				turnStreamActions.setProposalsVisible(false);
 				try {
-					const pending = mutation.mutateAsync({
-						intent,
-						participantId,
-						roomId,
-					});
+					const pending = mutation.mutateAsync(
+						{
+							intent,
+							participantId,
+							roomId,
+						},
+						{ onSettled: () => void roomStreamActions.setTransitioning(false) },
+					);
 
 					await pending;
 				} catch (error) {
@@ -47,5 +53,5 @@ export function useProposals(roomId: string) {
 		[roomId, mutation.mutateAsync],
 	);
 
-	return { acceptProposal, proposals, showProposals };
+	return { acceptProposal, pending, proposals, showProposals };
 }

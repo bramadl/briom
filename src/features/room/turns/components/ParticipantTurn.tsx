@@ -15,10 +15,10 @@ import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useRetryTurnMutation } from "../hooks/use-retry-turn-mutation";
 import { useTurnStreaming } from "../hooks/use-turn-streaming";
+import { FailedTurn } from "./internal/FailedTurn";
 import { TurnActions } from "./internal/TurnActions";
 import { TurnContent } from "./internal/TurnContent";
 import { TurnContentCollapser } from "./internal/TurnContentCollapser";
-import { TurnFailed } from "./internal/TurnFailed";
 
 function ParticipantProfile(props: {
 	displayName: string;
@@ -153,7 +153,7 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 								<TurnContent content={content} />
 							</TurnContentCollapser>
 						)}
-						<TurnFailed
+						<FailedTurn
 							label={
 								isActive
 									? "Perspective was not generated"

@@ -1,12 +1,5 @@
 import { resolveMediaType, SIZE_LIMIT } from "@briom/core/domain";
 
-/**
- * @description
- * Some browsers (or OS-es) sometimes being weird by
- * reading typescript files (.ts) as video/mp2t–this
- * is a known (whitelist) extensions that we would
- * prolly only care atm.
- */
 const EXTENSION_OVERRIDE: Record<string, string> = {
 	ts: "text/x-typescript",
 	tsx: "text/x-typescript",

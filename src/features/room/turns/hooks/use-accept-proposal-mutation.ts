@@ -5,7 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { acceptProposal } from "../actions/accept-proposal.action";
 import { buildOptimisticParticipantTurn } from "../optimistics/build-participant-turn.optimistic";
-import { turnQueryOptions } from "../queries/query.options";
 import { useTurnCollapseStore } from "./use-turn-collapse-store";
 
 export function useAcceptProposalMutation(roomId: string) {
@@ -19,11 +18,6 @@ export function useAcceptProposalMutation(roomId: string) {
 		},
 
 		onMutate: async () => {
-			queryClient.cancelQueries({
-				queryKey: turnQueryOptions.getProposals(roomId).queryKey,
-				exact: true,
-			});
-
 			const previousCollapseState = {
 				forceCollapsedIds: new Set(
 					useTurnCollapseStore.getState().forceCollapsedIds,

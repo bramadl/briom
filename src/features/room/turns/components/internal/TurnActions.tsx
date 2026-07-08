@@ -8,12 +8,7 @@ import {
 } from "@briom/components/ui/tooltip";
 import { cn } from "@briom/libs/utils";
 import { format } from "date-fns";
-import {
-	CheckIcon,
-	CopyIcon,
-	// EditIcon,
-	// ReplyIcon
-} from "lucide-react";
+import { CheckIcon, CopyIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useCopyToClipboard } from "usehooks-ts";
 

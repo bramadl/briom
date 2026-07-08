@@ -92,7 +92,7 @@ export class GenerateTopicHandler
 			},
 		);
 
-		await this.roomRepository.persist(room);
+		await this.roomRepository.setTopic(room.id, topic);
 		await this.eventBus.publishAll(room.pullEvents());
 
 		this.logger.info(

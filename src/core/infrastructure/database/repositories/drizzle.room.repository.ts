@@ -115,6 +115,13 @@ export class DrizzleRoomRepository
 		});
 	}
 
+	public async setTopic(roomId: RoomId, topic: string): Promise<void> {
+		await this.db
+			.update(roomsTable)
+			.set({ topic, updatedAt: new Date() })
+			.where(eq(roomsTable.id, roomId.value()));
+	}
+
 	private mapToDomain(
 		raw: typeof roomsTable.$inferSelect & {
 			participants: Array<

@@ -20,6 +20,30 @@ type ResolvedUsage = {
 	costUsd: number;
 };
 
+/**
+ * @description
+ * `@openrouter/sdk` is Speakeasy-generated and retries on transient
+ * errors (429s, timeouts, connection errors) using whatever backoff
+ * policy is declared in OpenRouter's OpenAPI spec (`x-speakeasy-retries`)
+ * unless overridden here. Left unbounded, a single struggling request
+ * can silently retry for minutes before ever surfacing an error to our
+ * code — which is indistinguishable from a genuine hang from the
+ * caller's perspective, and is what let one turn burn the full Vercel
+ * function budget. This bounds it to a handful of quick attempts: fail
+ * fast and let OUR retry/error-surfacing logic (turn marked failed,
+ * moderator sees it, can hit retry) take over instead.
+ */
+const BOUNDED_RETRY_CONFIG = {
+	strategy: "backoff",
+	backoff: {
+		initialInterval: 250,
+		maxInterval: 2_000,
+		maxElapsedTime: 8_000,
+		exponent: 1.5,
+	},
+	retryConnectionErrors: true,
+} as const;
+
 export class OpenRouterLLMGateway implements ILLMGateway {
 	public constructor(
 		private readonly client: OpenRouterClient,
@@ -43,7 +67,7 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 						stream: false,
 					},
 				},
-				{ signal: input.signal },
+				{ signal: input.signal, retries: BOUNDED_RETRY_CONFIG },
 			);
 
 			const rawContent = response.choices[0]?.message.content;
@@ -268,7 +292,7 @@ export class OpenRouterLLMGateway implements ILLMGateway {
 						stream: true,
 					},
 				},
-				{ signal: input.signal },
+				{ signal: input.signal, retries: BOUNDED_RETRY_CONFIG },
 			);
 
 			this.logger.info("OpenRouterLLMGateway.initiateStream: handshake OK", {

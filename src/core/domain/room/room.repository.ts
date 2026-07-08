@@ -37,4 +37,6 @@ export interface IRoomRepository {
 	 * and update (existing room with mutations).
 	 */
 	persist(room: Room): Promise<void>;
+
+	setTopic(roomId: RoomId, topic: string): Promise<void>;
 }

@@ -192,6 +192,7 @@ export const handlersSlice = servicesSlice
 		const fxRateGateway = r["gateway:fx-rate:frankfurter"];
 		const checkpointGenerator = r["generator:checkpoint:inngest"];
 		const eventBus = r["eventBus:drimion"];
+		const turnAbortSignal = r["signal:turn-abort:drizzle"];
 		const logger = r["logger:pino"];
 
 		return new StreamTurnHandler(
@@ -206,6 +207,7 @@ export const handlersSlice = servicesSlice
 			fxRateGateway,
 			checkpointGenerator,
 			eventBus,
+			turnAbortSignal,
 			logger,
 		);
 	})

@@ -10,7 +10,7 @@ import { Button } from "@briom/components/ui/button";
 import { AlertCircleIcon, Loader2Icon, RefreshCwIcon } from "lucide-react";
 import { useCallback, useTransition } from "react";
 
-interface TurnFailedProps {
+interface FailedTurnProps {
 	/**
 	 * @description
 	 * Short label of the error.
@@ -32,7 +32,7 @@ interface TurnFailedProps {
 	reason: string;
 }
 
-export function TurnFailed({ label, onRetried, reason }: TurnFailedProps) {
+export function FailedTurn({ label, onRetried, reason }: FailedTurnProps) {
 	const [pending, startTransition] = useTransition();
 
 	const retry = useCallback(() => {

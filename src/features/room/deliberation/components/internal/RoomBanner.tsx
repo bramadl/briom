@@ -2,31 +2,26 @@
 
 import { cn } from "@briom/libs/utils";
 import { useRoom } from "@briom/room/hooks/use-room";
-import { AlertTriangleIcon, BanIcon } from "lucide-react";
+import { useMemo } from "react";
 
 export function RoomBanner() {
-	const { isFrozen, room } = useRoom();
+	const { room } = useRoom();
+	const roomState = useMemo(() => room.state, [room.state]);
 
+	if (!roomState) return null;
 	return (
 		<div
 			className={cn(
-				"sticky top-0 inset-x-0 px-4 py-2 text-sm flex items-center gap-2 animate-in slide-in-from-bottom fade-in-0",
-				isFrozen
-					? "bg-destructive/10 text-destructive border-b border-destructive/20"
-					: "bg-amber-500/10 text-amber-600 border-b border-amber-500/20",
+				"p-4 text-sm",
+				roomState.kind === "frozen"
+					? "bg-dusty-blue-background text-dusty-blue"
+					: "bg-terracotta-background text-terracotta",
 			)}
 		>
-			{room.state ? (
-				<>
-					<BanIcon className="size-3.5 shrink-0" />
-					{room.state.reason}
-				</>
-			) : (
-				<>
-					<AlertTriangleIcon className="size-3.5 shrink-0" />
-					{"Placeholder Message"}
-				</>
-			)}
+			<p className="font-semibold">
+				{roomState.kind === "frozen" ? "Room Frozen" : "Room Locked"}
+			</p>
+			<p className="text-xs">{roomState.reason}</p>
 		</div>
 	);
 }

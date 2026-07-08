@@ -3,14 +3,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback } from "react";
 
 interface UseFormRoomToggler {
-	/**
-	 * @description
-	 * If set to true, when the page (or modal) is being displayed, clicking (or
-	 * triggering the hotkey) again will do nothing.
-	 *
-	 * The default behavior is false, meaning clicking the trigger again will
-	 * bounce the user to the previous page (`router.back()`).
-	 */
 	preserve?: boolean;
 }
 

@@ -4,6 +4,7 @@ import type { RoomTurnDTO } from "@briom/core/app";
 import { turnChannel } from "@briom/inngest/channels/turn.channel";
 import { roomQueryOptions } from "@briom/room/queries/query.options";
 import { getTurnRealtimeToken } from "@briom/room/turns/actions/get-turn-realtime.action";
+import { turnQueryOptions } from "@briom/room/turns/queries/query.options";
 import { turnStreamActions } from "@briom/room/turns/store/turn-stream.store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRealtime } from "inngest/react";
@@ -53,6 +54,7 @@ export function useTurnSubscriber(params: {
 
 	const queryClient = useQueryClient();
 	const roomKey = roomQueryOptions.getRoom(roomId).queryKey;
+	const proposalKey = turnQueryOptions.getProposals(roomId).queryKey;
 
 	const channel = turnChannel({ roomId });
 	const { messages } = useRealtime({
@@ -89,6 +91,13 @@ export function useTurnSubscriber(params: {
 				case "settled": {
 					const { turnId, content } = message.data;
 					turnStreamActions.settleTurn(turnId, content);
+					queryClient
+						.invalidateQueries({ queryKey: proposalKey, exact: true })
+						.then(() => {
+							setTimeout(() => {
+								turnStreamActions.setProposalsVisible(true);
+							}, 600);
+						});
 					break;
 				}
 
@@ -99,6 +108,13 @@ export function useTurnSubscriber(params: {
 						isRetryable: message.data.isRetryable,
 						retryAfter: message.data.retryAfter,
 					});
+					queryClient
+						.invalidateQueries({ queryKey: proposalKey, exact: true })
+						.then(() => {
+							setTimeout(() => {
+								turnStreamActions.setProposalsVisible(true);
+							}, 600);
+						});
 					break;
 				}
 

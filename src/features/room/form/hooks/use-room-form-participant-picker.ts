@@ -8,12 +8,6 @@ import { useCallback, useDeferredValue, useMemo, useState } from "react";
 
 import type { RoomFormParticipantSchema } from "../schema/schema";
 
-/**
- * @description
- * Sort order: Featured first, then Free, then Paid — each group
- * alphabetical by name so the order stays stable across renders
- * instead of shuffling with every OpenRouter response.
- */
 function sortParticipantModels(models: ParticipantModel[]): ParticipantModel[] {
 	return [...models].sort((a, b) => {
 		const featuredDiff = Number(isFeatured(b)) - Number(isFeatured(a));
@@ -26,14 +20,6 @@ function sortParticipantModels(models: ParticipantModel[]): ParticipantModel[] {
 	});
 }
 
-/**
- * @description
- * Parses the search box's mini-syntax:
- *
- * - `@free` alone → free-only, no text filter
- * - `@free gpt` → free-only, filtered by "gpt"
- * - `gpt` → text filter only, no free constraint
- */
 function parseModelQuery(rawQuery: string): {
 	freeOnly: boolean;
 	text: string;
@@ -67,23 +53,11 @@ function filterParticipantModels(
 	});
 }
 
-/**
- * @description
- * MVP hardcoded "Featured" set, shown with a badge and sorted to the
- * top of the grid. OpenRouter's model list doesn't expose any
- * popularity/trending signal to derive this automatically, so this is
- * a manually curated list of model ids — update by hand as needed.
- */
 function isFeatured(model: ParticipantModel): boolean {
 	return FEATURED_MODEL_IDS.has(model.id);
 }
 
 interface UseRoomParticipantPickerOptions {
-	/**
-	 * @description
-	 * Currently invited participants (from the form), used to derive
-	 * which models are already selected.
-	 */
 	participants: RoomFormParticipantSchema;
 }
 

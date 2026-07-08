@@ -81,6 +81,13 @@ interface DeliberationEditorProps {
 	 * Invited AI participants into the room.
 	 */
 	participants: RoomParticipantDTO[];
+
+	/**
+	 * @description
+	 * Render pulse animation–indicator of something
+	 * is in-flight.
+	 */
+	pulsed: boolean;
 }
 
 export function DeliberationEditor({
@@ -92,6 +99,7 @@ export function DeliberationEditor({
 	onAbort,
 	onSend,
 	participants,
+	pulsed = false,
 }: DeliberationEditorProps) {
 	const { roomId } = useParams<{ roomId: string }>();
 	const draftKey = `room:${roomId}:moderator`;
@@ -159,6 +167,7 @@ export function DeliberationEditor({
 			className={cn(
 				"relative flex flex-col gap-4 py-4 max-w-4xl mx-auto rounded-xl border border-border/50 bg-card/50 backdrop-blur-sm transition-all",
 				"focus-within:border-border focus-within:shadow-lg focus-within:shadow-primary/5",
+				pulsed && "animate-pulse border-primary! ring-4 ring-primary/15",
 				isDragActive &&
 					"border-primary/60 bg-primary/5 shadow-lg shadow-primary/10",
 			)}

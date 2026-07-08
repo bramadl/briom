@@ -35,18 +35,6 @@ interface TurnContentProps {
 	content: string;
 }
 
-/**
- * @description
- * `memo`-wrapped so React can bail out of the re-parse entirely when
- * `content` hasn't actually changed since the last render — relevant
- * now that the caller (`useSmoothedStreamText`) updates `content`
- * inside a `startTransition`: transitions can be interrupted and
- * re-run with a newer value, and this guards against ever re-running
- * the (expensive) markdown pipeline for a value it already rendered.
- *
- * `content` is a plain string, so the default shallow-prop-equality
- * `memo` behavior is sufficient — no custom comparator needed.
- */
 export const TurnContent = memo(function TurnContent({
 	content,
 }: TurnContentProps) {

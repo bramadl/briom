@@ -1,0 +1,1 @@
+ALTER TABLE "rooms"."rooms" DROP COLUMN "version";

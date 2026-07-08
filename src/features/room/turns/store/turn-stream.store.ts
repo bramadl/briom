@@ -42,6 +42,7 @@ export const turnStreamActions = {
 		turnStreamState.activeTurnId = turnId;
 		turnStreamState.phase = "pending";
 		turnStreamState.error = null;
+		turnStreamState.proposalsVisible = false;
 		turnStreamState.settledTurnIds.delete(turnId);
 	},
 
@@ -149,5 +150,5 @@ export function useLiveTurnContent(turnId: string): string {
 
 export function useShouldShowProposals(): boolean {
 	const snap = useSnapshot(turnStreamState);
-	return snap.proposalsVisible || snap.activeTurnId === null;
+	return snap.proposalsVisible;
 }

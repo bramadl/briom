@@ -12,25 +12,7 @@ import { useCallback } from "react";
 import { RoomFormSchema } from "../schema/schema";
 
 interface UseRoomFormOptions {
-	/**
-	 * @description
-	 * ID of the form where button outside the form structure
-	 * can still consume.
-	 *
-	 * The ID is being passed-through, ensuring consistency
-	 * across the component.
-	 *
-	 * @default "room-form"
-	 */
 	id?: string;
-
-	/**
-	 * Called when the submission handler has successfully
-	 * processed the form. The ID can be used for client to
-	 * redirect the user then.
-	 *
-	 * @param roomId - ID of the formed room.
-	 */
 	onRoomFormed: (roomId: string) => void;
 }
 
