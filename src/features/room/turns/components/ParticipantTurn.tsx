@@ -126,11 +126,11 @@ export const ParticipantTurn = memo(function ParticipantTurn({
 
 	const theme = getParticipantTheme(profile.participant.id);
 
-	const isFailed = isActive ? status === "failed" : turn.status === "failed";
+	const isFailed = status === "failed";
 	const isCollapsed = !isExpanded;
 
 	const failureReason = isActive ? error?.message : turn.error?.message;
-	const onRetried = !isActive ? retry : undefined;
+	const onRetried = isFailed ? retry : undefined;
 
 	return (
 		<div className="relative group space-y-2 w-full min-w-0 rounded-lg" id={id}>
