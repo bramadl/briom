@@ -28,7 +28,7 @@
     }
   },
   "include": [
-    "src/core/**"
+    "src/core/domain/**"
   ],
   "ignore": {
     "useGitignore": true,

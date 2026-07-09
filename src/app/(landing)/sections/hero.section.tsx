@@ -1,15 +1,16 @@
 "use client";
 
-import { useAuthModal } from "@briom/app/auth/components/AuthModalProvider";
-import { Button } from "@briom/components/ui/button";
+// import { useAuthModal } from "@briom/app/auth/components/AuthModalProvider";
+// import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";
+import { Waitlist } from "@briom/components/ui/waitlist";
 import { gsap, registerGsap } from "@briom/libs/providers/gsap/register";
 import { useGSAP } from "@gsap/react";
-import { ArrowRight } from "lucide-react";
+// import { ArrowRight } from "lucide-react";
 import { useRef } from "react";
 
 export function HeroSection() {
-	const { openAuth } = useAuthModal();
+	// const { openAuth } = useAuthModal();
 
 	const rootRef = useRef<HTMLDivElement>(null);
 	useGSAP(
@@ -70,10 +71,11 @@ export function HeroSection() {
 					className="mt-10 flex flex-col sm:flex-row items-start gap-4 opacity-0"
 					data-hero-fade
 				>
-					<Button className="group" onClick={openAuth} size="lg">
+					{/* <Button className="group" onClick={openAuth} size="lg">
 						Open a room
 						<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
-					</Button>
+					</Button> */}
+					<Waitlist className="group" size="lg" />
 					<p className="text-sm text-muted-foreground sm:self-center">
 						Free to start. Bring a question.
 					</p>

@@ -1,13 +1,14 @@
 "use client";
 
-import { useAuthModal } from "@briom/app/auth/components/AuthModalProvider";
+// import { useAuthModal } from "@briom/app/auth/components/AuthModalProvider";
 import { Logo } from "@briom/components/logo";
 import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";
+import { Waitlist } from "@briom/components/ui/waitlist";
 import { useState } from "react";
 
 export function Navigation() {
-	const { openAuth } = useAuthModal();
+	// const { openAuth } = useAuthModal();
 	const [isHidden, setIsHidden] = useState(false);
 	const hide = () => setIsHidden(true);
 
@@ -16,7 +17,8 @@ export function Navigation() {
 			<Container>
 				<div className="flex items-center justify-between min-h-16">
 					<Logo className="translate-y-1" tagline tinted />
-					<Button onClick={openAuth}>Get Started</Button>
+					{/* <Button onClick={openAuth}>Get Started</Button> */}
+					<Waitlist />
 				</div>
 			</Container>
 			{!isHidden && (

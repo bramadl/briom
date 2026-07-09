@@ -1,15 +1,16 @@
 "use client";
 
-import { useAuthModal } from "@briom/app/auth/components/AuthModalProvider";
-import { Button } from "@briom/components/ui/button";
+// import { useAuthModal } from "@briom/app/auth/components/AuthModalProvider";
+// import { Button } from "@briom/components/ui/button";
 import { Container } from "@briom/components/ui/container";
+import { Waitlist } from "@briom/components/ui/waitlist";
 import { gsap, registerGsap } from "@briom/libs/providers/gsap/register";
 import { useGSAP } from "@gsap/react";
-import { ArrowRight } from "lucide-react";
+// import { ArrowRight } from "lucide-react";
 import { useRef } from "react";
 
 export function CtaSection() {
-	const { openAuth } = useAuthModal();
+	// const { openAuth } = useAuthModal();
 
 	const rootRef = useRef<HTMLDivElement>(null);
 	useGSAP(
@@ -67,10 +68,11 @@ export function CtaSection() {
 					deliberation begin.
 				</p>
 				<div className="opacity-0 translate-y-5" data-cta-reveal>
-					<Button className="group" onClick={openAuth} size="lg">
+					{/* <Button className="group" onClick={openAuth} size="lg">
 						Start deliberating
 						<ArrowRight className="transition-transform duration-300 group-hover:translate-x-1" />
-					</Button>
+            </Button> */}
+					<Waitlist className="group" size="lg" />
 				</div>
 			</Container>
 		</section>
